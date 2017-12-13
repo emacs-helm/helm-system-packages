@@ -74,14 +74,14 @@
                                      (message "No info on non-installed packages"))))
                ("Copy in kill-ring" . kill-new)
                ("Insert at point" . insert)
-               ("Browse HomePage" . (lambda (elm)
+               ("Browse homepage" . (lambda (elm)
                                       (let ((urls (helm-gentoo-get-url elm)))
                                         (browse-url (helm-comp-read "URL: " urls :must-match t)))))
-               ("Show extra infos" . (lambda (elm)
+               ("Show extra info" . (lambda (elm)
                                        (if (member elm helm-cache-world)
                                            (helm-gentoo-eshell-action elm "genlop -qi")
                                          (message "No info on non-installed packages"))))
-               ("Show USE flags" . (lambda (elm)
+               ("Show USE flags (`C-u' inserts at point)" . (lambda (elm)
                                      (helm-gentoo-default-action elm "equery" "-C" "u")
                                      (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
                                      (font-lock-mode 1)))
@@ -91,9 +91,9 @@
                              (helm-gentoo-install elm :action 'install)))
                ("Unmerge" . (lambda (elm)
                               (helm-gentoo-install elm :action 'uninstall)))
-               ("Show dependencies" . (lambda (elm)
+               ("Show dependencies (`C-u' inserts at point)" . (lambda (elm)
                                         (helm-gentoo-default-action elm "equery" "-C" "d")))
-               ("Show related files" . (lambda (elm)
+               ("Show related files (`C-u' inserts at point)" . (lambda (elm)
                                          ;; TODO: Use helm-read-file or similar?
                                          (helm-gentoo-default-action elm "equery" "-C" "files")))
                ("Refresh" . (lambda (elm)
@@ -115,7 +115,6 @@
     (insert (concat command elms))
     (term-char-mode) (term-send-input)))
 
-;; TODO: Insert at point with prefix arg.
 (defun helm-gentoo-default-action (elm command &rest args)
   "Gentoo default action that use `helm-gentoo-buffer'."
   (if (member elm helm-cache-world)
@@ -125,8 +124,9 @@
                     (buffer-string))))
         (if (string-empty-p res)
             (message "No result")
-          (switch-to-buffer helm-gentoo-buffer)
-          (erase-buffer)
+          (unless helm-current-prefix-arg
+              (switch-to-buffer helm-gentoo-buffer)
+              (erase-buffer))
           (insert res)))
   (message "No info on non-installed packages")))
 
