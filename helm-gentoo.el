@@ -74,17 +74,19 @@
                                      (message "No info on non-installed packages"))))
                ("Copy in kill-ring" . kill-new)
                ("Insert at point" . insert)
-               ("Browse homepage" . (lambda (elm)
-                                      (let ((urls (helm-gentoo-get-url elm)))
-                                        (browse-url (helm-comp-read "URL: " urls :must-match t)))))
+               ("Browse homepage URL (`C-u' inserts at point)" . (lambda (elm)
+                                                                   (let ((urls (helm-gentoo-get-url elm)))
+                                                                     (if helm-current-prefix-arg
+                                                                         (insert urls)
+                                                                       (browse-url (helm-comp-read "URL: " urls :must-match t))))))
                ("Show extra info" . (lambda (elm)
-                                       (if (member elm helm-cache-world)
-                                           (helm-gentoo-eshell-action elm "genlop -qi")
-                                         (message "No info on non-installed packages"))))
+                                      (if (member elm helm-cache-world)
+                                          (helm-gentoo-eshell-action elm "genlop -qi")
+                                        (message "No info on non-installed packages"))))
                ("Show USE flags (`C-u' inserts at point)" . (lambda (elm)
-                                     (helm-gentoo-default-action elm "equery" "-C" "u")
-                                     (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
-                                     (font-lock-mode 1)))
+                                                              (helm-gentoo-default-action elm "equery" "-C" "u")
+                                                              (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
+                                                              (font-lock-mode 1)))
                ("Emerge-pretend" . (lambda (elm)
                                      (helm-gentoo-eshell-action elm "emerge -p")))
                ("Emerge" . (lambda (elm)
@@ -92,10 +94,10 @@
                ("Unmerge" . (lambda (elm)
                               (helm-gentoo-install elm :action 'uninstall)))
                ("Show dependencies (`C-u' inserts at point)" . (lambda (elm)
-                                        (helm-gentoo-default-action elm "equery" "-C" "d")))
+                                                                 (helm-gentoo-default-action elm "equery" "-C" "d")))
                ("Show related files (`C-u' inserts at point)" . (lambda (elm)
-                                         ;; TODO: Use helm-read-file or similar?
-                                         (helm-gentoo-default-action elm "equery" "-C" "files")))
+                                                                  ;; TODO: Use helm-read-file or similar?
+                                                                  (helm-gentoo-default-action elm "equery" "-C" "files")))
                ("Refresh" . (lambda (elm)
                               (helm-gentoo-setup-cache)
                               (setq helm-cache-world (helm-gentoo-get-world)))))))
@@ -192,19 +194,12 @@
                       "--print-all-useflags")
         (buffer-string)))))
 
-(defun helm-gentoo-get-url (elm) ; TODO: Broken?
+(defun helm-gentoo-get-url (elm)
   "Return a list of URLs from eix output."
-  (cl-loop with url-list = (split-string
-                            (with-temp-buffer
-                              (call-process "eix" nil t nil
-                                            elm "--format" "<homepage>\n")
-                              (buffer-string)))
-        for i in url-list
-        when (and (string-match "^http://.*" i)
-                  all
-                  (not (member i all)))
-        collect i into all
-        finally return all))
+  (split-string
+   (with-temp-buffer
+     (call-process "eix" nil t nil elm "--format" "<homepage>\n")
+     (buffer-string))))
 
 (defun helm-gentoo-get-world ()
   "Return list of all installed package on your system."
@@ -219,7 +214,6 @@
                                 "envvar"
                                 "USE")
                   (buffer-string))))
-
 
 (defun helm-highlight-world (eix)
   "Highlight all installed package."
