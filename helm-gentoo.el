@@ -81,22 +81,21 @@
                                        (if (member elm helm-cache-world)
                                            (helm-gentoo-eshell-action elm "genlop -qi")
                                          (message "No info on non-installed packages"))))
-               ("Show USE flags" . (lambda (elm) ; TODO: Broken?
+               ("Show USE flags" . (lambda (elm)
                                      (helm-gentoo-default-action elm "equery" "-C" "u")
                                      (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
                                      (font-lock-mode 1)))
                ("Emerge-pretend" . (lambda (elm)
-                                         (helm-gentoo-eshell-action elm "emerge -p")))
+                                     (helm-gentoo-eshell-action elm "emerge -p")))
                ("Emerge" . (lambda (elm)
                              (helm-gentoo-install elm :action 'install)))
                ("Unmerge" . (lambda (elm)
                               (helm-gentoo-install elm :action 'uninstall)))
                ("Show dependencies" . (lambda (elm)
-                                        ;; TODO: Broken?
                                         (helm-gentoo-default-action elm "equery" "-C" "d")))
                ("Show related files" . (lambda (elm)
-                                         ;; TODO: Use helm-read-file or similar.
-                                         (helm-gentoo-default-action elm "equery" "files")))
+                                         ;; TODO: Use helm-read-file or similar?
+                                         (helm-gentoo-default-action elm "equery" "-C" "files")))
                ("Refresh" . (lambda (elm)
                               (helm-gentoo-setup-cache)
                               (setq helm-cache-world (helm-gentoo-get-world)))))))
@@ -116,16 +115,20 @@
     (insert (concat command elms))
     (term-char-mode) (term-send-input)))
 
+;; TODO: Insert at point with prefix arg.
 (defun helm-gentoo-default-action (elm command &rest args)
   "Gentoo default action that use `helm-gentoo-buffer'."
   (if (member elm helm-cache-world)
-      (progn
-        (switch-to-buffer helm-gentoo-buffer)
-        (erase-buffer)
-        (let ((com-list (append args (list elm))))
-          (apply #'call-process command nil t nil
-                 com-list)))
-    (message "No info on non-installed packages")))
+      (let* ((com-list (append args (list elm)))
+             (res (with-temp-buffer
+                    (apply #'call-process command nil t nil com-list)
+                    (buffer-string))))
+        (if (string-empty-p res)
+            (message "No result")
+          (switch-to-buffer helm-gentoo-buffer)
+          (erase-buffer)
+          (insert res)))
+  (message "No info on non-installed packages")))
 
 (defvar helm-source-use-flags
   (helm-build-in-buffer-source "USE flags"
