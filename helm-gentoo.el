@@ -40,12 +40,12 @@
   :group 'helm)
 
 (defface helm-gentoo-local '((t (:foreground "orange")))
-  "Face for installed packages or loca USE flags in `helm-gentoo'."
+  "Face for installed packages or local USE flags in `helm-gentoo'."
   :group 'traverse-faces)
 
 
 ;;; Internals
-(defvar helm-gentoo-buffer "*helm-gentoo-output*") ; TODO: Remove?
+(defvar helm-gentoo-buffer "*helm-gentoo-output*")
 (defvar helm-cache-gentoo nil)
 (defvar helm-cache-world nil)
 
@@ -233,11 +233,11 @@
 
 ;;;###autoload
 (defun helm-gentoo ()
-  "Preconfigured `helm' for gentoo linux."
+  "Preconfigured `helm' for Portage."
   (interactive)
   (helm-other-buffer '(helm-source-gentoo
                        helm-source-use-flags)
-                     "*helm gentoo*"))
+                     "*helm portage*"))
 
 (provide 'helm-gentoo)
 
