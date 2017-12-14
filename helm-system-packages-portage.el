@@ -49,23 +49,6 @@
                   (call-process "eix" nil t nil "--only-names")
                   (buffer-string))))
 
-;; TODO: Make generic function of this?
-(defun helm-system-packages-portage-init ()
-  "Cache package lists and create Helm buffer."
-  (setq helm-system-packages--all
-        (or helm-system-packages--all (helm-system-packages-portage-list-all))
-        helm-system-packages--explicit
-        (or helm-system-packages--explicit (helm-system-packages-portage-list-explicit))
-        helm-system-packages--dependencies
-        (or helm-system-packages--dependencies (helm-system-packages-portage-list-dependencies)))
-  (unless (helm-candidate-buffer)
-    (helm-init-candidates-in-buffer
-        'global
-      (with-temp-buffer
-        (dolist (i helm-system-packages--all)
-          (insert (concat i "\n")))
-        (buffer-string)))))
-
 (defun helm-system-packages-portage-print-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
 
@@ -80,7 +63,7 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defvar helm-system-packages-portage-source
   (helm-build-in-buffer-source "Portage source"
-    :init 'helm-system-packages-portage-init
+    :init 'helm-system-packages-init
     :candidate-transformer 'helm-system-packages-highlight
     :action '(("Show package(s)" .
                (lambda (_)
@@ -117,12 +100,7 @@ Otherwise display in `helm-system-packages-buffer'."
                    (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
                    (font-lock-mode 1))))
               ("Browse homepage URL" . helm-system-packages-portage-print-url)
-              ("Refresh" .
-               (lambda (_)
-                 ;; TODO: Test if cache gets updated on install/uninstall.
-                 (setq helm-system-packages--all (helm-system-packages-portage-list-all)
-                       helm-system-packages--explicit (helm-system-packages-portage-list-explicit)
-                       helm-system-packages--dependencies (helm-system-packages-portage-list-dependencies)))))))
+              ("Refresh" . 'helm-system-packages-refresh))))
 
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."

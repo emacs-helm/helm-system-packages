@@ -29,9 +29,13 @@
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
-(defvar helm-system-packages--all nil)
+(defvar helm-system-packages-list-explicit nil)
+(defvar helm-system-packages-list-dependencies nil)
+(defvar helm-system-packages-list-all nil)
+
 (defvar helm-system-packages--explicit nil)
 (defvar helm-system-packages--dependencies nil)
+(defvar helm-system-packages--all nil)
 
 (defface helm-system-packages-explicit '((t (:foreground "orange")))
   "Face for excplitly installed packages."
@@ -81,11 +85,36 @@ Otherwise display in `helm-system-packages-buffer'."
 COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
   (let ((arg-list (append args (helm-marked-candidates)))
         (eshell-buffer-name helm-system-packages-eshell-buffer))
+    ;; Refresh package list after command has completed.
+    (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh t)
     (push command arg-list)
     (push "sudo" arg-list)
     (eshell t)
     (insert (mapconcat 'identity arg-list " "))
     (eshell-send-input)))
+
+(defun helm-system-packages-refresh (&optional lazy)
+  (setq
+   helm-system-packages--explicit
+   (or (and (not lazy) helm-system-packages--explicit)
+       (funcall helm-system-packages-list-explicit))
+   helm-system-packages--dependencies
+   (or (and (not lazy) helm-system-packages--dependencies)
+       (funcall helm-system-packages-list-dependencies))
+   helm-system-packages--all
+   (or (and (not lazy) helm-system-packages--all)
+       (funcall helm-system-packages-list-all))))
+
+(defun helm-system-packages-init ()
+  "Cache package lists and create Helm buffer."
+  (helm-system-packages-refresh t)
+  (unless (helm-candidate-buffer)
+    (helm-init-candidates-in-buffer
+        'global
+      (with-temp-buffer
+        (dolist (i helm-system-packages--all)
+          (insert (concat i "\n")))
+        (buffer-string)))))
 
 ;;;###autoload
 (defun helm-system-packages ()
@@ -94,9 +123,15 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
   (cond
    ((executable-find "emerge")
     (require 'helm-system-packages-portage)
+    (setq helm-system-packages-list-explicit 'helm-system-packages-portage-list-explicit
+          helm-system-packages-list-dependencies 'helm-system-packages-portage-list-dependencies
+          helm-system-packages-list-all 'helm-system-packages-portage-list-all)
     (helm-system-packages-portage))
    ((executable-find "dpkg")
     (require 'helm-system-packages-dpkg)
+    (setq helm-system-packages-list-explicit 'helm-system-packages-dpkg-list-explicit
+          helm-system-packages-list-dependencies 'helm-system-packages-dpkg-list-dependencies
+          helm-system-packages-list-all 'helm-system-packages-dpkg-list-all)
     (helm-system-packages-dpkg))))
 
 (provide 'helm-system-packages)

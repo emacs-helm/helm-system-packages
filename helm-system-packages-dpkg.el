@@ -48,22 +48,6 @@
                   (call-process "apt-cache" nil t nil "pkgnames")
                   (buffer-string))))
 
-(defun helm-system-packages-dpkg-init ()
-  "Cache package lists and create Helm buffer."
-  (setq helm-system-packages--all
-        (or helm-system-packages--all (helm-system-packages-dpkg-list-all))
-        helm-system-packages--explicit
-        (or helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit))
-        helm-system-packages--dependencies
-        (or helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))
-  (unless (helm-candidate-buffer)
-    (helm-init-candidates-in-buffer
-        'global
-      (with-temp-buffer
-        (dolist (i helm-system-packages--all)
-          (insert (concat i "\n")))
-        (buffer-string)))))
-
 (defun helm-system-packages-dpkg-print-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
 
@@ -86,7 +70,7 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defvar helm-system-packages-dpkg-source
   (helm-build-in-buffer-source "dpkg source"
-    :init 'helm-system-packages-dpkg-init
+    :init 'helm-system-packages-init
     :candidate-transformer 'helm-system-packages-highlight
     :action '(("Show package(s)" .
                (lambda (_)
@@ -108,12 +92,7 @@ Otherwise display in `helm-system-packages-buffer'."
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "rdepends")))
               ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
-              ("Refresh" .
-               (lambda (_)
-                 ;; TODO: Re-use init function?
-                 (setq helm-system-packages--all (helm-system-packages-dpkg-list-all)
-                       helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit)
-                       helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))))))
+              ("Refresh" . 'helm-system-packages-refresh))))
 
 ;; TODO: Factor into entry function?
 (defun helm-system-packages-dpkg ()
