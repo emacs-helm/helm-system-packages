@@ -26,12 +26,12 @@
 
 ;;; Internals
 
-;; TODO: Use `--' for internal variables.
+(defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
-(defvar helm-system-packages-root-buffer "*helm-system-packages-process*")
-(defvar helm-system-packages-all nil)
-(defvar helm-system-packages-explicit nil)
-(defvar helm-system-packages-dependencies nil)
+
+(defvar helm-system-packages--all nil)
+(defvar helm-system-packages--explicit nil)
+(defvar helm-system-packages--dependencies nil)
 
 (defface helm-system-packages-explicit '((t (:foreground "orange")))
   "Face for excplitly installed packages."
@@ -75,22 +75,14 @@ Otherwise display in `helm-system-packages-buffer'."
 (defun helm-system-packages-run-as-root (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
 
-Command will be run in an Eshell buffer."
-  (when (get-buffer helm-system-packages-root-buffer)
-    (kill-buffer helm-system-packages-root-buffer))
-  (when (get-buffer "*Eshell Command Output*")
-    (kill-buffer "*Eshell Command Output*"))
+COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
   (let ((arg-list (append args (helm-marked-candidates)))
-        (buf-fname (buffer-file-name helm-current-buffer)))
+        (eshell-buffer-name helm-system-packages-eshell-buffer))
     (push command arg-list)
     (push "sudo" arg-list)
-    (if (and buf-fname (string-match tramp-file-name-regexp buf-fname))
-        (progn
-          (save-window-excursion ; TODO: Fix this brittle mechanism.
-            (pop-to-buffer "*scratch*")
-            (eshell-command (mapconcat 'identity arg-list " ")))
-          (pop-to-buffer "*Eshell Command Output*"))
-      (eshell-command (mapconcat 'identity arg-list " ")))))
+    (eshell t)
+    (insert (mapconcat 'identity arg-list " "))
+    (eshell-send-input)))
 
 ;;;###autoload
 (defun helm-system-packages ()

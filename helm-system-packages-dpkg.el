@@ -49,17 +49,17 @@
 
 (defun helm-system-packages-dpkg-init ()
   "Cache package lists and create Helm buffer."
-  (setq helm-system-packages-all
-        (or helm-system-packages-all (helm-system-packages-dpkg-list-all))
-        helm-system-packages-explicit
-        (or helm-system-packages-explicit (helm-system-packages-dpkg-list-explicit))
-        helm-system-packages-dependencies
-        (or helm-system-packages-dependencies (helm-system-packages-dpkg-list-dependencies)))
+  (setq helm-system-packages--all
+        (or helm-system-packages--all (helm-system-packages-dpkg-list-all))
+        helm-system-packages--explicit
+        (or helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit))
+        helm-system-packages--dependencies
+        (or helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))
   (unless (helm-candidate-buffer)
     (helm-init-candidates-in-buffer
         'global
       (with-temp-buffer
-        (dolist (i helm-system-packages-all)
+        (dolist (i helm-system-packages--all)
           (insert (concat i "\n")))
         (buffer-string)))))
 
@@ -112,9 +112,9 @@ Otherwise display in `helm-system-packages-buffer'."
                ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
                ("Refresh" . (lambda (_)
                               ;; TODO: Re-use init function?
-                              (setq helm-system-packages-all (helm-system-packages-dpkg-list-all)
-                                    helm-system-packages-explicit (helm-system-packages-dpkg-list-explicit)
-                                    helm-system-packages-dependencies (helm-system-packages-dpkg-list-dependencies)))))))
+                              (setq helm-system-packages--all (helm-system-packages-dpkg-list-all)
+                                    helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit)
+                                    helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))))))
 
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
