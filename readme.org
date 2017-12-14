@@ -1,0 +1,53 @@
+#+TITLE: Helm-System-Packages
+
+* Introduction
+
+Helm-System-Packages is a Helm interface to the package manager of your operating system.
+
+Start `helm-system-packages` to list all available packages (with installed packages displayed in their own face).
+Fuzzy-search, mark and execute the desired action over any set of packages:
+
+- Install
+- Uninstall
+- Display packages details or insert details at point
+- Find files
+
+Some package managers come with their specific actions and even specific sources, e.g. Portage's USE flags.
+
+* Motivation
+
+Most package managers GUI sucks so bad they are less efficient than their commandline counterparts.
+
+The commandline workflow is not ideal however:
+
+- Search for local packages.
+- Package missing?  Search for remote packages.
+- List is too long: pipe through a pager.
+- (Un)Install the desired package by writing the searched package names again.
+
+With Helm all those actions get factored into one.
+Helm sessions can also be resumed.
+
+* Roadmap
+** TODO Different face for dependencies.
+** TODO Use long switches whenever possible.
+** TODO Normalize action names.
+Not "Emerge" but "Install".
+Some actions are specific to some package managers however, e.g. "emerge pretend".
+** TODO All actions should support multiple candidates.
+Centralize commands into one `helm-system-packages-run` or something like that.
+** TODO Add defcustom for commands.
+To allow different command switches, e.g. the "--needed" switch in pacman.
+** TODO Output to Eshell only? Comint mode?
+** TODO Factor all "info" actions?
+** TODO Output "info" to an Org buffer?
+We probably still need specific "info" action to insert at point.
+** TODO Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
+** TODO Add pacman support.
+** Add xbps (Void Linux) support
+** Add guix support
+** Add homebrew support
+
+* References
+- https://wiki.voidlinux.eu/Rosetta_stone
+- https://wiki.archlinux.org/index.php/Pacman/Rosetta
