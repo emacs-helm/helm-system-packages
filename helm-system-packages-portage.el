@@ -33,15 +33,18 @@
 (defun helm-system-packages-portage-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
-                  (call-process "qlist" nil t nil "-I")
+                  (insert-file-contents-literally "/var/lib/portage/world")
                   (buffer-string))))
 
 (defun helm-system-packages-portage-list-dependencies ()
   "List packages installed as a dependency."
-  (split-string (with-temp-buffer
-                  ;; TODO: What's the command?
-                  (call-process "qlist" nil t nil "-I")
-                  (buffer-string))))
+  (unless helm-system-packages--explicit
+    (helm-system-packages-portage-list-explicit))
+  (seq-difference
+   (split-string (with-temp-buffer
+                   (call-process "qlist" nil t nil "-I")
+                   (buffer-string)))
+   helm-system-packages--explicit))
 
 (defun helm-system-packages-portage-list-all ()
   "List all packages."
@@ -111,7 +114,7 @@ Otherwise display in `helm-system-packages-buffer'."
         (call-process "eix" nil t nil "--print-all-useflags")
         (buffer-string)))))
 
-(defvar helm-source-use-flags
+(defvar helm-system-packages-portage-use-source
   (helm-build-in-buffer-source "USE flags"
     :init 'helm-system-packages-portage-use-init
     :candidate-transformer 'helm-system-packages-portage-highlight
