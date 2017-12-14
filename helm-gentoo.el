@@ -231,10 +231,8 @@
           else
           collect i)))
 
-;;;###autoload
 (defun helm-gentoo ()
   "Preconfigured `helm' for Portage."
-  (interactive)
   (helm-other-buffer '(helm-source-gentoo
                        helm-source-use-flags)
                      "*helm portage*"))
