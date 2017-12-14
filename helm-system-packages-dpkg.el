@@ -100,7 +100,7 @@ Otherwise display in `helm-system-packages-buffer'."
               ("Find files" .
                ;; TODO: Use helm-read-file or similar?
                (lambda (_)
-                 (helm-system-packages-print "dpkg" "-L")))
+                 (helm-system-packages-print "dpkg" "--listfiles")))
               ("Show dependencies" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "depends")))
