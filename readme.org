@@ -32,25 +32,27 @@ The commandline workflow is not ideal however:
 With Helm all those actions get factored into one.
 Helm sessions can also be resumed.
 * Roadmap
-** TODO Different face for dependencies.
+** DONE Different face for dependencies.
 ** TODO Use thing at point as a default value.
 ** TODO Add column with description.
 That would allow for matching over description as well.
 ** TODO Option to display fullscreen (like helm-top)
 ** TODO Use long switches whenever possible.
-** TODO Normalize action names.
+** DONE Normalize action names.
 Not "Emerge" but "Install".
 Some actions are specific to some package managers however, e.g. "emerge pretend".
-** TODO All actions should support multiple candidates.
+** DONE All actions should support multiple candidates.
 Centralize commands into one `helm-system-packages-run` or something like that.
 ** TODO Add defcustom for commands.
 To allow different command switches, e.g. the ~--needed~ switch in pacman.
-** TODO Output to Eshell only? Comint mode?
+** DONE Output to Eshell only? Comint mode?
 ** TODO Factor all "info" actions?
 ** TODO Output "info" to an Org buffer?
 We probably still need specific "info" action to insert at point.
 ** TODO Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
 ** TODO Add pacman support.
+** TODO Test without eshell-tramp.
+If it does not work, either load it or fall back to "*sudo".
 ** Add xbps (Void Linux) support
 ** Add guix support
 ** Add homebrew support
