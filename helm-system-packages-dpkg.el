@@ -78,21 +78,18 @@ Otherwise display in `helm-system-packages-buffer'."
               (insert res)
               (keep-lines "^Homepage: " (point-min) (point-max))
               (replace-regexp "^Homepage: " "")
-              (delete-duplicate-lines (point-min) (point-max)) ; TODO: Can Helm do this?
               (buffer-string))))
       (if helm-current-prefix-arg
           (insert urls)
         (browse-url (helm-comp-read "URL: " urls :must-match t))))))
 
-(setq helm-system-packages-dpkg-source ; TODO: Use defvar.
+(defvar helm-system-packages-dpkg-source
   (helm-build-in-buffer-source "dpkg source"
     :init 'helm-system-packages-dpkg-init
     :candidate-transformer 'helm-system-packages-highlight
     :action  '(("Show package(s)" .
                 (lambda (_)
                   (helm-system-packages-print "apt-cache" "show")))
-               ;; ("Copy in kill-ring" . kill-new) ; TODO: Helm can do this by default, right?
-               ;; ("Insert at point" . insert) ; TODO: Helm can do this by default, right?
                ("Install" .
                 (lambda (_)
                   (helm-system-packages-run-as-root "apt-get" "install")))
