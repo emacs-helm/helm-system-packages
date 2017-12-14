@@ -90,8 +90,8 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
   (interactive)
   (cond
    ((executable-find "emerge")
-    (require 'helm-gentoo)
-    (helm-gentoo))
+    (require 'helm-system-packages-portage)
+    (helm-system-packages-portage))
    ((executable-find "dpkg")
     (require 'helm-system-packages-dpkg)
     (helm-system-packages-dpkg))))

@@ -138,7 +138,7 @@ Otherwise display in `helm-system-packages-buffer'."
     :candidate-transformer 'helm-system-packages-portage-highlight
     :action '(("Description" .
                (lambda (elm)
-                 (switch-to-buffer helm-gentoo-buffer)
+                 (switch-to-buffer helm-system-packages-buffer)
                  (erase-buffer)
                  (apply #'call-process "euse" nil t nil `("-i" ,elm))
                  (font-lock-add-keywords nil `((,elm . font-lock-variable-name-face)))
@@ -174,6 +174,6 @@ Otherwise display in `helm-system-packages-buffer'."
                        helm-system-packages-portage-use-source)
                      "*helm portage*"))
 
-(provide 'helm-gentoo)
+(provide 'helm-system-packages-portage)
 
-;;; helm-gentoo.el ends here
+;;; helm-system-packages-portage.el ends here
