@@ -87,31 +87,32 @@ Otherwise display in `helm-system-packages-buffer'."
   (helm-build-in-buffer-source "dpkg source"
     :init 'helm-system-packages-dpkg-init
     :candidate-transformer 'helm-system-packages-highlight
-    :action  '(("Show package(s)" .
-                (lambda (_)
-                  (helm-system-packages-print "apt-cache" "show")))
-               ("Install" .
-                (lambda (_)
-                  (helm-system-packages-run-as-root "apt-get" "install")))
-               ("Uninstall" .
-                (lambda (_)
-                  (helm-system-packages-run-as-root "apt-get" "autoremove")))
-               ("Find files" .
-                  ;; TODO: Use helm-read-file or similar?
-                (lambda (_)
-                  (helm-system-packages-print "dpkg" "-L")))
-               ("Show dependencies" .
-                (lambda (_)
-                  (helm-system-packages-print "apt-cache" "depends")))
-               ("Show reverse dependencies" .
-                (lambda (_)
-                  (helm-system-packages-print "apt-cache" "rdepends")))
-               ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
-               ("Refresh" . (lambda (_)
-                              ;; TODO: Re-use init function?
-                              (setq helm-system-packages--all (helm-system-packages-dpkg-list-all)
-                                    helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit)
-                                    helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))))))
+    :action '(("Show package(s)" .
+               (lambda (_)
+                 (helm-system-packages-print "apt-cache" "show")))
+              ("Install" .
+               (lambda (_)
+                 (helm-system-packages-run-as-root "apt-get" "install")))
+              ("Uninstall" .
+               (lambda (_)
+                 (helm-system-packages-run-as-root "apt-get" "autoremove")))
+              ("Find files" .
+               ;; TODO: Use helm-read-file or similar?
+               (lambda (_)
+                 (helm-system-packages-print "dpkg" "-L")))
+              ("Show dependencies" .
+               (lambda (_)
+                 (helm-system-packages-print "apt-cache" "depends")))
+              ("Show reverse dependencies" .
+               (lambda (_)
+                 (helm-system-packages-print "apt-cache" "rdepends")))
+              ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
+              ("Refresh" .
+               (lambda (_)
+                 ;; TODO: Re-use init function?
+                 (setq helm-system-packages--all (helm-system-packages-dpkg-list-all)
+                       helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit)
+                       helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))))))
 
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
