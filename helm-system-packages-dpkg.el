@@ -24,6 +24,7 @@
 
 ;;; Code:
 (require 'helm)
+(require 'helm-system-packages)
 
 (defgroup helm-system-packages-dpkg nil
   "Predefined configurations for `helm.el'."
@@ -114,6 +115,7 @@ Otherwise display in `helm-system-packages-buffer'."
                        helm-system-packages--explicit (helm-system-packages-dpkg-list-explicit)
                        helm-system-packages--dependencies (helm-system-packages-dpkg-list-dependencies)))))))
 
+;; TODO: Factor into entry function?
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
   (helm-other-buffer '(helm-system-packages-dpkg-source)

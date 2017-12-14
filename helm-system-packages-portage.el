@@ -24,6 +24,7 @@
 
 ;;; Code:
 (require 'helm)
+(require 'helm-system-packages)
 
 (defgroup helm-system-packages-portage nil
   "Predefined configurations for `helm.el'."
