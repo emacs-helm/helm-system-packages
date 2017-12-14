@@ -16,20 +16,24 @@ Some package managers come with their specific actions and even specific sources
 
 * Motivation
 
-Most package managers GUI sucks so bad they are less efficient than their commandline counterparts.
+Most package managers GUI suck so bad they are less efficient than their commandline counterparts.
 
 The commandline workflow is not ideal however:
 
-- Search for local packages.
-- Package missing?  Search for remote packages.
-- List is too long: pipe through a pager.
-- (Un)Install the desired package by writing the searched package names again.
+1. Search for local packages.
+2. Package missing?  Search for remote packages.
+3. List is too long?  Pipe through a pager.
+4. (Un)install the desired package by writing the searched package names again.
 
 With Helm all those actions get factored into one.
 Helm sessions can also be resumed.
 
 * Roadmap
 ** TODO Different face for dependencies.
+** TODO Use thing at point as a default value.
+** TODO Add column with description.
+That would allow for matching over description as well.
+** TODO Option to display fullscreen (like helm-top)
 ** TODO Use long switches whenever possible.
 ** TODO Normalize action names.
 Not "Emerge" but "Install".
@@ -37,7 +41,7 @@ Some actions are specific to some package managers however, e.g. "emerge pretend
 ** TODO All actions should support multiple candidates.
 Centralize commands into one `helm-system-packages-run` or something like that.
 ** TODO Add defcustom for commands.
-To allow different command switches, e.g. the "--needed" switch in pacman.
+To allow different command switches, e.g. the ~--needed~ switch in pacman.
 ** TODO Output to Eshell only? Comint mode?
 ** TODO Factor all "info" actions?
 ** TODO Output "info" to an Org buffer?
