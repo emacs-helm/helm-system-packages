@@ -14,6 +14,10 @@ Fuzzy-search, mark and execute the desired action over any set of packages:
 
 Some package managers come with their specific actions and even specific sources, e.g. Portage's USE flags.
 
+* Usage
+
+Most actions can be called with a prefix argument to insert the result at point.
+
 * Motivation
 
 Most package managers GUI suck so bad they are less efficient than their commandline counterparts.
@@ -27,7 +31,6 @@ The commandline workflow is not ideal however:
 
 With Helm all those actions get factored into one.
 Helm sessions can also be resumed.
-
 * Roadmap
 ** TODO Different face for dependencies.
 ** TODO Use thing at point as a default value.
