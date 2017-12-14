@@ -96,10 +96,10 @@ Otherwise display in `helm-system-packages-buffer'."
               ("Find files" .
                (lambda (_)
                  (helm-system-packages-print "equery" "-C" "files")))
-              ("Show dependencies " .
+              ("Show dependencies" .
                (lambda (_)
                  (helm-system-packages-print "equery" "-C" "g")))
-              ("Show reverse dependencies " .
+              ("Show reverse dependencies" .
                (lambda (_)
                  (helm-system-packages-print "equery" "-C" "d")))
               ("Show history" .
