@@ -69,7 +69,10 @@ Otherwise display in `helm-system-packages-buffer'."
         (message "No result")
       (unless helm-current-prefix-arg
         (switch-to-buffer helm-system-packages-buffer)
-        (erase-buffer))
+        (erase-buffer)
+        (org-mode)
+        (setq res (replace-regexp-in-string "\\`.*: " "* " res))
+        (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))
       (insert res))))
 
 (defun helm-system-packages-run-as-root (command &rest args)
