@@ -47,8 +47,8 @@
   (mapcar (lambda (pkg)
             (propertize pkg 'face
                         (cond
-                         ((member pkg helm-system-packages-explicit) 'helm-system-packages-explicit)
-                         ((member pkg helm-system-packages-dependencies) 'helm-system-packages-dependencies)
+                         ((member pkg helm-system-packages--explicit) 'helm-system-packages-explicit)
+                         ((member pkg helm-system-packages--dependencies) 'helm-system-packages-dependencies)
                          (t nil))))
           packages))
 
