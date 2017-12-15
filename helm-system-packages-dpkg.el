@@ -95,8 +95,9 @@ Otherwise display in `helm-system-packages-buffer'."
 ;; TODO: Factor into entry function?
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
-  (helm-other-buffer '(helm-system-packages-dpkg-source)
-                     "*helm dpkg*"))
+  (helm :sources '(helm-system-packages-dpkg-source)
+        :buffer "*helm dpkg*"
+        :input (substring-no-properties (or (thing-at-point 'symbol) ""))))
 
 (provide 'helm-system-packages-dpkg)
 

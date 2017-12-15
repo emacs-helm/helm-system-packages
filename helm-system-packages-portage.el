@@ -157,9 +157,10 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defun helm-system-packages-portage ()
   "Preconfigured `helm' for Portage."
-  (helm-other-buffer '(helm-system-packages-portage-source
-                       helm-system-packages-portage-use-source)
-                     "*helm portage*"))
+  (helm :sources '(helm-system-packages-portage-source
+                   helm-system-packages-portage-use-source)
+        :buffer "*helm portage*"
+        :input (substring-no-properties (or (thing-at-point 'symbol) ""))))
 
 (provide 'helm-system-packages-portage)
 

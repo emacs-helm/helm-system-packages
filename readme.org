@@ -40,7 +40,7 @@ Helm sessions can also be resumed.
 
 * Roadmap
 ** DONE Different face for dependencies.
-** TODO Use thing at point as a default value.
+** DONE Use thing at point as a default value.
 ** TODO Add column with description.
 That would allow for matching over description as well.
 ** TODO Option to display fullscreen (like helm-top)
@@ -54,7 +54,7 @@ Centralize commands into one ~helm-system-packages-run~ or something like that.
 ** TODO Add defcustom for commands.
 To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~--oneshot~ for emerge.
 
-Maybe ~~-oneshot-~~ would deserve a separate action.
+Maybe ~--oneshot~ would deserve a separate action.
 
 ~C-u~ could be used to force installation of already installed packages.
 ** DONE Output to Eshell only? Comint mode?
@@ -63,6 +63,7 @@ We can add Org subsections for files, dependencies, etc.
 Those sections should be folded by default.
 
 We probably still need specific "info" actions to insert at point.
+** Use bindings reflecting helm-list-elisp-packages
 ** DONE Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
 ** TODO Add pacman support.
 ** TODO Test without eshell-tramp.
