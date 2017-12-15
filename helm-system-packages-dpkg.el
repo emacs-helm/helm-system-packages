@@ -67,6 +67,7 @@ Otherwise display in `helm-system-packages-buffer'."
   (helm-build-in-buffer-source "dpkg source"
     :init 'helm-system-packages-init
     :candidate-transformer 'helm-system-packages-highlight
+    :candidate-number-limit 1000
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "show")))
