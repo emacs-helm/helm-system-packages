@@ -8,6 +8,7 @@
 ;; URL: https://github.com/emacs-helm/helm-system-packages
 ;; Version: 1.6.9
 ;; Package-Requires: ((emacs "24.4") (helm "2.8.6"))
+;; Keywords: helm, packages
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
