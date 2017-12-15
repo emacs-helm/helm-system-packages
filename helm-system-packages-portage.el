@@ -78,19 +78,19 @@ Otherwise display in `helm-system-packages-buffer'."
                  (helm-system-packages-run-as-root "emerge" "--ask" "--verbose")))
               ("Uninstall" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" "-C")))
+                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" "--unmerge")))
               ("Emerge-pretend" .
                (lambda (_)
-                 (helm-system-packages-print "emerge" "-p")))
+                 (helm-system-packages-print "emerge" "--pretend")))
               ("Find files" .
                (lambda (_)
-                 (helm-system-packages-find-files "equery" "-C" "files")))
+                 (helm-system-packages-find-files "equery" "--no-color" "files")))
               ("Show dependencies" .
                (lambda (_)
-                 (helm-system-packages-print "equery" "-C" "g")))
+                 (helm-system-packages-print "equery" "--no-color" "depgraph")))
               ("Show reverse dependencies" .
                (lambda (_)
-                 (helm-system-packages-print "equery" "-C" "d")))
+                 (helm-system-packages-print "equery" "--no-color" "depends")))
               ("Show history" .
                (lambda (_)
                  (helm-system-packages-print "genlop" "-qe")))
@@ -99,7 +99,7 @@ Otherwise display in `helm-system-packages-buffer'."
                  (helm-system-packages-print elm "genlop -qi")))
               ("Show USE flags" .
                (lambda (_)
-                 (helm-system-packages-print elm "equery" "-C" "u")
+                 (helm-system-packages-print elm "equery" "--no-color" "uses")
                  ;; TODO: Test font-lock.
                  (unless helm-current-prefix-arg
                    (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
@@ -124,21 +124,21 @@ Otherwise display in `helm-system-packages-buffer'."
                (lambda (elm)
                  (switch-to-buffer helm-system-packages-buffer)
                  (erase-buffer)
-                 (apply #'call-process "euse" nil t nil `("-i" ,elm))
+                 (apply #'call-process "euse" nil t nil `("--info" ,elm))
                  (font-lock-add-keywords nil `((,elm . font-lock-variable-name-face)))
                  (font-lock-mode 1)))
               ("Enable" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "euse" "-E")))
+                 (helm-system-packages-run-as-root "euse" "--enable")))
               ("Disable" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "euse" "-D")))
+                 (helm-system-packages-run-as-root "euse" "--disable")))
               ("Remove" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "euse" "-P")))
+                 (helm-system-packages-run-as-root "euse" "--prune")))
               ("Show which dependencies use this flag" .
                (lambda (_)
-                 (helm-system-packages-print "equery" "-C" "h"))))))
+                 (helm-system-packages-print "equery" "--no-color" "hasuse"))))))
 
 ;; TODO: Factor with helm-system-packages-highlight?
 (defun helm-system-packages-portage-highlight (use-flags)

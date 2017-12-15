@@ -45,7 +45,7 @@ Helm sessions can also be resumed.
 That would allow for matching over description as well.
 ** TODO Option to display fullscreen (like helm-top)
 Mostly useful if we add a "description" column.
-** TODO Use long switches whenever possible.
+** DONE Use long switches whenever possible.
 ** DONE Normalize action names.
 Not "Emerge" but "Install".
 Some actions are specific to some package managers however, e.g. "emerge pretend".
