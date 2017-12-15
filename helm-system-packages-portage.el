@@ -3,8 +3,11 @@
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;;               2017        Pierre Neidhardt <ambrevar@gmail.com>
 
+;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Maintainer: Pierre Neidhardt <ambrevar@gmail.com>
+;; URL: https://github.com/emacs-helm/helm-system-packages
 ;; Version: 1.6.9
-;; Package-Requires: ((helm "2.8.6"))
+;; Package-Requires: ((emacs "24.4") (helm "2.8.6"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
