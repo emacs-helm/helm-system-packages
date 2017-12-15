@@ -159,6 +159,7 @@ If LAZY is non-nil, only do it if the lists have not already been set."
     (fset 'helm-system-packages--explicit 'helm-system-packages-portage-list-explicit)
     (fset 'helm-system-packages--dependencies 'helm-system-packages-portage-list-dependencies)
     (fset 'helm-system-packages--all 'helm-system-packages-portage-list-all)
+    (fset 'helm-system-packages--descriptions 'helm-system-packages-portage-list-descriptions)
     (helm-system-packages-portage))
    ((executable-find "dpkg")
     (require 'helm-system-packages-dpkg)

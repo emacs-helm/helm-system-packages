@@ -53,6 +53,17 @@
                   (call-process "eix" nil t nil "--only-names")
                   (buffer-string))))
 
+(defun helm-system-packages-portage-list-descriptions ()
+  "Cache all package descriptions."
+  (with-temp-buffer
+    ;; TODO: Output straight to Elisp?
+    (call-process "env" nil '(t nil) nil "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never" "eix" "--format" "<category>/<name>: <description>\n")
+    (let (descs)
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(.*\\): \\(.*\\)" nil t)
+        (push (cons (intern (match-string 1)) (match-string 2)) descs))
+      descs)))
+
 (defun helm-system-packages-portage-print-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
 
