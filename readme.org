@@ -56,7 +56,10 @@ To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~
 
 Maybe ~--oneshot~ would deserve a separate action.
 
+~apt-get~ has ~remove~ and ~purge~.  I think ~purge~ is ill-designed, but maybe we could trigger it with ~C-u~?
+
 ~C-u~ could be used to force installation of already installed packages.
+~C-u~ could be used to uninstall unrequired dependencies.
 ** DONE Output to Eshell only? Comint mode?
 ** TODO Factor all "info" actions?
 We can add Org subsections for files, dependencies, etc.
