@@ -168,6 +168,13 @@ If LAZY is non-nil, only do it if the lists have not already been set."
     (fset 'helm-system-packages--all 'helm-system-packages-dpkg-list-all)
     (fset 'helm-system-packages--descriptions 'helm-system-packages-dpkg-list-descriptions)
     (helm-system-packages-dpkg))
+   ((executable-find "pacman")
+    (require 'helm-system-packages-pacman)
+    (fset 'helm-system-packages--explicit 'helm-system-packages-pacman-list-explicit)
+    (fset 'helm-system-packages--dependencies 'helm-system-packages-pacman-list-dependencies)
+    (fset 'helm-system-packages--all 'helm-system-packages-pacman-list-all)
+    (fset 'helm-system-packages--descriptions 'helm-system-packages-pacman-list-descriptions)
+    (helm-system-packages-pacman))
    (t (message "No supported package manager was found"))))
 
 (provide 'helm-system-packages)

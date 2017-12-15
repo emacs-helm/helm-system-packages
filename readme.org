@@ -70,7 +70,6 @@ We probably still need specific "info" actions to insert at point.
 ** DONE Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
 ** TODO Add helm-find-files keymap to "Find files"
 ** TODO Browse URL should process directly when there is only one entry.
-** TODO Add pacman support.
 ** TODO Test without eshell-tramp.
 If it does not work, either load it or fall back to "*sudo".
 ** TODO "Refresh" action should be a command, really.
