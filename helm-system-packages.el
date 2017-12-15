@@ -37,11 +37,11 @@
 
 (defface helm-system-packages-explicit '((t (:foreground "orange" :weight bold)))
   "Face for excplitly installed packages."
-  :group 'traverse-faces)
+  :group 'helm-system-packages)
 
 (defface helm-system-packages-dependencies '((t (:foreground "lightblue" :slant italic)))
   "Face for packages installed as dependencies."
-  :group 'traverse-faces)
+  :group 'helm-system-packages)
 
 (defgroup helm-system-packages nil
   "Predefined configurations for `helm-system-packages'."
