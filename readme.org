@@ -41,7 +41,7 @@ Helm sessions can also be resumed.
 * Roadmap
 ** DONE Different face for dependencies.
 ** DONE Use thing at point as a default value.
-** TODO Add column with description.
+** REVIEW Add column with description.
 That would allow for matching over description as well.
 ** TODO Option to display fullscreen (like helm-top)
 Mostly useful if we add a "description" column.

@@ -43,15 +43,40 @@
   "Face for packages installed as dependencies."
   :group 'traverse-faces)
 
+(defgroup helm-system-packages nil
+  "Predefined configurations for `helm-system-packages'."
+  :group 'helm)
+
+;; TODO: Add "C-]" to local map to toggle details.
+(defcustom helm-system-packages-details-flag t
+  "Always show details in package list when non-nil."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defcustom helm-system-packages-max-length helm-buffer-max-length
+  "Width of the package name column when displaying details."
+  :group 'helm-system-packages
+  :type 'integerp)
+
+;; TODO: Match over description as well.
 (defun helm-system-packages-highlight (packages)
   "Highlight all explicitly installed PACKAGES as well as dependencies."
-  ;; TODO: Transform in-place?
   (mapcar (lambda (pkg)
-            (propertize pkg 'face
-                        (cond
-                         ((member pkg helm-system-packages--explicit) 'helm-system-packages-explicit)
-                         ((member pkg helm-system-packages--dependencies) 'helm-system-packages-dependencies)
-                         (t nil))))
+            (setq pkg
+                  (propertize pkg 'face
+                              (cond
+                               ((member pkg helm-system-packages--explicit) 'helm-system-packages-explicit)
+                               ((member pkg helm-system-packages--dependencies) 'helm-system-packages-dependencies)
+                               (t nil))))
+            (when helm-system-packages-details-flag
+              (setq pkg (concat
+                         ;; TODO: Move this to cache instead.
+                         (substring pkg 0 (min (length pkg) helm-system-packages-max-length))
+                         (make-string (max (- helm-system-packages-max-length (length pkg)) 0) ? )
+                         (or (and (> (length pkg) helm-system-packages-max-length) helm-buffers-end-truncated-string) " ")
+                         " "
+                         (alist-get (intern pkg) helm-system-packages--descriptions))))
+            pkg)
           packages))
 
 (defun helm-system-packages-run (command &rest args)
