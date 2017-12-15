@@ -31,10 +31,6 @@
 (require 'helm-system-packages)
 (require 'seq)
 
-(defgroup helm-system-packages-portage nil
-  "Predefined configurations for `helm.el'."
-  :group 'helm)
-
 (defun helm-system-packages-portage-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer

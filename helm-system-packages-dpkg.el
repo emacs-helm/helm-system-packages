@@ -29,10 +29,6 @@
 (require 'helm)
 (require 'helm-system-packages)
 
-(defgroup helm-system-packages-dpkg nil
-  "Predefined configurations for `helm.el'."
-  :group 'helm)
-
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
