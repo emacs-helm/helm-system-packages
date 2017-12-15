@@ -74,6 +74,11 @@ We probably still need specific "info" actions to insert at point.
 If it does not work, either load it or fall back to "*sudo".
 ** TODO "Refresh" action should be a command, really.
 ** TODO Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
+** TODO Truncate long descriptions
+No more than one line per package?
+This should be coupled with the "full screen" feature.
+** TODO Re-use eshell buffer?
+Make an option?
 ** Add xbps (Void Linux) support
 ** Add guix support
 ** Add homebrew support
