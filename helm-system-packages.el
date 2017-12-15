@@ -49,7 +49,7 @@
   :group 'traverse-faces)
 
 (defun helm-system-packages-highlight (packages)
-  "Highlight all explicitly installed packages as well as dependencies."
+  "Highlight all explicitly installed PACKAGES as well as dependencies."
   ;; TODO: Transform in-place?
   (mapcar (lambda (pkg)
             (propertize pkg 'face
@@ -97,6 +97,9 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
     (eshell-send-input)))
 
 (defun helm-system-packages-refresh (&optional lazy)
+  "Cache package lists.
+
+If LAZY is non-nil, only do it if the lists have not already been set."
   (setq
    helm-system-packages--explicit
    (or (and (not lazy) helm-system-packages--explicit)
