@@ -167,7 +167,8 @@ If LAZY is non-nil, only do it if the lists have not already been set."
     (fset 'helm-system-packages--dependencies 'helm-system-packages-dpkg-list-dependencies)
     (fset 'helm-system-packages--all 'helm-system-packages-dpkg-list-all)
     (fset 'helm-system-packages--descriptions 'helm-system-packages-dpkg-list-descriptions)
-    (helm-system-packages-dpkg))))
+    (helm-system-packages-dpkg))
+   (t (message "No supported package manager was found"))))
 
 (provide 'helm-system-packages)
 
