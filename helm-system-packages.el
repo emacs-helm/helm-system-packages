@@ -30,13 +30,10 @@
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
-(defvar helm-system-packages-list-explicit nil)
-(defvar helm-system-packages-list-dependencies nil)
-(defvar helm-system-packages-list-all nil)
-
 (defvar helm-system-packages--explicit nil)
 (defvar helm-system-packages--dependencies nil)
 (defvar helm-system-packages--all nil)
+(defvar helm-system-packages--descriptions nil)
 
 (defface helm-system-packages-explicit '((t (:foreground "orange" :weight bold)))
   "Face for excplitly installed packages."
@@ -112,16 +109,12 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
   "Cache package lists.
 
 If LAZY is non-nil, only do it if the lists have not already been set."
-  (setq
-   helm-system-packages--explicit
-   (or (and (not lazy) helm-system-packages--explicit)
-       (funcall helm-system-packages-list-explicit))
-   helm-system-packages--dependencies
-   (or (and (not lazy) helm-system-packages--dependencies)
-       (funcall helm-system-packages-list-dependencies))
-   helm-system-packages--all
-   (or (and (not lazy) helm-system-packages--all)
-       (funcall helm-system-packages-list-all))))
+  (dolist (cache '(helm-system-packages--explicit
+                   helm-system-packages--dependencies
+                   helm-system-packages--all
+                   helm-system-packages--descriptions))
+    (set cache (or (and lazy (symbol-value cache))
+                   (and (functionp cache) (funcall cache))))))
 
 (defun helm-system-packages-init ()
   "Cache package lists and create Helm buffer."
@@ -138,15 +131,16 @@ If LAZY is non-nil, only do it if the lists have not already been set."
   (cond
    ((executable-find "emerge")
     (require 'helm-system-packages-portage)
-    (setq helm-system-packages-list-explicit 'helm-system-packages-portage-list-explicit
-          helm-system-packages-list-dependencies 'helm-system-packages-portage-list-dependencies
-          helm-system-packages-list-all 'helm-system-packages-portage-list-all)
+    (fset 'helm-system-packages--explicit 'helm-system-packages-portage-list-explicit)
+    (fset 'helm-system-packages--dependencies 'helm-system-packages-portage-list-dependencies)
+    (fset 'helm-system-packages--all 'helm-system-packages-portage-list-all)
     (helm-system-packages-portage))
    ((executable-find "dpkg")
     (require 'helm-system-packages-dpkg)
-    (setq helm-system-packages-list-explicit 'helm-system-packages-dpkg-list-explicit
-          helm-system-packages-list-dependencies 'helm-system-packages-dpkg-list-dependencies
-          helm-system-packages-list-all 'helm-system-packages-dpkg-list-all)
+    (fset 'helm-system-packages--explicit 'helm-system-packages-dpkg-list-explicit)
+    (fset 'helm-system-packages--dependencies 'helm-system-packages-dpkg-list-dependencies)
+    (fset 'helm-system-packages--all 'helm-system-packages-dpkg-list-all)
+    (fset 'helm-system-packages--descriptions 'helm-system-packages-dpkg-list-descriptions)
     (helm-system-packages-dpkg))))
 
 (provide 'helm-system-packages)
