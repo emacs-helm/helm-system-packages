@@ -87,7 +87,7 @@ Otherwise display in `helm-system-packages-buffer'."
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "rdepends")))
               ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
-              ("Refresh" . 'helm-system-packages-refresh))))
+              ("Refresh" . helm-system-packages-refresh))))
 
 ;; TODO: Factor into entry function?
 (defun helm-system-packages-dpkg ()
