@@ -57,13 +57,9 @@ Otherwise display in `helm-system-packages-buffer'."
         urls)
     (if (string-empty-p res)
         (message "No result")
-      (setq urls
-            (split-string
-            (with-temp-buffer
-              (insert res)
-              (keep-lines "^Homepage: " (point-min) (point-max))
-              (replace-regexp "^Homepage: " "")
-              (buffer-string))))
+      (dolist (url (split-string res "\n"))
+        (when (string-match "^Homepage: \\(.*\\)" url)
+          (push (match-string 1 url) urls)))
       (if helm-current-prefix-arg
           (insert urls)
         (browse-url (helm-comp-read "URL: " urls :must-match t))))))
