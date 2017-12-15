@@ -129,10 +129,7 @@ If LAZY is non-nil, only do it if the lists have not already been set."
   (unless (helm-candidate-buffer)
     (helm-init-candidates-in-buffer
         'global
-      (with-temp-buffer
-        (dolist (i helm-system-packages--all)
-          (insert (concat i "\n")))
-        (buffer-string)))))
+      helm-system-packages--all)))
 
 ;;;###autoload
 (defun helm-system-packages ()
