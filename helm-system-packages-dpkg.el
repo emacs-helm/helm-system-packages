@@ -51,16 +51,14 @@
 
 (defun helm-system-packages-dpkg-list-descriptions ()
   "Cache all package descriptions."
-  ;; TODO: Keep working in buffer? Benchmark.
-  (let ((res (with-temp-buffer
-               ;; `apt-cache search` is much faster than `apt-cache show`.
-               (call-process "apt-cache" nil '(t nil) nil "search" ".")
-               (buffer-string)))
-        descs)
-    (unless (string-empty-p res)
-      (dolist (line (split-string res "\n" t) descs)
-        (string-match "\\(.*\\) \\- \\(.*\\)" line)
-        (push (cons (intern (match-string 1 line)) (match-string 2 line)) descs)))))
+  (with-temp-buffer
+    ;; `apt-cache search` is much faster than `apt-cache show`.
+    (call-process "apt-cache" nil '(t nil) nil "search" ".")
+    (let (descs)
+      (goto-char (point-min))
+      (while (re-search-forward "^\\(.*\\) \\- \\(.*\\)" nil t)
+        (push (cons (intern (match-string 1)) (match-string 2)) descs))
+      descs)))
 
 (defun helm-system-packages-dpkg-print-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
