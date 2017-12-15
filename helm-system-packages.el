@@ -53,7 +53,7 @@
   :group 'helm-system-packages
   :type 'boolean)
 
-(defcustom helm-system-packages-max-length helm-buffer-max-length
+(defcustom helm-system-packages-max-length 36 ; Seems to be a decent value for Portage.
   "Width of the package name column when displaying details."
   :group 'helm-system-packages
   :type 'integerp)
