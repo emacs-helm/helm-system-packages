@@ -105,7 +105,7 @@ Otherwise display in `helm-system-packages-buffer'."
                    (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
                    (font-lock-mode 1))))
               ("Browse homepage URL" . helm-system-packages-portage-print-url)
-              ("Refresh" . 'helm-system-packages-refresh))))
+              ("Refresh" . helm-system-packages-refresh))))
 
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."
