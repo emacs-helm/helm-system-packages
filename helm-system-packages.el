@@ -38,11 +38,11 @@
 (defvar helm-system-packages--dependencies nil)
 (defvar helm-system-packages--all nil)
 
-(defface helm-system-packages-explicit '((t (:foreground "orange")))
+(defface helm-system-packages-explicit '((t (:foreground "orange" :weight bold)))
   "Face for excplitly installed packages."
   :group 'traverse-faces)
 
-(defface helm-system-packages-dependencies '((t (:foreground "lightblue")))
+(defface helm-system-packages-dependencies '((t (:foreground "lightblue" :slant italic)))
   "Face for packages installed as dependencies."
   :group 'traverse-faces)
 
