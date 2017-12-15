@@ -43,9 +43,11 @@
 
 (defun helm-system-packages-dpkg-list-all ()
   "List all packages."
-  (split-string (with-temp-buffer
-                  (call-process "apt-cache" nil t nil "pkgnames")
-                  (buffer-string))))
+  (sort
+   (split-string (with-temp-buffer
+                   (call-process "apt-cache" nil t nil "pkgnames")
+                   (buffer-string)))
+   'string<))
 
 (defun helm-system-packages-dpkg-list-descriptions ()
   "Cache all package descriptions."
