@@ -53,6 +53,10 @@ Some actions are specific to some package managers however, e.g. "emerge pretend
 Centralize commands into one ~helm-system-packages-run~ or something like that.
 ** TODO Add defcustom for commands.
 To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~--oneshot~ for emerge.
+
+Maybe ~~-oneshot-~~ would deserve a separate action.
+
+~C-u~ could be used to force installation of already installed packages.
 ** DONE Output to Eshell only? Comint mode?
 ** TODO Factor all "info" actions?
 We can add Org subsections for files, dependencies, etc.
