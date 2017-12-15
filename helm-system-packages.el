@@ -62,21 +62,22 @@
 (defun helm-system-packages-highlight (packages)
   "Highlight all explicitly installed PACKAGES as well as dependencies."
   (mapcar (lambda (pkg)
-            (setq pkg
-                  (propertize pkg 'face
-                              (cond
-                               ((member pkg helm-system-packages--explicit) 'helm-system-packages-explicit)
-                               ((member pkg helm-system-packages--dependencies) 'helm-system-packages-dependencies)
-                               (t nil))))
-            (when helm-system-packages-details-flag
-              (setq pkg (concat
-                         ;; TODO: Move this to cache instead.
-                         (substring pkg 0 (min (length pkg) helm-system-packages-max-length))
-                         (make-string (max (- helm-system-packages-max-length (length pkg)) 0) ? )
-                         (or (and (> (length pkg) helm-system-packages-max-length) helm-buffers-end-truncated-string) " ")
-                         " "
-                         (alist-get (intern pkg) helm-system-packages--descriptions))))
-            pkg)
+            (let (display)
+              (setq display
+                    (propertize pkg 'face
+                                (cond
+                                 ((member pkg helm-system-packages--explicit) 'helm-system-packages-explicit)
+                                 ((member pkg helm-system-packages--dependencies) 'helm-system-packages-dependencies)
+                                 (t nil))))
+              (when helm-system-packages-details-flag
+                (setq display (concat
+                               ;; TODO: Move this to cache instead?
+                               (substring display 0 (min (length display) helm-system-packages-max-length))
+                               (make-string (max (- helm-system-packages-max-length (length display)) 0) ? )
+                               (or (and (> (length display) helm-system-packages-max-length) helm-buffers-end-truncated-string) " ")
+                               " "
+                               (alist-get (intern pkg) helm-system-packages--descriptions))))
+              (cons display pkg)))
           packages))
 
 (defun helm-system-packages-run (command &rest args)
@@ -84,7 +85,7 @@
   (let ((arg-list (append args (helm-marked-candidates))))
     (with-temp-buffer
       ;; We discard errors.
-      (apply #'call-process command nil '(t nil) nil arg-list)
+      (apply #'call-process command nil t nil arg-list)
       (buffer-string))))
 
 (defun helm-system-packages-print (command &rest args)
