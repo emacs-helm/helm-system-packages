@@ -4,19 +4,21 @@
 
 Helm-System-Packages is a Helm interface to the package manager of your operating system.
 
-Start `helm-system-packages` to list all available packages (with installed packages displayed in their own face).
+Start ~helm-system-packages~ to list all available packages (with installed
+packages as well as dependencies displayed in their own respective face).
 Fuzzy-search, mark and execute the desired action over any set of packages:
 
 - Install
 - Uninstall
 - Display packages details or insert details at point
 - Find files
+- ...
 
 Some package managers come with their specific actions and even specific sources, e.g. Portage's USE flags.
 
 * Usage
 
-There is only one entry point: `helm-system-packages`.
+There is only one entry point: ~helm-system-packages~.
 
 Use the persistent action to view the details of the marked packages.
 
@@ -48,14 +50,16 @@ Mostly useful if we add a "description" column.
 Not "Emerge" but "Install".
 Some actions are specific to some package managers however, e.g. "emerge pretend".
 ** DONE All actions should support multiple candidates.
-Centralize commands into one `helm-system-packages-run` or something like that.
+Centralize commands into one ~helm-system-packages-run~ or something like that.
 ** TODO Add defcustom for commands.
 To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~--oneshot~ for emerge.
 ** DONE Output to Eshell only? Comint mode?
 ** TODO Factor all "info" actions?
 We can add Org subsections for files, dependencies, etc.
-We probably still need specific "info" action to insert at point.
-** TODO Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
+Those sections should be folded by default.
+
+We probably still need specific "info" actions to insert at point.
+** DONE Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
 ** TODO Add pacman support.
 ** TODO Test without eshell-tramp.
 If it does not work, either load it or fall back to "*sudo".

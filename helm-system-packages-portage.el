@@ -87,7 +87,7 @@ Otherwise display in `helm-system-packages-buffer'."
                  (helm-system-packages-print "emerge" "-p")))
               ("Find files" .
                (lambda (_)
-                 (helm-system-packages-print "equery" "-C" "files")))
+                 (helm-system-packages-find-files "equery" "-C" "files")))
               ("Show dependencies" .
                (lambda (_)
                  (helm-system-packages-print "equery" "-C" "g")))

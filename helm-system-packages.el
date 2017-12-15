@@ -61,7 +61,8 @@
   "COMMAND to run over `helm-marked-candidates'."
   (let ((arg-list (append args (helm-marked-candidates))))
     (with-temp-buffer
-      (apply #'call-process command nil t nil arg-list)
+      ;; We discard errors.
+      (apply #'call-process command nil '(t nil) nil arg-list)
       (buffer-string))))
 
 (defun helm-system-packages-print (command &rest args)
@@ -79,6 +80,19 @@ Otherwise display in `helm-system-packages-buffer'."
         (setq res (replace-regexp-in-string "\\`.*: " "* " res))
         (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))
       (insert res))))
+
+(defun helm-system-packages-find-files (command &rest args)
+  (let ((res (apply #'helm-system-packages-run command args)))
+    (if (string-empty-p res)
+        (message "No result")
+      (if helm-current-prefix-arg
+          (insert res)
+        (helm :sources (helm-build-sync-source "Package files"
+                         :candidates (split-string res "\n")
+                         :candidate-transformer (lambda (files)
+                                                  (let ((helm-ff-transformer-show-only-basename nil))
+                                                    (mapcar 'helm-ff-filter-candidate-one-by-one files))))
+              :buffer "*helm system package files*")))))
 
 (defun helm-system-packages-run-as-root (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.

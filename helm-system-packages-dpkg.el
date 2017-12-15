@@ -81,9 +81,8 @@ Otherwise display in `helm-system-packages-buffer'."
                (lambda (_)
                  (helm-system-packages-run-as-root "apt-get" "autoremove")))
               ("Find files" .
-               ;; TODO: Use helm-read-file or similar?
                (lambda (_)
-                 (helm-system-packages-print "dpkg" "--listfiles")))
+                 (helm-system-packages-find-files "dpkg" "--listfiles")))
               ("Show dependencies" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "depends")))
