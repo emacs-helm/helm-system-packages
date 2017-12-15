@@ -16,11 +16,15 @@ Some package managers come with their specific actions and even specific sources
 
 * Usage
 
+There is only one entry point: `helm-system-packages`.
+
+Use the persistent action to view the details of the marked packages.
+
 Most actions can be called with a prefix argument to insert the result at point.
 
 * Motivation
 
-Most package managers GUI suck so bad they are less efficient than their commandline counterparts.
+Most of the package managers GUIs out there do not provide much efficiency over their commandline counterparts.
 
 The commandline workflow is not ideal however:
 
@@ -31,6 +35,7 @@ The commandline workflow is not ideal however:
 
 With Helm all those actions get factored into one.
 Helm sessions can also be resumed.
+
 * Roadmap
 ** DONE Different face for dependencies.
 ** TODO Use thing at point as a default value.
@@ -61,3 +66,4 @@ If it does not work, either load it or fall back to "*sudo".
 * References
 - https://wiki.voidlinux.eu/Rosetta_stone
 - https://wiki.archlinux.org/index.php/Pacman/Rosetta
+- https://github.com/jabranham/system-packages
