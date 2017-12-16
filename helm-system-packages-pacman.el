@@ -87,6 +87,12 @@
               ("Show reverse dependencies" .
                (lambda (_)
                  (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%N")))
+              ("Mark as dependency" .
+               (lambda (_)
+                 (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
+              ("Mark as explicit" .
+               (lambda (_)
+                 (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit")))
               ("Browse homepage URL" .
                (lambda (_)
                  (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t)))))))
