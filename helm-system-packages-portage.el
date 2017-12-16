@@ -105,8 +105,7 @@
                    (font-lock-mode 1))))
               ("Browse homepage URL" .
                (lambda (_)
-                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t))))
-              ("Refresh" . helm-system-packages-refresh))))
+                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t)))))))
 
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."

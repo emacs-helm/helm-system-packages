@@ -145,7 +145,12 @@ With prefix argument, insert the output at point."
 (defun helm-system-packages-refresh (&optional lazy)
   "Cache package lists.
 
-If LAZY is non-nil, only do it if the lists have not already been set."
+There is no need to call this function unless the set of system
+packages was changed externally, e.g. via a system upgrade.
+
+With prefix argument or if LAZY is non-nil, only do it if the
+lists have not already been set."
+  (interactive "P")
   (dolist (cache '(helm-system-packages--explicit
                    helm-system-packages--dependencies
                    helm-system-packages--all

@@ -72,7 +72,7 @@ We probably still need specific "info" actions to insert at point.
 ** DONE Browse URL should process directly when there is only one entry.
 ** TODO Test without eshell-tramp.
 If it does not work, either load it or fall back to "*sudo".
-** TODO "Refresh" action should be a command, really.
+** DONE "Refresh" action should be a command, really.
 ** TODO Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
 ** REVIEW Truncate long descriptions
 No more than one line per package?

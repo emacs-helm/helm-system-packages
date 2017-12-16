@@ -89,8 +89,7 @@
                  (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%N")))
               ("Browse homepage URL" .
                (lambda (_)
-                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t))))
-              ("Refresh" . helm-system-packages-refresh))))
+                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t)))))))
 
 (defun helm-system-packages-pacman ()
   "Preconfigured `helm' for pacman."
