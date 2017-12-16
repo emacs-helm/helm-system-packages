@@ -107,6 +107,7 @@ Otherwise display in `helm-system-packages-buffer'."
   "Preconfigured `helm' for dpkg."
   (helm :sources '(helm-system-packages-dpkg-source)
         :buffer "*helm dpkg*"
+        :truncate-lines t
         :input (substring-no-properties (or (thing-at-point 'symbol) ""))))
 
 (provide 'helm-system-packages-dpkg)

@@ -96,6 +96,7 @@
   "Preconfigured `helm' for pacman."
   (helm :sources '(helm-system-packages-pacman-source)
         :buffer "*helm pacman*"
+        :truncate-lines t
         :input (substring-no-properties (or (thing-at-point 'symbol) ""))))
 
 (provide 'helm-system-packages-pacman)

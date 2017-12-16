@@ -168,6 +168,7 @@ Otherwise display in `helm-system-packages-buffer'."
   (helm :sources '(helm-system-packages-portage-source
                    helm-system-packages-portage-use-source)
         :buffer "*helm portage*"
+        :truncate-lines t
         :input (substring-no-properties (or (thing-at-point 'symbol) ""))))
 
 (provide 'helm-system-packages-portage)
