@@ -51,7 +51,7 @@ Not "Emerge" but "Install".
 Some actions are specific to some package managers however, e.g. "emerge pretend".
 ** DONE All actions should support multiple candidates.
 Centralize commands into one ~helm-system-packages-run~ or something like that.
-** TODO Add defcustom for commands.
+** REVIEW Add defcustom for commands.
 To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~--oneshot~ for emerge.
 
 Maybe ~--oneshot~ would deserve a separate action.

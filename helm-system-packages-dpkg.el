@@ -80,12 +80,12 @@ Otherwise display in `helm-system-packages-buffer'."
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "show")))
-              ("Install" .
+              ("Install (`C-u' to reinstall)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "apt-get" "install")))
-              ("Uninstall" .
+                 (helm-system-packages-run-as-root "apt-get" "install" (when helm-current-prefix-arg "--reinstall") )))
+              ("Uninstall (`C-u' to include dependencies)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "apt-get" "autoremove")))
+                 (helm-system-packages-run-as-root "apt-get" "remove" (when helm-current-prefix-arg "--auto-remove"))))
               ("Find files" .
                (lambda (_)
                  (helm-system-packages-find-files "dpkg" "--listfiles")))

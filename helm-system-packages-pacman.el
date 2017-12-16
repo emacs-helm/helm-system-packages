@@ -68,12 +68,12 @@
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "pacman" "--sync" "--info" "--info")))
-              ("Install" .
+              ("Install (`C-u' to reinstall)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--sync" "--needed")))
-              ("Uninstall" .
+                 (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed"))))
+              ("Uninstall (`C-u' to include dependencies)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--remove" "--recursive")))
+                 (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive"))))
               ("Find files" .
                ;; TODO: pacman supports querying files of non-installed packages.  This is slower though.
                ;; pacman --files --list --quiet

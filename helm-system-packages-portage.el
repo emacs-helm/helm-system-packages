@@ -72,12 +72,12 @@
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "eix")))
-              ("Install" .
+              ("Install (`C-u' to not add to world)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose")))
-              ("Uninstall" .
+                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (when helm-current-prefix-arg "--oneshot"))))
+              ("Uninstall (`C-u' to include dependencies)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" "--unmerge")))
+                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (if helm-current-prefix-arg "--depclean" "--unmerge"))))
               ("Emerge-pretend" .
                (lambda (_)
                  (helm-system-packages-print "emerge" "--pretend")))
