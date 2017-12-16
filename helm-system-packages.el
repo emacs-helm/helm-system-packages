@@ -126,7 +126,7 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
   (let ((arg-list (append args (helm-marked-candidates)))
         (eshell-buffer-name helm-system-packages-eshell-buffer))
     ;; Refresh package list after command has completed.
-    (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh t)
+    (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
     (push command arg-list)
     (push "sudo" arg-list)
     (eshell t)
