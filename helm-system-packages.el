@@ -133,6 +133,15 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
     (insert (mapconcat 'identity arg-list " "))
     (eshell-send-input)))
 
+(defun helm-system-packages-browse-url (urls)
+  "Browse homepage URLs of `helm-marked-candidates'.
+
+With prefix argument, insert the output at point."
+  (cond
+   ((not urls) (message "No result"))
+   (helm-current-prefix-arg (insert urls))
+   (t (mapc 'browse-url (helm-comp-read "URL: " urls :must-match t :exec-when-only-one t :marked-candidates t)))))
+
 (defun helm-system-packages-refresh (&optional lazy)
   "Cache package lists.
 

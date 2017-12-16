@@ -67,14 +67,10 @@ With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (let ((res (helm-system-packages-run "apt-cache" "show"))
         urls)
-    (if (string-empty-p res)
-        (message "No result")
-      (dolist (url (split-string res "\n"))
-        (when (string-match "^Homepage: \\(.*\\)" url)
-          (push (match-string 1 url) urls)))
-      (if helm-current-prefix-arg
-          (insert urls)
-        (browse-url (helm-comp-read "URL: " urls :must-match t))))))
+    (dolist (url (split-string res "\n" t))
+      (when (string-match "^Homepage: \\(.*\\)" url)
+        (push (match-string 1 url) urls)))
+    (helm-system-packages-browse-url urls)))
 
 (defvar helm-system-packages-dpkg-source
   (helm-build-in-buffer-source "dpkg source"

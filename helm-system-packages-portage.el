@@ -64,18 +64,6 @@
         (push (cons (intern (match-string 1)) (match-string 2)) descs))
       descs)))
 
-(defun helm-system-packages-portage-print-url (_)
-  "Print homepage URLs of `helm-marked-candidates'.
-
-With prefix argument, insert the output at point.
-Otherwise display in `helm-system-packages-buffer'."
-  (let ((urls (helm-system-packages-run "eix" "--format" "<homepage>\n")))
-    (if (string-empty-p urls)
-        (message "No result")
-      (if helm-current-prefix-arg
-          (insert urls)
-        (browse-url (helm-comp-read "URL: " (split-string urls) :must-match t))))))
-
 (defvar helm-system-packages-portage-source
   (helm-build-in-buffer-source "Portage source"
     :init 'helm-system-packages-init
@@ -115,7 +103,9 @@ Otherwise display in `helm-system-packages-buffer'."
                  (unless helm-current-prefix-arg
                    (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
                    (font-lock-mode 1))))
-              ("Browse homepage URL" . helm-system-packages-portage-print-url)
+              ("Browse homepage URL" .
+               (lambda (_)
+                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t))))
               ("Refresh" . helm-system-packages-refresh))))
 
 (defun helm-system-packages-portage-use-init ()
