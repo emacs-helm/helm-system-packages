@@ -129,9 +129,11 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
     (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
     (push command arg-list)
     (push "sudo" arg-list)
-    (eshell t)
-    (insert (mapconcat 'identity arg-list " "))
-    (eshell-send-input)))
+    (eshell)
+    (if (eshell-interactive-process)
+        (message "A process is already running")
+      (insert (mapconcat 'identity arg-list " "))
+      (eshell-send-input))))
 
 (defun helm-system-packages-browse-url (urls)
   "Browse homepage URLs of `helm-marked-candidates'.

@@ -77,7 +77,7 @@ If it does not work, either load it or fall back to "*sudo".
 ** REVIEW Truncate long descriptions
 No more than one line per package?
 This should be coupled with the "full screen" feature.
-** TODO Re-use eshell buffer?
+** REVIEW Re-use eshell buffer?
 Make an option?  Don't think that would be useful.
 ** Add xbps (Void Linux) support
 ** Add guix support
