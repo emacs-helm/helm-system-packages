@@ -26,6 +26,7 @@
 ;; Helm UI wrapper for system package managers.
 
 ;;; Code:
+(require 'helm-files)
 
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
@@ -116,7 +117,11 @@ Otherwise display in `helm-system-packages-buffer'."
                          :candidates (split-string res "\n")
                          :candidate-transformer (lambda (files)
                                                   (let ((helm-ff-transformer-show-only-basename nil))
-                                                    (mapcar 'helm-ff-filter-candidate-one-by-one files))))
+                                                    (mapcar 'helm-ff-filter-candidate-one-by-one files)))
+                         :candidate-number-limit 'helm-ff-candidate-number-limit
+                         :persistent-action 'helm-find-files-persistent-action
+                         :keymap 'helm-find-files-map
+                         :action 'helm-find-files-actions)
               :buffer "*helm system package files*")))))
 
 (defun helm-system-packages-run-as-root (command &rest args)
