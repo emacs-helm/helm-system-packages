@@ -59,6 +59,13 @@
   :group 'helm-system-packages
   :type 'integerp)
 
+(defcustom helm-system-packages-candidate-limit 1000
+  "Maximum number of candidates to display at once.
+
+0 means display all."
+  :group 'helm-system-packages
+  :type 'integerp)
+
 ;; TODO: Match over description as well.
 (defun helm-system-packages-highlight (packages)
   "Highlight all explicitly installed PACKAGES as well as dependencies."
