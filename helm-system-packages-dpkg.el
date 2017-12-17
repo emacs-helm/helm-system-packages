@@ -95,7 +95,10 @@ Otherwise display in `helm-system-packages-buffer'."
               ("Show reverse dependencies" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "rdepends")))
-              ("Browse homepage URL" . helm-system-packages-dpkg-print-url))))
+              ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
+              ("Uninstall/Purge (`C-u' to include dependencies)" .
+               (lambda (_)
+                 (helm-system-packages-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))))
 
 ;; TODO: Factor into entry function?
 (defun helm-system-packages-dpkg ()
