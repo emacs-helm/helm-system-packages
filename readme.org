@@ -66,7 +66,7 @@ We can add Org subsections for files, dependencies, etc.
 Those sections should be folded by default.
 
 We probably still need specific "info" actions to insert at point.
-** Use bindings reflecting helm-list-elisp-packages
+** TODO Use bindings reflecting helm-list-elisp-packages
 ** DONE Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
 ** DONE Add helm-find-files keymap to "Find files"
 ** DONE Browse URL should process directly when there is only one entry.
@@ -79,6 +79,8 @@ No more than one line per package?
 This should be coupled with the "full screen" feature.
 ** REVIEW Re-use eshell buffer?
 Make an option?  Don't think that would be useful.
+** Stand-alone version?
+Should load emacs with --no-desktop?
 ** Add xbps (Void Linux) support
 ** Add guix support
 ** Add homebrew support

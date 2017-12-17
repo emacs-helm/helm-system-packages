@@ -45,6 +45,8 @@
   "List all packages."
   (sort
    (split-string (with-temp-buffer
+                   ;; TODO: This does not show local packages.
+                   ;; If we uninstall a local package, then it should be remove from the list.
                    (call-process "pacman" nil t nil "--sync" "--search" "--quiet")
                    (buffer-string)))
    'string<))
