@@ -29,6 +29,29 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+
+(defface helm-system-packages-pacman-explicit '((t (:inherit font-lock-warning-face)))
+  "Face for explicitly installed packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-pacman-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
+  "Face for packages installed as dependencies."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-pacman-orphans '((t (:inherit font-lock-string-face :slant italic)))
+  "Face for orphan packages (unrequired dependencies)."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-pacman-locals '((t (:weight bold)))
+  "Face for local packages."
+  :group 'helm-system-packages)
+
+(defvar helm-system-packages-pacman--all nil
+  "String of all packages.")
+
+(defvar helm-system-packages-pacman--descriptions nil
+  "String of all packages with their description.")
+
 (defun helm-system-packages-pacman-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
@@ -36,37 +59,86 @@
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-dependencies ()
-  "List packages installed as a dependency."
+  "List packages installed as a required dependency."
   (split-string (with-temp-buffer
                   (call-process "pacman" nil t nil "--query" "--deps" "--quiet")
                   (buffer-string))))
 
-(defun helm-system-packages-pacman-list-all ()
-  "List all packages."
-  (sort
-   (split-string (with-temp-buffer
-                   ;; TODO: This does not show local packages.
-                   ;; If we uninstall a local package, then it should be remove from the list.
-                   (call-process "pacman" nil t nil "--sync" "--search" "--quiet")
-                   (buffer-string)))
-   'string<))
+(defun helm-system-packages-pacman-list-orphans ()
+  "List orphan packages (unrequired dependencies)."
+  (split-string (with-temp-buffer
+                  (call-process "pacman" nil t nil "--query" "--deps" "--unrequired" "--quiet")
+                  (buffer-string))))
 
-(defun helm-system-packages-pacman-list-descriptions ()
+(defun helm-system-packages-pacman-list-locals ()
+  "List explicitly installed local packages.
+Local packages can also be orphans, explicit or dependencies."
+  (split-string (with-temp-buffer
+                  (call-process "pacman" nil t nil "--query" "--foreign" "--quiet")
+                  (buffer-string))))
+
+;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-descriptions.
+(defun helm-system-packages-pacman-buffer-all ()
   "Cache all package descriptions."
   (with-temp-buffer
-    ;; TODO: Output to Elisp?
-    (call-process "expac" nil '(t nil) nil "--sync" "%n: %d")
-    (let (descs)
-      (goto-char (point-min))
-      (while (re-search-forward "^\\(.*\\): \\(.*\\)" nil t)
-        (push (cons (intern (match-string 1)) (match-string 2)) descs))
-      descs)))
+    (call-process "expac" nil '(t nil) nil "--sync" "%n")
+    (apply 'call-process "expac" nil '(t nil) nil "--query" "%n" (helm-system-packages-pacman-list-locals))
+    (sort-lines nil (point-min) (point-max))
+    (buffer-string)))
+
+(defcustom helm-system-packages-pacman-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap.")
+
+;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-locals.
+(defun helm-system-packages-pacman-buffer-descriptions ()
+  "Cache all package descriptions."
+  (with-temp-buffer
+    ;; TODO: Possible optimization: Output directly in Elisp?
+    (let ((format-string (format "%%-%dn  %%d" helm-system-packages-pacman-column-width)))
+      (call-process "expac" nil '(t nil) nil "--sync" format-string)
+      (apply 'call-process "expac" nil '(t nil) nil "--query" format-string (helm-system-packages-pacman-list-locals)))
+    (sort-lines nil (point-min) (point-max))
+    (buffer-string)))
+
+(defun helm-system-packages-pacman-init ()
+  "Cache package lists and create Helm buffer."
+  (unless (and helm-system-packages-pacman--all helm-system-packages-pacman--descriptions)
+    (helm-system-packages-pacman-refresh))
+  ;; TODO: We should only create the buffer if it does not already exist.
+  ;; On the other hand, we need to be able to override the package list.
+  ;; (unless (helm-candidate-buffer) ...
+  (helm-init-candidates-in-buffer
+      'global
+    (if helm-system-packages-details-flag
+        helm-system-packages-pacman--descriptions
+      helm-system-packages-pacman--all)))
+
+(defun helm-system-packages-pacman-refresh ()
+  "Refresh the package list."
+  (interactive)
+  (setq helm-system-packages-pacman--descriptions (helm-system-packages-pacman-buffer-descriptions)
+        helm-system-packages-pacman--all (helm-system-packages-pacman-buffer-all))
+  (let ((explicit (helm-system-packages-pacman-list-explicit))
+         (dependencies (helm-system-packages-pacman-list-dependencies))
+         (orphans (helm-system-packages-pacman-list-orphans))
+         (locals (helm-system-packages-pacman-list-locals)))
+    (setq helm-system-packages--display-lists nil)
+    (dolist (p explicit)
+      (push (cons p '(helm-system-packages-pacman-explicit)) helm-system-packages--display-lists))
+    (dolist (p dependencies)
+      (push (cons p '(helm-system-packages-pacman-dependencies)) helm-system-packages--display-lists))
+    (dolist (p orphans)
+      (push (cons p '(helm-system-packages-pacman-orphans)) helm-system-packages--display-lists))
+    (dolist (p locals)
+      ;; Local packages are necessarily either explicitly installed or a required dependency or an orphan.
+      (push 'helm-system-packages-pacman-locals (cdr (assoc p helm-system-packages--display-lists))))))
 
 (defvar helm-system-packages-pacman-source
   (helm-build-in-buffer-source "pacman source"
-    :init 'helm-system-packages-init
+    :init 'helm-system-packages-pacman-init
     :candidate-transformer 'helm-system-packages-highlight
     :candidate-number-limit helm-system-packages-candidate-limit
+    :display-to-real 'helm-system-packages-extract-name
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "pacman" "--sync" "--info" "--info")))
