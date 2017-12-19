@@ -41,6 +41,20 @@
                   (call-process "apt-mark" nil t nil "showauto")
                   (buffer-string))))
 
+;; TODO: Use dedicated face for residual packages.
+(defun helm-system-packages-dpkg-list-residual ()
+  "List packages installed as a dependency."
+  (let (res)
+    (dolist (pkgline
+             (split-string (with-temp-buffer
+                                     (call-process "dpkg" nil t nil "--get-selections")
+                                     (buffer-string))
+                                   "\n")
+             res)
+      (let ((pkg (split-string pkgline)))
+        (when (string= (cadr pkg) "deinstall")
+          (push (car pkg) res))))))
+
 (defun helm-system-packages-dpkg-list-all ()
   "List all packages."
   (sort
