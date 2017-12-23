@@ -36,11 +36,11 @@
 (defvar helm-system-packages--all nil)
 (defvar helm-system-packages--descriptions nil)
 
-(defface helm-system-packages-explicit '((t (:foreground "orange" :weight bold)))
+(defface helm-system-packages-explicit '((t (:inherit font-lock-warning-face :weight bold)))
   "Face for explicitly installed packages."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-dependencies '((t (:foreground "lightblue" :slant italic)))
+(defface helm-system-packages-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
   "Face for packages installed as dependencies."
   :group 'helm-system-packages)
 
