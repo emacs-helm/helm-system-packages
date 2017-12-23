@@ -37,7 +37,7 @@
 (defvar helm-system-packages--descriptions nil)
 
 (defface helm-system-packages-explicit '((t (:foreground "orange" :weight bold)))
-  "Face for excplitly installed packages."
+  "Face for explicitly installed packages."
   :group 'helm-system-packages)
 
 (defface helm-system-packages-dependencies '((t (:foreground "lightblue" :slant italic)))
@@ -185,9 +185,7 @@ lists have not already been set."
 (defun helm-system-packages ()
   "Helm user interface for system packages."
   (interactive)
-  (let ((managers '("emerge" "dpkg" "pacman")))
-    (while (and managers (not (executable-find (car managers))))
-      (setq managers (cdr managers)))
+  (let ((managers (seq-filter 'executable-find '("emerge" "dpkg" "pacman"))))
     (if (not managers)
         (message "No supported package manager was found")
       (let ((manager (car managers)))
