@@ -27,6 +27,7 @@
 
 ;;; Code:
 (require 'helm-files)
+(require 'seq)
 
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")

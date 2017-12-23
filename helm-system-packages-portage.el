@@ -29,7 +29,6 @@
 ;;; Code:
 (require 'helm)
 (require 'helm-system-packages)
-(require 'seq)
 
 (defun helm-system-packages-portage-list-explicit ()
   "List explicitly installed packages."
