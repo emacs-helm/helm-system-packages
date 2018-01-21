@@ -29,6 +29,22 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defface helm-system-packages-dpkg-explicit '((t (:inherit font-lock-warning-face)))
+  "Face for explicitly installed packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-dpkg-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
+  "Face for packages installed as dependencies."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-dpkg-residuals '((t (:inherit font-lock-string-face :slant italic)))
+  "Face for packages with left-over configuration files."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-dpkg-locals '((t (:weight bold)))
+  "Face for local packages."
+  :group 'helm-system-packages)
+
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
@@ -41,9 +57,8 @@
                   (call-process "apt-mark" nil t nil "showauto")
                   (buffer-string))))
 
-;; TODO: Use dedicated face for residual packages.
-(defun helm-system-packages-dpkg-list-residual ()
-  "List packages installed as a dependency."
+(defun helm-system-packages-dpkg-list-residuals ()
+  "List packages with left-over configuration files."
   (let (res)
     (dolist (pkgline
              (split-string (with-temp-buffer
@@ -55,24 +70,58 @@
         (when (string= (cadr pkg) "deinstall")
           (push (car pkg) res))))))
 
-(defun helm-system-packages-dpkg-list-all ()
+(defun helm-system-packages-dpkg-buffer-all ()
   "List all packages."
-  (sort
-   (split-string (with-temp-buffer
-                   (call-process "apt-cache" nil t nil "pkgnames")
-                   (buffer-string)))
-   'string<))
+  (with-temp-buffer
+    (call-process "apt-cache" nil t nil "pkgnames")
+    ;; (sort-lines nil (point-min) (point-max))
+    (buffer-string)))
 
-(defun helm-system-packages-dpkg-list-descriptions ()
+(defcustom helm-system-packages-dpkg-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap.")
+
+(defun helm-system-packages-dpkg-buffer-descriptions ()
   "Cache all package descriptions."
   (with-temp-buffer
     ;; `apt-cache search` is much faster than `apt-cache show`.
     (call-process "apt-cache" nil '(t nil) nil "search" ".")
-    (let (descs)
-      (goto-char (point-min))
-      (while (re-search-forward "^\\(.*\\) \\- \\(.*\\)" nil t)
-        (push (cons (intern (match-string 1)) (match-string 2)) descs))
-      descs)))
+    ;; apt-cache's output format is "pkg - desc".  Remove "-" and align to column.
+    (goto-char (point-min))
+    (while (search-forward " " nil t)
+      (delete-char 1)
+      (backward-char)
+      (let ((pos (- (point) (line-beginning-position))))
+        (when (< pos helm-system-packages-dpkg-column-width)
+          (insert (make-string (- helm-system-packages-dpkg-column-width pos) ? ))))
+      (forward-line))
+    ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also see helm-system-packages-dpkg-buffer-all.
+    (buffer-string)))
+
+(defun helm-system-packages-dpkg-init ()
+  "Cache package lists and create Helm buffer."
+  (unless (and helm-system-packages-dpkg--all helm-system-packages-dpkg--descriptions)
+    (helm-system-packages-dpkg-refresh))
+  (helm-init-candidates-in-buffer
+      'global
+    (if helm-system-packages-details-flag
+        helm-system-packages-dpkg--descriptions
+      helm-system-packages-dpkg--all)))
+
+(defun helm-system-packages-dpkg-refresh ()
+  "Refresh the package list."
+  (interactive)
+  (setq helm-system-packages-dpkg--descriptions (helm-system-packages-dpkg-buffer-descriptions)
+        helm-system-packages-dpkg--all (helm-system-packages-dpkg-buffer-all))
+  (let ((explicit (helm-system-packages-dpkg-list-explicit))
+        (dependencies (helm-system-packages-dpkg-list-dependencies))
+        (residuals (helm-system-packages-dpkg-list-residuals)))
+    (setq helm-system-packages--display-lists nil)
+    (dolist (p explicit)
+      (push (cons p '(helm-system-packages-dpkg-explicit)) helm-system-packages--display-lists))
+    (dolist (p dependencies)
+      (push (cons p '(helm-system-packages-dpkg-dependencies)) helm-system-packages--display-lists))
+    (dolist (p residuals)
+      (push (cons p '(helm-system-packages-dpkg-residuals)) helm-system-packages--display-lists))))
 
 (defun helm-system-packages-dpkg-print-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
@@ -91,6 +140,7 @@ Otherwise display in `helm-system-packages-buffer'."
     :init 'helm-system-packages-init
     :candidate-transformer 'helm-system-packages-highlight
     :candidate-number-limit helm-system-packages-candidate-limit
+    :display-to-real 'helm-system-packages-extract-name
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "show")))
@@ -114,7 +164,6 @@ Otherwise display in `helm-system-packages-buffer'."
                (lambda (_)
                  (helm-system-packages-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))))
 
-;; TODO: Factor into entry function?
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
   (helm :sources '(helm-system-packages-dpkg-source)
