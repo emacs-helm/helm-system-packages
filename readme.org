@@ -38,6 +38,18 @@ The commandline workflow is not ideal however:
 With Helm all those actions get factored into one.
 Helm sessions can also be resumed.
 
+* Development
+
+Each module is rather straightforward, it only need to define the following:
+
+- A ~helm-system-packages-FOO~ function that starts a Helm session.
+- An interactive ~helm-system-packages-FOO-refresh~ function to refresh the package list either manually or after transactions.
+
+The candidate faces can be customized from the ~helm-system-packages--display-lists~ variable.
+A candidate can have multiple faces.
+
+The =helm-system-packages.el= file provides some helper functions for Helm actions.
+
 * Roadmap
 ** DONE Different face for dependencies.
 ** DONE Use thing at point as a default value.
