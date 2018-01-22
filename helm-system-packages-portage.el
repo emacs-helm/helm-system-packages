@@ -180,6 +180,48 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     (dolist (p dependencies)
       (push (cons p '(helm-system-packages-portage-dependencies)) helm-system-packages--display-lists))))
 
+(defcustom helm-system-packages-portage-actions
+  '(("Show package(s)" .
+     (lambda (_)
+       (helm-system-packages-print "eix")))
+    ("Install (`C-u' to not add to world)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (when helm-current-prefix-arg "--oneshot"))))
+    ("Uninstall (`C-u' to include dependencies)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (if helm-current-prefix-arg "--depclean" "--unmerge"))))
+    ("Emerge-pretend" .
+     (lambda (_)
+       (helm-system-packages-print "emerge" "--pretend")))
+    ("Find files" .
+     (lambda (_)
+       (helm-system-packages-find-files "equery" "--no-color" "files")))
+    ("Show dependencies" .
+     (lambda (_)
+       (helm-system-packages-print "equery" "--no-color" "depgraph")))
+    ("Show reverse dependencies" .
+     (lambda (_)
+       (helm-system-packages-print "equery" "--no-color" "depends")))
+    ("Show history" .
+     (lambda (_)
+       (helm-system-packages-print "genlop" "-qe")))
+    ("Show extra info" .
+     (lambda (_)
+       (helm-system-packages-print elm "genlop -qi")))
+    ("Show USE flags" .
+     (lambda (_)
+       (helm-system-packages-print elm "equery" "--no-color" "uses")
+       ;; TODO: Test font-lock.
+       (unless helm-current-prefix-arg
+         (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
+         (font-lock-mode 1))))
+    ("Browse homepage URL" .
+     (lambda (_)
+       (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t)))))
+  "Actions for Helm portage."
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
+
 (defvar helm-system-packages-portage-source
   (helm-build-in-buffer-source "Portage source"
     :init 'helm-system-packages-portage-init
@@ -189,43 +231,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     :keymap helm-system-packages-portage-map
     :help-message 'helm-system-packages-portage-help-message
     :persistent-help "Show package description"
-    :action '(("Show package(s)" .
-               (lambda (_)
-                 (helm-system-packages-print "eix")))
-              ("Install (`C-u' to not add to world)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (when helm-current-prefix-arg "--oneshot"))))
-              ("Uninstall (`C-u' to include dependencies)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (if helm-current-prefix-arg "--depclean" "--unmerge"))))
-              ("Emerge-pretend" .
-               (lambda (_)
-                 (helm-system-packages-print "emerge" "--pretend")))
-              ("Find files" .
-               (lambda (_)
-                 (helm-system-packages-find-files "equery" "--no-color" "files")))
-              ("Show dependencies" .
-               (lambda (_)
-                 (helm-system-packages-print "equery" "--no-color" "depgraph")))
-              ("Show reverse dependencies" .
-               (lambda (_)
-                 (helm-system-packages-print "equery" "--no-color" "depends")))
-              ("Show history" .
-               (lambda (_)
-                 (helm-system-packages-print "genlop" "-qe")))
-              ("Show extra info" .
-               (lambda (_)
-                 (helm-system-packages-print elm "genlop -qi")))
-              ("Show USE flags" .
-               (lambda (_)
-                 (helm-system-packages-print elm "equery" "--no-color" "uses")
-                 ;; TODO: Test font-lock.
-                 (unless helm-current-prefix-arg
-                   (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
-                   (font-lock-mode 1))))
-              ("Browse homepage URL" .
-               (lambda (_)
-                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t)))))))
+    :action helm-system-packages-portage-actions))
 
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."
@@ -236,30 +242,36 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
         (call-process "eix" nil t nil "--print-all-useflags")
         (buffer-string)))))
 
+(defcustom helm-system-packages-portage-use-actions
+  '(("Description" .
+     (lambda (elm)
+       (switch-to-buffer helm-system-packages-buffer)
+       (erase-buffer)
+       (apply #'call-process "euse" nil t nil `("--info" ,elm))
+       (font-lock-add-keywords nil `((,elm . font-lock-variable-name-face)))
+       (font-lock-mode 1)))
+    ("Enable" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "euse" "--enable")))
+    ("Disable" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "euse" "--disable")))
+    ("Remove" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "euse" "--prune")))
+    ("Show which dependencies use this flag" .
+     (lambda (_)
+       (helm-system-packages-print "equery" "--no-color" "hasuse"))))
+  "Actions for Helm portage USE flags."
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
+
 (defvar helm-system-packages-portage-use-source
   (helm-build-in-buffer-source "USE flags"
     :init 'helm-system-packages-portage-use-init
     :candidate-transformer 'helm-system-packages-portage-use-transformer
     :help-message 'helm-system-packages-portage-help-message
-    :action '(("Description" .
-               (lambda (elm)
-                 (switch-to-buffer helm-system-packages-buffer)
-                 (erase-buffer)
-                 (apply #'call-process "euse" nil t nil `("--info" ,elm))
-                 (font-lock-add-keywords nil `((,elm . font-lock-variable-name-face)))
-                 (font-lock-mode 1)))
-              ("Enable" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "euse" "--enable")))
-              ("Disable" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "euse" "--disable")))
-              ("Remove" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "euse" "--prune")))
-              ("Show which dependencies use this flag" .
-               (lambda (_)
-                 (helm-system-packages-print "equery" "--no-color" "hasuse"))))))
+    :action helm-system-packages-portage-use-actions))
 
 (defun helm-system-packages-portage-use-transformer (use-flags)
   "Highlight enabled USE flags."

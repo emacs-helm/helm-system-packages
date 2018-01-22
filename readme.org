@@ -81,6 +81,7 @@ We probably still need specific "info" actions to insert at point.
 Should load emacs with --no-desktop?
 *** TODO Use ~term~ for dpkg
 Some packages fire up a curses configuration interface during installation.
+*** find-file action: Split packages in sources
 *** Add xbps (Void Linux) support
 *** Add guix support
 *** Add homebrew support

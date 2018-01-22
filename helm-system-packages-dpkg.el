@@ -211,6 +211,33 @@ Otherwise display in `helm-system-packages-buffer'."
         (push (match-string 1 url) urls)))
     (helm-system-packages-browse-url urls)))
 
+(defcustom helm-system-packages-dpkg-actions
+  '(("Show package(s)" .
+     (lambda (_)
+       (helm-system-packages-print "apt-cache" "show")))
+    ("Install (`C-u' to reinstall)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "apt-get" "install" (when helm-current-prefix-arg "--reinstall") )))
+    ("Uninstall (`C-u' to include dependencies)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "apt-get" "remove" (when helm-current-prefix-arg "--auto-remove"))))
+    ("Find files" .
+     (lambda (_)
+       (helm-system-packages-find-files "dpkg" "--listfiles")))
+    ("Show dependencies" .
+     (lambda (_)
+       (helm-system-packages-print "apt-cache" "depends")))
+    ("Show reverse dependencies" .
+     (lambda (_)
+       (helm-system-packages-print "apt-cache" "rdepends")))
+    ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
+    ("Uninstall/Purge (`C-u' to include dependencies)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))
+  "Actions for Helm dpkg."
+    :group 'helm-system-packages
+    :type '(alist :key-type string :value-type function))
+
 (defvar helm-system-packages-dpkg-source
   (helm-build-in-buffer-source "dpkg source"
     :init 'helm-system-packages-dpkg-init
@@ -220,28 +247,7 @@ Otherwise display in `helm-system-packages-buffer'."
     :keymap helm-system-packages-dpkg-map
     :help-message 'helm-system-packages-dpkg-help-message
     :persistent-help "Show package description"
-    :action '(("Show package(s)" .
-               (lambda (_)
-                 (helm-system-packages-print "apt-cache" "show")))
-              ("Install (`C-u' to reinstall)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "apt-get" "install" (when helm-current-prefix-arg "--reinstall") )))
-              ("Uninstall (`C-u' to include dependencies)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "apt-get" "remove" (when helm-current-prefix-arg "--auto-remove"))))
-              ("Find files" .
-               (lambda (_)
-                 (helm-system-packages-find-files "dpkg" "--listfiles")))
-              ("Show dependencies" .
-               (lambda (_)
-                 (helm-system-packages-print "apt-cache" "depends")))
-              ("Show reverse dependencies" .
-               (lambda (_)
-                 (helm-system-packages-print "apt-cache" "rdepends")))
-              ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
-              ("Uninstall/Purge (`C-u' to include dependencies)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))))
+    :action helm-system-packages-dpkg-actions))
 
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."

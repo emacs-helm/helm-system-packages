@@ -319,6 +319,35 @@ Otherwise display in `helm-system-packages-buffer'."
                          :action 'helm-find-files-actions)
               :buffer "*helm system package files*")))))
 
+(defcustom helm-system-packages-pacman-actions
+  '(("Show package(s)" . helm-system-packages-pacman-info)
+    ("Install (`C-u' to reinstall)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
+    ("Uninstall (`C-u' to include dependencies)" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
+    ("Find files" . helm-system-packages-pacman-find-files)
+    ("Show dependencies" .
+     (lambda (_)
+       ;; TODO: As an optimization, --query could be used and --sync could be a fallback.
+       (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%E")))
+    ("Show reverse dependencies" .
+     (lambda (_)
+       (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%N")))
+    ("Mark as dependency" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
+    ("Mark as explicit" .
+     (lambda (_)
+       (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit")))
+    ("Browse homepage URL" .
+     (lambda (_)
+       (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t)))))
+    "Actions for Helm pacman."
+    :group 'helm-system-packages
+    :type '(alist :key-type string :value-type function))
+
 (defvar helm-system-packages-pacman-source
   (helm-build-in-buffer-source "pacman source"
     :init 'helm-system-packages-pacman-init
@@ -328,30 +357,7 @@ Otherwise display in `helm-system-packages-buffer'."
     :keymap helm-system-packages-pacman-map
     :help-message 'helm-system-packages-pacman-help-message
     :persistent-help "Show package description"
-    :action '(("Show package(s)" . helm-system-packages-pacman-info)
-              ("Install (`C-u' to reinstall)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
-              ("Uninstall (`C-u' to include dependencies)" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
-              ("Find files" . helm-system-packages-pacman-find-files)
-              ("Show dependencies" .
-               (lambda (_)
-                 ;; TODO: As an optimization, --query could be used and --sync could be a fallback.
-                 (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%E")))
-              ("Show reverse dependencies" .
-               (lambda (_)
-                 (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%N")))
-              ("Mark as dependency" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
-              ("Mark as explicit" .
-               (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit")))
-              ("Browse homepage URL" .
-               (lambda (_)
-                 (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t)))))))
+    :action helm-system-packages-pacman-actions))
 
 (defun helm-system-packages-pacman ()
   "Preconfigured `helm' for pacman."
