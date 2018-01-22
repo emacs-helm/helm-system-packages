@@ -30,44 +30,98 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defface helm-system-packages-portage-explicit '((t (:inherit font-lock-warning-face)))
+  "Face for explicitly installed packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-portage-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
+  "Face for packages installed as dependencies."
+  :group 'helm-system-packages)
+
+;; TODO: Move `all' and `description' to common file?
+(defvar helm-system-packages-portage--all nil
+  "Cache of all package names.")
+
+(defvar helm-system-packages-portage--descriptions nil
+  "Cache of all package names with descriptions.")
+
 (defun helm-system-packages-portage-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
                   (insert-file-contents-literally "/var/lib/portage/world")
                   (buffer-string))))
 
-(defun helm-system-packages-portage-list-dependencies ()
-  "List packages installed as a dependency."
-  (unless helm-system-packages--explicit
-    (helm-system-packages-portage-list-explicit))
+(defun helm-system-packages-portage-list-dependencies (&optional explicit)
+  "List packages installed as a required dependency.
+The caller can pass the list of EXPLICIT packages to avoid re-computing it."
+  (unless explicit
+    (setq explicit (helm-system-packages-portage-list-explicit)))
   (seq-difference
    (split-string (with-temp-buffer
                    (call-process "qlist" nil t nil "-I")
                    (buffer-string)))
-   helm-system-packages--explicit))
+   explicit))
 
-(defun helm-system-packages-portage-list-all ()
-  "List all packages."
-  (split-string (with-temp-buffer
-                  (call-process "eix" nil t nil "--only-names")
-                  (buffer-string))))
-
-(defun helm-system-packages-portage-list-descriptions ()
-  "Cache all package descriptions."
+(defun helm-system-packages-portage-cache-names ()
+  "Cache all package names."
   (with-temp-buffer
-    ;; TODO: Output straight to Elisp?
-    (call-process "env" nil '(t nil) nil "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never" "eix" "--format" "<category>/<name>: <description>\n")
-    (let (descs)
-      (goto-char (point-min))
-      (while (re-search-forward "^\\(.*\\): \\(.*\\)" nil t)
-        (push (cons (intern (match-string 1)) (match-string 2)) descs))
-      descs)))
+    (call-process "eix" nil t nil "--only-names")
+    (buffer-string)))
+
+(defcustom helm-system-packages-portage-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap."
+  :group 'helm-system-packages)
+
+(defun helm-system-packages-portage-cache-descriptions ()
+  "Cache all package names with descriptions."
+  (with-temp-buffer
+    ;; `eix' can format the output while `apt-cache search' cannot.  Thus we
+    ;; tell `eix' to use the same formatting as `apt-cache' so that we can
+    ;; re-use its code.
+    ;; TODO: Can eix pad in the format string just like `expac' does?
+    ;; TODO: Or output straight to Elisp?
+    (call-process "env" nil '(t nil) nil "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never" "eix" "--format" "<category>/<name> - <description>\n")
+    (goto-char (point-min))
+    (while (search-forward " " nil t)
+      (delete-char 1)
+      (backward-char)
+      (let ((pos (- (point) (line-beginning-position))))
+        (when (< pos helm-system-packages-portage-column-width)
+          (insert (make-string (- helm-system-packages-portage-column-width pos) ? ))))
+      (forward-line))
+    ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also see helm-system-packages-portage-cache-names.
+    (buffer-string)))
+
+;; TODO: Move this to common source?
+(defun helm-system-packages-portage-init ()
+  "Cache package lists and create Helm buffer."
+  (unless (and helm-system-packages-portage--names helm-system-packages-portage--descriptions)
+    (helm-system-packages-portage-refresh))
+  (helm-init-candidates-in-buffer
+      'global
+    (if helm-system-packages-details-flag
+        helm-system-packages-portage--descriptions
+      helm-system-packages-portage--names)))
+
+(defun helm-system-packages-portage-refresh ()
+  "Refresh the package list."
+  (interactive)
+  (setq helm-system-packages-portage--descriptions (helm-system-packages-portage-cache-descriptions)
+        helm-system-packages-portage--names (helm-system-packages-portage-cache-names))
+  (let* ((explicit (helm-system-packages-portage-list-explicit))
+         (dependencies (helm-system-packages-portage-list-dependencies explicit)))
+    (setq helm-system-packages--display-lists nil)
+    (dolist (p explicit)
+      (push (cons p '(helm-system-packages-portage-explicit)) helm-system-packages--display-lists))
+    (dolist (p dependencies)
+      (push (cons p '(helm-system-packages-portage-dependencies)) helm-system-packages--display-lists))))
 
 (defvar helm-system-packages-portage-source
   (helm-build-in-buffer-source "Portage source"
-    :init 'helm-system-packages-init
+    :init 'helm-system-packages-portage-init
     :candidate-transformer 'helm-system-packages-highlight
     :candidate-number-limit helm-system-packages-candidate-limit
+    :display-to-real 'helm-system-packages-extract-name
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "eix")))
@@ -118,7 +172,7 @@
 (defvar helm-system-packages-portage-use-source
   (helm-build-in-buffer-source "USE flags"
     :init 'helm-system-packages-portage-use-init
-    :candidate-transformer 'helm-system-packages-portage-highlight
+    :candidate-transformer 'helm-system-packages-portage-use-transformer
     :action '(("Description" .
                (lambda (elm)
                  (switch-to-buffer helm-system-packages-buffer)
@@ -139,8 +193,7 @@
                (lambda (_)
                  (helm-system-packages-print "equery" "--no-color" "hasuse"))))))
 
-;; TODO: Factor with helm-system-packages-highlight?
-(defun helm-system-packages-portage-highlight (use-flags)
+(defun helm-system-packages-portage-use-transformer (use-flags)
   "Highlight enabled USE flags."
   (let ((local-uses (split-string (with-temp-buffer
                                     (call-process "portageq" nil t nil "envvar" "USE")
