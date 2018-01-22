@@ -115,11 +115,11 @@
   "Face for local packages."
   :group 'helm-system-packages)
 
-(defvar helm-system-packages-pacman--all nil
-  "String of all packages.")
+(defvar helm-system-packages-pacman--names nil
+  "Cache of all packages.")
 
 (defvar helm-system-packages-pacman--descriptions nil
-  "String of all packages with their description.")
+  "Cache of all package names with descriptions.")
 
 (defun helm-system-packages-pacman-list-explicit ()
   "List explicitly installed packages."
@@ -147,7 +147,7 @@ Local packages can also be orphans, explicit or dependencies."
                   (buffer-string))))
 
 ;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-descriptions.
-(defun helm-system-packages-pacman-buffer-all ()
+(defun helm-system-packages-pacman-cache-names ()
   "Cache all package names."
   (with-temp-buffer
     (call-process "expac" nil '(t nil) nil "--sync" "%n")
@@ -159,7 +159,7 @@ Local packages can also be orphans, explicit or dependencies."
   "Column at which descriptions are aligned, excluding a double-space gap.")
 
 ;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-locals.
-(defun helm-system-packages-pacman-buffer-descriptions ()
+(defun helm-system-packages-pacman-cache-descriptions ()
   "Cache all package names with descriptions."
   (with-temp-buffer
     ;; TODO: Possible optimization: Output directly in Elisp?
@@ -171,7 +171,7 @@ Local packages can also be orphans, explicit or dependencies."
 
 (defun helm-system-packages-pacman-init ()
   "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages-pacman--all helm-system-packages-pacman--descriptions)
+  (unless (and helm-system-packages-pacman--names helm-system-packages-pacman--descriptions)
     (helm-system-packages-pacman-refresh))
   ;; TODO: We should only create the buffer if it does not already exist.
   ;; On the other hand, we need to be able to override the package list.
@@ -180,13 +180,13 @@ Local packages can also be orphans, explicit or dependencies."
       'global
     (if helm-system-packages-details-flag
         helm-system-packages-pacman--descriptions
-      helm-system-packages-pacman--all)))
+      helm-system-packages-pacman--names)))
 
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages-pacman--descriptions (helm-system-packages-pacman-buffer-descriptions)
-        helm-system-packages-pacman--all (helm-system-packages-pacman-buffer-all))
+  (setq helm-system-packages-pacman--descriptions (helm-system-packages-pacman-cache-descriptions)
+        helm-system-packages-pacman--names (helm-system-packages-pacman-cache-names))
   (let ((explicit (helm-system-packages-pacman-list-explicit))
          (dependencies (helm-system-packages-pacman-list-dependencies))
          (orphans (helm-system-packages-pacman-list-orphans))

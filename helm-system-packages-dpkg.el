@@ -95,8 +95,8 @@
   "Face for packages with left-over configuration files."
   :group 'helm-system-packages)
 
-(defvar helm-system-packages-dpkg--all nil
-  "Cache of all packages.")
+(defvar helm-system-packages-dpkg--names nil
+  "Cache of all package names.")
 
 (defvar helm-system-packages-dpkg--descriptions nil
   "Cache of all package names with descriptions.")
@@ -126,7 +126,7 @@
         (when (string= (cadr pkg) "deinstall")
           (push (car pkg) res))))))
 
-(defun helm-system-packages-dpkg-buffer-all ()
+(defun helm-system-packages-dpkg-cache-names ()
   "Cache all package names."
   (with-temp-buffer
     (call-process "apt-cache" nil t nil "pkgnames")
@@ -136,7 +136,7 @@
 (defcustom helm-system-packages-dpkg-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap.")
 
-(defun helm-system-packages-dpkg-buffer-descriptions ()
+(defun helm-system-packages-dpkg-cache-descriptions ()
   "Cache all package names with descriptions."
   (with-temp-buffer
     ;; `apt-cache search` is much faster than `apt-cache show`.
@@ -166,8 +166,8 @@
 (defun helm-system-packages-dpkg-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages-dpkg--descriptions (helm-system-packages-dpkg-buffer-descriptions)
-        helm-system-packages-dpkg--all (helm-system-packages-dpkg-buffer-all))
+  (setq helm-system-packages-dpkg--descriptions (helm-system-packages-dpkg-cache-descriptions)
+        helm-system-packages-dpkg--names (helm-system-packages-dpkg-cache-names))
   (let ((explicit (helm-system-packages-dpkg-list-explicit))
         (dependencies (helm-system-packages-dpkg-list-dependencies))
         (residuals (helm-system-packages-dpkg-list-residuals)))
