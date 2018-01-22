@@ -50,6 +50,11 @@ It is called:
   :group 'helm-system-packages
   :type 'boolean)
 
+(defcustom helm-system-packages-auto-send-commandline-p t
+  "When a transaction commandline is inserted into a shell buffer, "
+  :group 'helm-system-packages
+  :type 'boolean)
+
 (defcustom helm-system-packages-candidate-limit 1000
   "Maximum number of candidates to display at once.
 
@@ -134,7 +139,8 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
       (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
       (goto-char (point-max))
       (insert (mapconcat 'identity arg-list " "))
-      (eshell-send-input))))
+      (when helm-system-packages-auto-send-commandline-p
+        (eshell-send-input)))))
 
 (defun helm-system-packages-browse-url (urls)
   "Browse homepage URLs of `helm-marked-candidates'.
