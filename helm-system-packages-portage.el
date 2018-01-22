@@ -103,7 +103,7 @@ Requirements:
   :group 'helm-system-packages)
 
 ;; TODO: Move `all' and `description' to common file?
-(defvar helm-system-packages-portage--all nil
+(defvar helm-system-packages-portage--names nil
   "Cache of all package names.")
 
 (defvar helm-system-packages-portage--descriptions nil

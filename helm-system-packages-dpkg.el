@@ -175,13 +175,13 @@ Requirements:
 
 (defun helm-system-packages-dpkg-init ()
   "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages-dpkg--all helm-system-packages-dpkg--descriptions)
+  (unless (and helm-system-packages-dpkg--names helm-system-packages-dpkg--descriptions)
     (helm-system-packages-dpkg-refresh))
   (helm-init-candidates-in-buffer
       'global
     (if helm-system-packages-show-descriptions-p
         helm-system-packages-dpkg--descriptions
-      helm-system-packages-dpkg--all)))
+      helm-system-packages-dpkg--names)))
 
 (defun helm-system-packages-dpkg-refresh ()
   "Refresh the package list."
@@ -213,7 +213,7 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defvar helm-system-packages-dpkg-source
   (helm-build-in-buffer-source "dpkg source"
-    :init 'helm-system-packages-init
+    :init 'helm-system-packages-dpkg-init
     :candidate-transformer 'helm-system-packages-dpkg-transformer
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
