@@ -285,6 +285,40 @@ Otherwise display in `helm-system-packages-buffer'."
         (goto-char (point-min))
         (delete-char 1)))))
 
+(defun helm-system-packages-pacman-find-files (_candidate)
+  (require 'helm-files)
+  (let ((candidates (reverse (helm-marked-candidates)))
+        local sync res)
+    (dolist (c candidates)
+      (push c (if (assoc c helm-system-packages--display-lists) local sync)))
+    (if (and (not local) (not sync))
+        (message "No result")
+      (setq res
+            (with-temp-buffer
+              ;; pacman's file database queries do not include the leading '/'.
+              (when sync
+                ;; TODO: Check for errors when file database does not exist.
+                (apply #'call-process "pacman" nil t nil "--files" "--list" "--quiet" sync)
+                (goto-char (point-min))
+                (while (not (eobp))
+                  (insert "/")
+                  (forward-line)))
+              (when local
+                (apply #'call-process "pacman" nil t nil "--query" "--list" "--quiet" local))
+              (buffer-string)))
+      (if helm-current-prefix-arg
+          (insert res)
+        (helm :sources (helm-build-sync-source "Package files"
+                         :candidates (split-string res "\n")
+                         :candidate-transformer (lambda (files)
+                                                  (let ((helm-ff-transformer-show-only-basename nil))
+                                                    (mapcar 'helm-ff-filter-candidate-one-by-one files)))
+                         :candidate-number-limit 'helm-ff-candidate-number-limit
+                         :persistent-action 'helm-find-files-persistent-action
+                         :keymap 'helm-find-files-map
+                         :action 'helm-find-files-actions)
+              :buffer "*helm system package files*")))))
+
 (defvar helm-system-packages-pacman-source
   (helm-build-in-buffer-source "pacman source"
     :init 'helm-system-packages-pacman-init
@@ -301,12 +335,7 @@ Otherwise display in `helm-system-packages-buffer'."
               ("Uninstall (`C-u' to include dependencies)" .
                (lambda (_)
                  (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
-              ("Find files" .
-               ;; TODO: pacman supports querying files of non-installed packages.  This is slower though.
-               ;; pacman --files --list --quiet
-               ;; Note: Must add the "/" prefix manually.
-               (lambda (_)
-                 (helm-system-packages-find-files "pacman" "--query" "--list" "--quiet")))
+              ("Find files" . helm-system-packages-pacman-find-files)
               ("Show dependencies" .
                (lambda (_)
                  ;; TODO: As an optimization, --query could be used and --sync could be a fallback.
