@@ -175,7 +175,8 @@ Local packages can also be orphans, explicit or dependencies."
 
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap."
-  :group 'helm-system-packages)
+  :group 'helm-system-packages
+  :type 'integerp)
 
 ;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-locals.
 (defun helm-system-packages-pacman-cache-descriptions ()
@@ -221,6 +222,11 @@ Local packages can also be orphans, explicit or dependencies."
       ;; Local packages are necessarily either explicitly installed or a required dependency or an orphan.
       (push 'helm-system-packages-pacman-locals (cdr (assoc p helm-system-packages--display-lists))))))
 
+(defcustom helm-system-packages-pacman-confirm-p t
+  "Prompt for confirmation before proceding with transaction."
+  :group 'helm-system-packages
+  :type 'boolean)
+
 (defvar helm-system-packages-pacman-source
   (helm-build-in-buffer-source "pacman source"
     :init 'helm-system-packages-pacman-init
@@ -235,10 +241,10 @@ Local packages can also be orphans, explicit or dependencies."
                  (helm-system-packages-print "pacman" "--sync" "--info" "--info")))
               ("Install (`C-u' to reinstall)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed"))))
+                 (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
               ("Uninstall (`C-u' to include dependencies)" .
                (lambda (_)
-                 (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive"))))
+                 (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
               ("Find files" .
                ;; TODO: pacman supports querying files of non-installed packages.  This is slower though.
                ;; pacman --files --list --quiet
