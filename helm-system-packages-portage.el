@@ -30,6 +30,50 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defvar helm-system-packages-portage-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-map)
+    (define-key map (kbd "M-I")   'helm-system-packages-portage-toggle-explicit)
+    (define-key map (kbd "M-U")   'helm-system-packages-portage-toggle-uninstalled)
+    (define-key map (kbd "M-D")   'helm-system-packages-portage-toggle-dependencies)
+    map))
+
+(defvar helm-system-packages-portage--show-uninstalled-p t)
+(defvar helm-system-packages-portage--show-explicit-p t)
+(defvar helm-system-packages-portage--show-dependencies-p t)
+
+(defun helm-system-packages-portage-toggle-explicit ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-portage--show-explicit-p (not helm-system-packages-portage--show-explicit-p))
+    (helm-update)))
+(put 'helm-system-packages-portage-toggle-explicit 'helm-only t)
+
+(defun helm-system-packages-portage-toggle-uninstalled ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-portage--show-uninstalled-p (not helm-system-packages-portage--show-uninstalled-p))
+    (helm-update)))
+(put 'helm-system-packages-portage-toggle-uninstalled 'helm-only t)
+
+(defun helm-system-packages-portage-toggle-dependencies ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-portage--show-dependencies-p (not helm-system-packages-portage--show-dependencies-p))
+    (helm-update)))
+(put 'helm-system-packages-portage-toggle-dependencies 'helm-only t)
+
+(defun helm-system-packages-portage-transformer (packages)
+  (let (res (pkglist (reverse packages)))
+    (dolist (p pkglist res)
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+        (cond
+         ((not face) (when helm-system-packages-portage--show-uninstalled-p (push p res)))
+         ((or
+           (and helm-system-packages-portage--show-explicit-p (memq 'helm-system-packages-portage-explicit face))
+           (and helm-system-packages-portage--show-dependencies-p (memq 'helm-system-packages-portage-dependencies face)))
+          (push (propertize p 'face (car face)) res)))))))
+
 (defface helm-system-packages-portage-explicit '((t (:inherit font-lock-warning-face)))
   "Face for explicitly installed packages."
   :group 'helm-system-packages)
@@ -119,9 +163,10 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 (defvar helm-system-packages-portage-source
   (helm-build-in-buffer-source "Portage source"
     :init 'helm-system-packages-portage-init
-    :candidate-transformer 'helm-system-packages-highlight
+    :candidate-transformer 'helm-system-packages-portage-transformer
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
+    :keymap helm-system-packages-portage-map
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "eix")))
