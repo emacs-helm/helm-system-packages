@@ -278,7 +278,8 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
                    helm-system-packages-portage-use-source)
         :buffer "*helm portage*"
         :truncate-lines t
-        :input (substring-no-properties (or (thing-at-point 'symbol) ""))))
+        :input (when helm-system-packages-use-symbol-at-point-p
+                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
 
 (provide 'helm-system-packages-portage)
 

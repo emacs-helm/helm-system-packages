@@ -63,6 +63,11 @@ It is called:
   :group 'helm-system-packages
   :type 'integerp)
 
+(defcustom helm-system-packages-use-symbol-at-point-p nil
+  "Whether to use symbol at point as a default search entry."
+  :group 'helm-system-packages
+  :type 'boolean)
+
 (defun helm-system-packages-toggle-descriptions ()
   "Toggle description column."
   (interactive)
