@@ -227,6 +227,64 @@ Local packages can also be orphans, explicit or dependencies."
   :group 'helm-system-packages
   :type 'boolean)
 
+(defun helm-system-packages-pacman-info (_candidate)
+  "Print information about the selected packages.
+
+The local database will be queried if possible, while the sync database is used as a fallback.
+Note that they don't hold the exact same information.
+
+With prefix argument, insert the output at point.
+Otherwise display in `helm-system-packages-buffer'."
+  ;; TODO: Sort buffer output? Or keep the mark order?
+  (let ((candidates (reverse (helm-marked-candidates)))
+        local local-res
+        sync sync-res
+        ;; Record the current prefix arg now because we will change buffer later.
+        (prefix helm-current-prefix-arg))
+    (dolist (c candidates)
+      (push c (if (assoc c helm-system-packages--display-lists) local sync)))
+    (if (and (not local) (not sync))
+        (message "No result")
+      ;; Get local candidates first, then sync candidates.
+      ;; TODO: Write directly to Org buffer.
+      (when local
+        (setq local-res
+              (with-temp-buffer
+                (apply #'call-process "pacman" nil t nil "--query" "--info" "--info" local)
+                (buffer-string)))
+        (unless prefix
+          (switch-to-buffer helm-system-packages-buffer)
+          (erase-buffer)
+          (org-mode)
+          (setq local-res (replace-regexp-in-string "\\`.*: " "* " local-res))
+          (setq local-res (replace-regexp-in-string "\n\n.*: " "\n* " local-res)))
+        (insert local-res))
+      (when sync
+        (setq sync-res
+              (with-temp-buffer
+                (apply #'call-process "pacman" nil t nil "--sync" "--info" "--info" sync)
+                (buffer-string)))
+        (unless prefix
+          (switch-to-buffer helm-system-packages-buffer)
+          (unless local-res
+            (erase-buffer)
+            (org-mode))
+          ;; `pacman -Sii' returns:
+          ;;
+          ;; Repository      : community
+          ;; Name            : FOO
+          ;;
+          ;; We need to remove the second line and print `* FOO'.
+          (setq sync-res (replace-regexp-in-string "\\`\\(.*\\)\n.*: \\(.*\\)" "* \\2\n\\1" sync-res))
+          (setq sync-res (replace-regexp-in-string "\n\n\\(.*\\)\n.*: \\(.*\\)" "\n* \\2\n\\1" sync-res)))
+        (insert sync-res))
+      (unless prefix
+        ;; Insert a newline so that we are at the top-level to sort.
+        (insert "\n")
+        (org-sort-entries nil ?a)
+        (goto-char (point-min))
+        (delete-char 1)))))
+
 (defvar helm-system-packages-pacman-source
   (helm-build-in-buffer-source "pacman source"
     :init 'helm-system-packages-pacman-init
@@ -236,9 +294,7 @@ Local packages can also be orphans, explicit or dependencies."
     :keymap helm-system-packages-pacman-map
     :help-message 'helm-system-packages-pacman-help-message
     :persistent-help "Show package description"
-    :action '(("Show package(s)" .
-               (lambda (_)
-                 (helm-system-packages-print "pacman" "--sync" "--info" "--info")))
+    :action '(("Show package(s)" . helm-system-packages-pacman-info)
               ("Install (`C-u' to reinstall)" .
                (lambda (_)
                  (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))

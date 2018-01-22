@@ -101,8 +101,7 @@ Otherwise display in `helm-system-packages-buffer'."
         (switch-to-buffer helm-system-packages-buffer)
         (erase-buffer)
         (org-mode)
-        ;; TODO: This si too fragile and does not work for pacman.
-        ;; Alternative: Simply replace the double linebreak with "* pkg".
+        ;; This is does not work for pacman which needs a specialized function.
         (setq res (replace-regexp-in-string "\\`.*: " "* " res))
         (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))
       (insert res))))
