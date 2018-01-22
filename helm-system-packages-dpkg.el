@@ -29,6 +29,60 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defvar helm-system-packages-dpkg-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-map)
+    (define-key map (kbd "M-I")   'helm-system-packages-dpkg-toggle-explicit)
+    (define-key map (kbd "M-U")   'helm-system-packages-dpkg-toggle-uninstalled)
+    (define-key map (kbd "M-D")   'helm-system-packages-dpkg-toggle-dependencies)
+    (define-key map (kbd "M-R")   'helm-system-packages-dpkg-toggle-residuals)
+    map))
+
+(defvar helm-system-packages-dpkg--show-uninstalled-p t)
+(defvar helm-system-packages-dpkg--show-explicit-p t)
+(defvar helm-system-packages-dpkg--show-dependencies-p t)
+(defvar helm-system-packages-dpkg--show-residuals-p t)
+
+(defun helm-system-packages-dpkg-toggle-explicit ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-explicit-p (not helm-system-packages-dpkg--show-explicit-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-explicit 'helm-only t)
+
+(defun helm-system-packages-dpkg-toggle-uninstalled ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-uninstalled-p (not helm-system-packages-dpkg--show-uninstalled-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-uninstalled 'helm-only t)
+
+(defun helm-system-packages-dpkg-toggle-dependencies ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-dependencies-p (not helm-system-packages-dpkg--show-dependencies-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-dependencies 'helm-only t)
+
+(defun helm-system-packages-dpkg-toggle-residuals ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-residuals-p (not helm-system-packages-dpkg--show-residuals-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-residuals 'helm-only t)
+
+(defun helm-system-packages-dpkg-transformer (packages)
+  (let (res (pkglist (reverse packages)))
+    (dolist (p pkglist res)
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+        (cond
+         ((not face) (when helm-system-packages-dpkg--show-uninstalled-p (push p res)))
+         ((or
+           (and helm-system-packages-dpkg--show-explicit-p (memq 'helm-system-packages-dpkg-explicit face))
+           (and helm-system-packages-dpkg--show-dependencies-p (memq 'helm-system-packages-dpkg-dependencies face))
+           (and helm-system-packages-dpkg--show-residuals-p (memq 'helm-system-packages-dpkg-residuals face)))
+          (push (propertize p 'face (car face)) res)))))))
+
 (defface helm-system-packages-dpkg-explicit '((t (:inherit font-lock-warning-face)))
   "Face for explicitly installed packages."
   :group 'helm-system-packages)
@@ -39,10 +93,6 @@
 
 (defface helm-system-packages-dpkg-residuals '((t (:inherit font-lock-string-face :slant italic)))
   "Face for packages with left-over configuration files."
-  :group 'helm-system-packages)
-
-(defface helm-system-packages-dpkg-locals '((t (:weight bold)))
-  "Face for local packages."
   :group 'helm-system-packages)
 
 (defun helm-system-packages-dpkg-list-explicit ()
@@ -138,9 +188,10 @@ Otherwise display in `helm-system-packages-buffer'."
 (defvar helm-system-packages-dpkg-source
   (helm-build-in-buffer-source "dpkg source"
     :init 'helm-system-packages-init
-    :candidate-transformer 'helm-system-packages-highlight
+    :candidate-transformer 'helm-system-packages-dpkg-transformer
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
+    :keymap helm-system-packages-dpkg-map
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "show")))
