@@ -26,7 +26,6 @@
 ;; Helm UI wrapper for system package managers.
 
 ;;; Code:
-(require 'helm-files)
 (require 'seq)
 
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
@@ -103,6 +102,7 @@ Otherwise display in `helm-system-packages-buffer'."
       (insert res))))
 
 (defun helm-system-packages-find-files (command &rest args)
+  (require 'helm-files)
   (let ((res (apply #'helm-system-packages-run command args)))
     (if (string-empty-p res)
         (message "No result")
