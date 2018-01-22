@@ -148,7 +148,7 @@ Local packages can also be orphans, explicit or dependencies."
 
 ;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-descriptions.
 (defun helm-system-packages-pacman-buffer-all ()
-  "Cache all package descriptions."
+  "Cache all package names."
   (with-temp-buffer
     (call-process "expac" nil '(t nil) nil "--sync" "%n")
     (apply 'call-process "expac" nil '(t nil) nil "--query" "%n" (helm-system-packages-pacman-list-locals))
@@ -160,7 +160,7 @@ Local packages can also be orphans, explicit or dependencies."
 
 ;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-locals.
 (defun helm-system-packages-pacman-buffer-descriptions ()
-  "Cache all package descriptions."
+  "Cache all package names with descriptions."
   (with-temp-buffer
     ;; TODO: Possible optimization: Output directly in Elisp?
     (let ((format-string (format "%%-%dn  %%d" helm-system-packages-pacman-column-width)))

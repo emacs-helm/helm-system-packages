@@ -121,7 +121,7 @@
           (push (car pkg) res))))))
 
 (defun helm-system-packages-dpkg-buffer-all ()
-  "List all packages."
+  "Cache all package names."
   (with-temp-buffer
     (call-process "apt-cache" nil t nil "pkgnames")
     ;; (sort-lines nil (point-min) (point-max))
@@ -131,7 +131,7 @@
   "Column at which descriptions are aligned, excluding a double-space gap.")
 
 (defun helm-system-packages-dpkg-buffer-descriptions ()
-  "Cache all package descriptions."
+  "Cache all package names with descriptions."
   (with-temp-buffer
     ;; `apt-cache search` is much faster than `apt-cache show`.
     (call-process "apt-cache" nil '(t nil) nil "search" ".")
