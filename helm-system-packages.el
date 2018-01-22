@@ -32,16 +32,6 @@
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
-;; TODO: Move to individual package managers.
-
-(defface helm-system-packages-explicit '((t (:inherit font-lock-warning-face :weight bold)))
-  "Face for explicitly installed packages."
-  :group 'helm-system-packages)
-
-(defface helm-system-packages-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
-  "Face for packages installed as dependencies."
-  :group 'helm-system-packages)
-
 (defvar helm-system-packages-refresh nil
   "Function to refresh the package list.
 It is called:
@@ -62,11 +52,6 @@ It is called:
   :group 'helm-system-packages
   :type 'boolean)
 
-(defcustom helm-system-packages-max-length 36 ; Seems to be a decent value for Portage.
-  "Width of the package name column when displaying details."
-  :group 'helm-system-packages
-  :type 'integerp)
-
 (defcustom helm-system-packages-candidate-limit 1000
   "Maximum number of candidates to display at once.
 
@@ -83,18 +68,6 @@ such as the package description."
   (if helm-system-packages-details-flag
       (car (split-string package))
     package))
-
-;; TODO: Rename "highlight" to something else.  "display"?
-;; TODO: Propertize the cache directly?
-(defun helm-system-packages-highlight (packages)
-  "Display PACKAGES using the content of `helm-system-packages--display-lists'."
-  (mapcar (lambda (p)
-            ;; TODO: Add support for multiple faces.
-            (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
-              (if face
-                  (propertize p 'face (car face))
-                p)))
-          packages))
 
 (defun helm-system-packages-run (command &rest args)
   "COMMAND to run over `helm-marked-candidates'."
