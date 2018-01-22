@@ -12,7 +12,7 @@ Fuzzy-search, mark and execute the desired action over any set of packages:
 - Uninstall
 - Display packages details or insert details at point
 - Find files
-- ...
+- And much more.
 
 Some package managers come with their specific actions and even specific sources, e.g. Portage's USE flags.
 
@@ -23,6 +23,15 @@ There is only one entry point: ~helm-system-packages~.
 Use the persistent action to view the details of the marked packages.
 
 Most actions can be called with a prefix argument to insert the result at point.
+
+Transactions such as installing and removing packages are run via the `sudo`
+command in Eshell.
+If you'd like to cache the password for, say, an hour, you can configure Eshell
+to use its own version of sudo via TRAMP:
+
+: (require 'em-tramp)
+: (setq password-cache t)
+: (setq password-cache-expiry 3600)
 
 * Motivation
 

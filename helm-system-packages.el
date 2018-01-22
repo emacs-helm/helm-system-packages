@@ -31,6 +31,7 @@
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
+;; TODO: Don't refresh when eshell-last-command-status is not 0?
 (defvar helm-system-packages-refresh nil
   "Function to refresh the package list.
 It is called:
