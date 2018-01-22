@@ -134,7 +134,8 @@
     (buffer-string)))
 
 (defcustom helm-system-packages-dpkg-column-width 40
-  "Column at which descriptions are aligned, excluding a double-space gap.")
+  "Column at which descriptions are aligned, excluding a double-space gap."
+  :group 'helm-system-packages)
 
 (defun helm-system-packages-dpkg-cache-descriptions ()
   "Cache all package names with descriptions."

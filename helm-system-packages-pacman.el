@@ -156,7 +156,8 @@ Local packages can also be orphans, explicit or dependencies."
     (buffer-string)))
 
 (defcustom helm-system-packages-pacman-column-width 40
-  "Column at which descriptions are aligned, excluding a double-space gap.")
+  "Column at which descriptions are aligned, excluding a double-space gap."
+  :group 'helm-system-packages)
 
 ;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-locals.
 (defun helm-system-packages-pacman-cache-descriptions ()
