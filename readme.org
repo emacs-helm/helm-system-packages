@@ -28,7 +28,7 @@ Most actions can be called with a prefix argument to insert the result at point.
 
 Most of the package managers GUIs out there do not provide much efficiency over their commandline counterparts.
 
-The commandline workflow is not ideal however:
+The commandline workflow is centered around a cumbersome try-repeat loop:
 
 1. Search for local packages.
 2. Package missing?  Search for remote packages.
@@ -50,20 +50,20 @@ A candidate can have multiple faces.
 
 The =helm-system-packages.el= file provides some helper functions for Helm actions.
 
-* Roadmap
-** DONE Different face for dependencies.
-** DONE Use thing at point as a default value.
-** REVIEW Add column with description.
+** Roadmap
+*** DONE Different face for dependencies.
+*** DONE Use thing at point as a default value.
+*** REVIEW Add column with description.
 That would allow for matching over description as well.
-** TODO Option to display fullscreen (like helm-top)
+*** TODO Option to display fullscreen (like helm-top)
 Mostly useful if we add a "description" column.
-** DONE Use long switches whenever possible.
-** DONE Normalize action names.
+*** DONE Use long switches whenever possible.
+*** DONE Normalize action names.
 Not "Emerge" but "Install".
 Some actions are specific to some package managers however, e.g. "emerge pretend".
-** DONE All actions should support multiple candidates.
+*** DONE All actions should support multiple candidates.
 Centralize commands into one ~helm-system-packages-run~ or something like that.
-** REVIEW Add defcustom for commands.
+*** REVIEW Add defcustom for commands.
 To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~--oneshot~ for emerge.
 
 Maybe ~--oneshot~ would deserve a separate action.
@@ -72,31 +72,31 @@ Maybe ~--oneshot~ would deserve a separate action.
 
 ~C-u~ could be used to force installation of already installed packages.
 ~C-u~ could be used to uninstall unrequired dependencies.
-** DONE Output to Eshell only? Comint mode?
-** TODO Factor all "info" actions?
+*** DONE Output to Eshell only? Comint mode?
+*** TODO Factor all "info" actions?
 We can add Org subsections for files, dependencies, etc.
 Those sections should be folded by default.
 
 We probably still need specific "info" actions to insert at point.
-** TODO Use bindings reflecting helm-list-elisp-packages
-** DONE Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
-** DONE Add helm-find-files keymap to "Find files"
-** DONE Browse URL should process directly when there is only one entry.
-** REVIEW Test without eshell-tramp.
+*** TODO Use bindings reflecting helm-list-elisp-packages
+*** DONE Add "find-files" command: a Helm-find-files session over the file list of the marked packages.
+*** DONE Add helm-find-files keymap to "Find files"
+*** DONE Browse URL should process directly when there is only one entry.
+*** REVIEW Test without eshell-tramp.
 If it does not work, either load it or fall back to "*sudo".
 Seems to be working though.
-** DONE "Refresh" action should be a command, really.
-** TODO Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
-** REVIEW Truncate long descriptions
+*** DONE "Refresh" action should be a command, really.
+*** TODO Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
+*** REVIEW Truncate long descriptions
 No more than one line per package?
 This should be coupled with the "full screen" feature.
-** REVIEW Re-use eshell buffer?
+*** REVIEW Re-use eshell buffer?
 Make an option?  Don't think that would be useful.
-** Stand-alone version?
+*** Stand-alone version?
 Should load emacs with --no-desktop?
-** Add xbps (Void Linux) support
-** Add guix support
-** Add homebrew support
+*** Add xbps (Void Linux) support
+*** Add guix support
+*** Add homebrew support
 
 * References
 - https://wiki.voidlinux.eu/Rosetta_stone

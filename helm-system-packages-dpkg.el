@@ -29,6 +29,24 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defvar helm-system-packages-dpkg-help-message
+  "* Helm dpkg
+
+Requirements:
+
+- dpkg
+- apt-get
+- apt-cache
+- apt-mark
+
+** Commands
+\\<helm-system-packages-dpkg-map>
+\\[helm-system-packages-dpkg-toggle-explicit]\t\tToggle display of explicitly installed packages.
+\\[helm-system-packages-dpkg-toggle-uninstalled]\t\tToggle display of non-installed.
+\\[helm-system-packages-dpkg-toggle-dependencies]\t\tToggle display of dependencies.
+\\[helm-system-packages-dpkg-toggle-residuals]\t\tToggle display of package with residual configuration files.
+\\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
+
 (defvar helm-system-packages-dpkg-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
@@ -200,6 +218,8 @@ Otherwise display in `helm-system-packages-buffer'."
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
     :keymap helm-system-packages-dpkg-map
+    :help-message 'helm-system-packages-dpkg-help-message
+    :persistent-help "Show package description"
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "apt-cache" "show")))

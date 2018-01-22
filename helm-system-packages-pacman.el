@@ -29,6 +29,23 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defvar helm-system-packages-pacman-help-message
+  "* Helm pacman
+
+Requirements:
+
+- pacman
+- expac
+
+** Commands
+\\<helm-system-packages-pacman-map>
+\\[helm-system-packages-pacman-toggle-explicit]\t\tToggle display of explicitly installed packages.
+\\[helm-system-packages-pacman-toggle-uninstalled]\t\tToggle display of non-installed.
+\\[helm-system-packages-pacman-toggle-dependencies]\t\tToggle display of required dependencies.
+\\[helm-system-packages-pacman-toggle-orphans]\t\tToggle display of unrequired dependencies.
+\\[helm-system-packages-pacman-toggle-locals]\t\tToggle display of local packages.
+\\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
+
 (defvar helm-system-packages-pacman-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
@@ -211,6 +228,8 @@ Local packages can also be orphans, explicit or dependencies."
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
     :keymap helm-system-packages-pacman-map
+    :help-message 'helm-system-packages-pacman-help-message
+    :persistent-help "Show package description"
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "pacman" "--sync" "--info" "--info")))

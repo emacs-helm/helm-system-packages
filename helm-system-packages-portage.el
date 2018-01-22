@@ -30,6 +30,25 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defvar helm-system-packages-portage-help-message
+  "* Helm Portage
+
+Requirements:
+
+- emerge
+- eix
+- qlist
+- euse (USE flags)
+- portageq (USE flags)
+- genlop (history)
+
+** Commands
+\\<helm-system-packages-portage-map>
+\\[helm-system-packages-portage-toggle-explicit]\t\tToggle display of explicitly installed packages.
+\\[helm-system-packages-portage-toggle-uninstalled]\t\tToggle display of non-installed.
+\\[helm-system-packages-portage-toggle-dependencies]\t\tToggle display of dependencies.
+\\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
+
 (defvar helm-system-packages-portage-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
@@ -168,6 +187,8 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
     :keymap helm-system-packages-portage-map
+    :help-message 'helm-system-packages-portage-help-message
+    :persistent-help "Show package description"
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "eix")))
@@ -219,6 +240,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
   (helm-build-in-buffer-source "USE flags"
     :init 'helm-system-packages-portage-use-init
     :candidate-transformer 'helm-system-packages-portage-use-transformer
+    :help-message 'helm-system-packages-portage-help-message
     :action '(("Description" .
                (lambda (elm)
                  (switch-to-buffer helm-system-packages-buffer)
