@@ -46,9 +46,8 @@ It is called:
   "Predefined configurations for `helm-system-packages'."
   :group 'helm)
 
-;; TODO: Add "C-]" to local map to toggle details.
-(defcustom helm-system-packages-details-flag t
-  "Always show details in package list when non-nil."
+(defcustom helm-system-packages-show-descriptions-p t
+  "Always show descriptions in package list when non-nil."
   :group 'helm-system-packages
   :type 'boolean)
 
@@ -59,13 +58,21 @@ It is called:
   :group 'helm-system-packages
   :type 'integerp)
 
+(defun helm-system-packages-toggle-descriptions ()
+  "Toggle description column."
+  (interactive)
+  (with-helm-alive-p
+  (setq helm-system-packages-show-descriptions-p (not helm-system-packages-show-descriptions-p))
+    (helm-force-update)))
+(put 'helm-system-packages-toggle-descriptions 'helm-only t)
+
 ;; TODO: Possible optimization: turn into macro.
 (defun helm-system-packages-extract-name (package)
   "Extract package name from the candidate.
 This is useful required because the Helm session runs over a buffer source, so
 there is only a REAL value which might contain additional display information
 such as the package description."
-  (if helm-system-packages-details-flag
+  (if helm-system-packages-show-descriptions-p
       (car (split-string package))
     package))
 

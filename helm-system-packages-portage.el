@@ -36,6 +36,7 @@
     (define-key map (kbd "M-I")   'helm-system-packages-portage-toggle-explicit)
     (define-key map (kbd "M-U")   'helm-system-packages-portage-toggle-uninstalled)
     (define-key map (kbd "M-D")   'helm-system-packages-portage-toggle-dependencies)
+    (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))
 
 (defvar helm-system-packages-portage--show-uninstalled-p t)
@@ -112,7 +113,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     (call-process "eix" nil t nil "--only-names")
     (buffer-string)))
 
-(defcustom helm-system-packages-portage-column-width 40
+(defcustom helm-system-packages-portage-column-width 36
   "Column at which descriptions are aligned, excluding a double-space gap."
   :group 'helm-system-packages)
 
@@ -143,7 +144,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     (helm-system-packages-portage-refresh))
   (helm-init-candidates-in-buffer
       'global
-    (if helm-system-packages-details-flag
+    (if helm-system-packages-show-descriptions-p
         helm-system-packages-portage--descriptions
       helm-system-packages-portage--names)))
 

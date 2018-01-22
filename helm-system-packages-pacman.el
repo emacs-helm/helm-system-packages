@@ -37,6 +37,7 @@
     (define-key map (kbd "M-D")   'helm-system-packages-pacman-toggle-dependencies)
     (define-key map (kbd "M-O")   'helm-system-packages-pacman-toggle-orphans)
     (define-key map (kbd "M-L")   'helm-system-packages-pacman-toggle-locals)
+    (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))
 
 (defvar helm-system-packages-pacman--show-uninstalled-p t)
@@ -179,7 +180,7 @@ Local packages can also be orphans, explicit or dependencies."
   ;; (unless (helm-candidate-buffer) ...
   (helm-init-candidates-in-buffer
       'global
-    (if helm-system-packages-details-flag
+    (if helm-system-packages-show-descriptions-p
         helm-system-packages-pacman--descriptions
       helm-system-packages-pacman--names)))
 

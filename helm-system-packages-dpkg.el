@@ -36,6 +36,7 @@
     (define-key map (kbd "M-U")   'helm-system-packages-dpkg-toggle-uninstalled)
     (define-key map (kbd "M-D")   'helm-system-packages-dpkg-toggle-dependencies)
     (define-key map (kbd "M-R")   'helm-system-packages-dpkg-toggle-residuals)
+    (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))
 
 (defvar helm-system-packages-dpkg--show-uninstalled-p t)
@@ -160,7 +161,7 @@
     (helm-system-packages-dpkg-refresh))
   (helm-init-candidates-in-buffer
       'global
-    (if helm-system-packages-details-flag
+    (if helm-system-packages-show-descriptions-p
         helm-system-packages-dpkg--descriptions
       helm-system-packages-dpkg--all)))
 
