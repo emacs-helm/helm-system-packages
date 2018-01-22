@@ -95,6 +95,12 @@
   "Face for packages with left-over configuration files."
   :group 'helm-system-packages)
 
+(defvar helm-system-packages-dpkg--all nil
+  "Cache of all packages.")
+
+(defvar helm-system-packages-dpkg--descriptions nil
+  "Cache of all package names with descriptions.")
+
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
