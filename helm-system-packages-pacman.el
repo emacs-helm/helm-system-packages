@@ -29,6 +29,75 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(defvar helm-system-packages-pacman-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-map)
+    (define-key map (kbd "M-I")   'helm-system-packages-pacman-toggle-explicit)
+    (define-key map (kbd "M-U")   'helm-system-packages-pacman-toggle-uninstalled)
+    (define-key map (kbd "M-D")   'helm-system-packages-pacman-toggle-dependencies)
+    (define-key map (kbd "M-O")   'helm-system-packages-pacman-toggle-orphans)
+    (define-key map (kbd "M-L")   'helm-system-packages-pacman-toggle-locals)
+    map))
+
+(defvar helm-system-packages-pacman--show-uninstalled-p t)
+(defvar helm-system-packages-pacman--show-explicit-p t)
+(defvar helm-system-packages-pacman--show-dependencies-p t)
+(defvar helm-system-packages-pacman--show-orphans-p t)
+(defvar helm-system-packages-pacman--show-locals-p t)
+
+(defun helm-system-packages-pacman-toggle-explicit ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-pacman--show-explicit-p (not helm-system-packages-pacman--show-explicit-p))
+    (helm-update)))
+(put 'helm-system-packages-pacman-toggle-explicit 'helm-only t)
+
+(defun helm-system-packages-pacman-toggle-uninstalled ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-pacman--show-uninstalled-p (not helm-system-packages-pacman--show-uninstalled-p))
+    (helm-update)))
+(put 'helm-system-packages-pacman-toggle-uninstalled 'helm-only t)
+
+(defun helm-system-packages-pacman-toggle-dependencies ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-pacman--show-dependencies-p (not helm-system-packages-pacman--show-dependencies-p))
+    (helm-update)))
+(put 'helm-system-packages-pacman-toggle-dependencies 'helm-only t)
+
+(defun helm-system-packages-pacman-toggle-orphans ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-pacman--show-orphans-p (not helm-system-packages-pacman--show-orphans-p))
+    (helm-update)))
+(put 'helm-system-packages-pacman-toggle-orphans 'helm-only t)
+
+(defun helm-system-packages-pacman-toggle-locals ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-pacman--show-locals-p (not helm-system-packages-pacman--show-locals-p))
+    (helm-update)))
+(put 'helm-system-packages-pacman-toggle-locals 'helm-only t)
+
+;; TODO: Propertize the cache directly?
+(defun helm-system-packages-pacman-transformer (packages)
+  ;; TODO: Possible optimization: Get rid of `reverse'.
+  (let (res (pkglist (reverse packages)))
+    (dolist (p pkglist res)
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+        (cond
+         ((not face) (when helm-system-packages-pacman--show-uninstalled-p (push p res)))
+         ;; For filtering, we consider local packages and non-local packages
+         ;; separately, thus we need to treat local packages first.
+         ;; TODO: Add support for multiple faces.
+         ((memq 'helm-system-packages-pacman-locals face)
+          (when helm-system-packages-pacman--show-locals-p (push (propertize p 'face (car face)) res)))
+         ((or
+           (and helm-system-packages-pacman--show-explicit-p (memq 'helm-system-packages-pacman-explicit face))
+           (and helm-system-packages-pacman--show-dependencies-p (memq 'helm-system-packages-pacman-dependencies face))
+           (and helm-system-packages-pacman--show-orphans-p (memq 'helm-system-packages-pacman-orphans face)))
+          (push (propertize p 'face (car face)) res)))))))
 
 (defface helm-system-packages-pacman-explicit '((t (:inherit font-lock-warning-face)))
   "Face for explicitly installed packages."
@@ -136,9 +205,10 @@ Local packages can also be orphans, explicit or dependencies."
 (defvar helm-system-packages-pacman-source
   (helm-build-in-buffer-source "pacman source"
     :init 'helm-system-packages-pacman-init
-    :candidate-transformer 'helm-system-packages-highlight
+    :candidate-transformer 'helm-system-packages-pacman-transformer
     :candidate-number-limit helm-system-packages-candidate-limit
     :display-to-real 'helm-system-packages-extract-name
+    :keymap helm-system-packages-pacman-map
     :action '(("Show package(s)" .
                (lambda (_)
                  (helm-system-packages-print "pacman" "--sync" "--info" "--info")))
