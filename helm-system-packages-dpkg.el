@@ -51,6 +51,12 @@ Requirements:
 \\[helm-system-packages-dpkg-toggle-residuals]\t\tToggle display of package with residual configuration files.
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
 
+(defvar helm-system-packages-dpkg--names nil
+  "Cache of all package names.")
+
+(defvar helm-system-packages-dpkg--descriptions nil
+  "Cache of all package names with descriptions.")
+
 (defvar helm-system-packages-dpkg-term-buffer nil)
 
 (defun helm-system-packages-dpkg-run-as-root (command &rest args)
@@ -147,12 +153,6 @@ a curses interface."
 (defface helm-system-packages-dpkg-residuals '((t (:inherit font-lock-string-face :slant italic)))
   "Face for packages with left-over configuration files."
   :group 'helm-system-packages)
-
-(defvar helm-system-packages-dpkg--names nil
-  "Cache of all package names.")
-
-(defvar helm-system-packages-dpkg--descriptions nil
-  "Cache of all package names with descriptions.")
 
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
