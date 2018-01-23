@@ -75,13 +75,14 @@ Those sections should be folded by default.
 
 We probably still need specific "info" actions to insert at point.
 *** TODO Use bindings reflecting helm-list-elisp-packages
-*** TODO Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
+*** TODO [#A] Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
 *** Add option to display multiline candidates for long descriptions.
 *** Stand-alone version?
 Should load emacs with --no-desktop?
-*** TODO Use ~term~ for dpkg
-Some packages fire up a curses configuration interface during installation.
 *** find-file action: Split packages in sources
+Done for pacman.
+*** With filtering, the displayed condidates won't include those above the candidate limit
+Can we include as many filtered candidates as possible?
 *** Add xbps (Void Linux) support
 *** Add guix support
 *** Add homebrew support
