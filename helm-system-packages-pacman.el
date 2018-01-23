@@ -236,6 +236,7 @@ Note that they don't hold the exact same information.
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   ;; TODO: Sort buffer output? Or keep the mark order?
+  (require 'org)
   (let ((candidates (reverse (helm-marked-candidates)))
         local local-res
         sync sync-res
@@ -338,10 +339,14 @@ Otherwise display in `helm-system-packages-buffer'."
   '(("Show package(s)" . helm-system-packages-pacman-info)
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--sync" (unless helm-current-prefix-arg "--needed") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
+       (helm-system-packages-run-as-root "pacman" "--sync"
+                                         (unless helm-current-prefix-arg "--needed")
+                                         (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--remove" (when helm-current-prefix-arg "--recursive") (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
+       (helm-system-packages-run-as-root "pacman" "--remove"
+                                         (when helm-current-prefix-arg "--recursive")
+                                         (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
     ("Find files" . helm-system-packages-pacman-find-files)
     ("Show dependencies" .
      (lambda (_)
