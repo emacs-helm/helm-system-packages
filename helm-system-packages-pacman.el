@@ -291,36 +291,48 @@ Otherwise display in `helm-system-packages-buffer'."
 (defun helm-system-packages-pacman-find-files (_candidate)
   (require 'helm-files)
   (let ((candidates (reverse (helm-marked-candidates)))
-        local sync res)
+        local sync buf)
     (dolist (c candidates)
       (push c (if (assoc c helm-system-packages--display-lists) local sync)))
     (if (and (not local) (not sync))
         (message "No result")
-      (setq res
+      (setq buf
             (with-temp-buffer
-              ;; pacman's file database queries do not include the leading '/'.
               (when sync
                 ;; TODO: Check for errors when file database does not exist.
-                (apply #'call-process "pacman" nil t nil "--files" "--list" "--quiet" sync)
-                (goto-char (point-min))
-                (while (not (eobp))
-                  (insert "/")
-                  (forward-line)))
+                (apply #'call-process "pacman" nil t nil "--files" "--list" sync))
               (when local
-                (apply #'call-process "pacman" nil t nil "--query" "--list" "--quiet" local))
+                (apply #'call-process "pacman" nil t nil "--query" "--list" local))
               (buffer-string)))
       (if helm-current-prefix-arg
-          (insert res)
-        (helm :sources (helm-build-sync-source "Package files"
-                         :candidates (split-string res "\n")
-                         :candidate-transformer (lambda (files)
-                                                  (let ((helm-ff-transformer-show-only-basename nil))
-                                                    (mapcar 'helm-ff-filter-candidate-one-by-one files)))
-                         :candidate-number-limit 'helm-ff-candidate-number-limit
-                         :persistent-action 'helm-find-files-persistent-action
-                         :keymap 'helm-find-files-map
-                         :action 'helm-find-files-actions)
-              :buffer "*helm system package files*")))))
+          (insert buf)
+        (let (file-list) ; An alist of (package-name . (files...))
+          (with-temp-buffer
+            (insert buf)
+            (goto-char (point-min))
+            (let (pkg pkg-list)
+              (while (search-forward " " nil t)
+                (setq pkg (buffer-substring-no-properties (line-beginning-position) (1- (point))))
+                (setq pkg-list (assoc pkg file-list))
+                (unless pkg-list
+                  (push (setq pkg-list (list pkg)) file-list))
+                ;; pacman's file database queries do not include the leading '/'.
+                (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
+                                              (buffer-substring-no-properties (point) (line-end-position)))))
+                (forward-line))
+              (helm :sources (mapcar
+                              (lambda (pkg)
+                                (helm-build-sync-source (concat (car pkg) " files")
+                                  :candidates (cdr pkg)
+                                  :candidate-transformer (lambda (files)
+                                                           (let ((helm-ff-transformer-show-only-basename nil))
+                                                             (mapcar 'helm-ff-filter-candidate-one-by-one files)))
+                                  :candidate-number-limit 'helm-ff-candidate-number-limit
+                                  :persistent-action 'helm-find-files-persistent-action
+                                  :keymap 'helm-find-files-map
+                                  :action 'helm-find-files-actions))
+                              file-list)
+                    :buffer "*helm system package files*"))))))))
 
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
