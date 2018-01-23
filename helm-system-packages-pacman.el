@@ -258,7 +258,7 @@ Otherwise display in `helm-system-packages-buffer'."
           (org-mode)
           (setq local-res (replace-regexp-in-string "\\`.*: " "* " local-res))
           (setq local-res (replace-regexp-in-string "\n\n.*: " "\n* " local-res)))
-        (insert local-res))
+        (save-excursion (insert local-res)))
       (when sync
         (setq sync-res
               (with-temp-buffer
@@ -277,13 +277,12 @@ Otherwise display in `helm-system-packages-buffer'."
           ;; We need to remove the second line and print `* FOO'.
           (setq sync-res (replace-regexp-in-string "\\`\\(.*\\)\n.*: \\(.*\\)" "* \\2\n\\1" sync-res))
           (setq sync-res (replace-regexp-in-string "\n\n\\(.*\\)\n.*: \\(.*\\)" "\n* \\2\n\\1" sync-res)))
-        (insert sync-res))
+        (save-excursion (insert sync-res)))
       (unless prefix
-        ;; Insert a newline so that we are at the top-level to sort.
-        (insert "\n")
-        (org-sort-entries nil ?a)
-        (goto-char (point-min))
-        (delete-char 1)))))
+        (save-mark-and-excursion
+         (push-mark (point-max) nil t)
+         (goto-char (point-min))
+          (org-sort-entries nil ?a))))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
   (require 'helm-files)

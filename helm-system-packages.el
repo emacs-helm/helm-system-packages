@@ -109,7 +109,7 @@ Otherwise display in `helm-system-packages-buffer'."
         ;; This is does not work for pacman which needs a specialized function.
         (setq res (replace-regexp-in-string "\\`.*: " "* " res))
         (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))
-      (insert res))))
+      (save-excursion (insert res)))))
 
 (defun helm-system-packages-find-files (command &rest args)
   (require 'helm-files)
