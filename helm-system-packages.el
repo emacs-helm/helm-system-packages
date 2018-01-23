@@ -143,6 +143,7 @@ Otherwise display in `helm-system-packages-buffer'."
   "COMMAND to run over `helm-marked-candidates'.
 
 COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
+  (require 'esh-mode)
   (let ((arg-list (append args (helm-marked-candidates)))
         (eshell-buffer-name helm-system-packages-eshell-buffer))
     ;; Refresh package list after command has completed.
