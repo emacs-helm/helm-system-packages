@@ -256,6 +256,7 @@ Otherwise display in `helm-system-packages-buffer'."
           (switch-to-buffer helm-system-packages-buffer)
           (erase-buffer)
           (org-mode)
+          (view-mode 0)
           (setq local-res (replace-regexp-in-string "\\`.*: " "* " local-res))
           (setq local-res (replace-regexp-in-string "\n\n.*: " "\n* " local-res)))
         (save-excursion (insert local-res)))
@@ -269,6 +270,7 @@ Otherwise display in `helm-system-packages-buffer'."
           (unless local-res
             (erase-buffer)
             (org-mode))
+          (view-mode 0)
           ;; `pacman -Sii' returns:
           ;;
           ;; Repository      : community
@@ -282,7 +284,9 @@ Otherwise display in `helm-system-packages-buffer'."
         (save-mark-and-excursion
          (push-mark (point-max) nil t)
          (goto-char (point-min))
-          (org-sort-entries nil ?a))))))
+         (org-sort-entries nil ?a)))
+      (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
+        (view-mode 1)))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
   (require 'helm-files)

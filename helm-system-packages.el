@@ -68,6 +68,13 @@ It is called:
   :group 'helm-system-packages
   :type 'boolean)
 
+(defcustom helm-system-packages-editable-info-p nil
+  "Whether info buffer is editable.
+If nil, it is displayed in view-mode, which means \"q\" (default binding) quits
+the window."
+  :group 'helm-system-packages
+  :type 'boolean)
+
 (defun helm-system-packages-toggle-descriptions ()
   "Toggle description column."
   (interactive)
@@ -106,10 +113,13 @@ Otherwise display in `helm-system-packages-buffer'."
         (switch-to-buffer helm-system-packages-buffer)
         (erase-buffer)
         (org-mode)
+        (view-mode 0)
         ;; This is does not work for pacman which needs a specialized function.
         (setq res (replace-regexp-in-string "\\`.*: " "* " res))
         (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))
-      (save-excursion (insert res)))))
+      (save-excursion (insert res))
+      (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
+        (view-mode 1)))))
 
 (defun helm-system-packages-find-files (command &rest args)
   (require 'helm-files)
