@@ -111,9 +111,9 @@ Otherwise display in `helm-system-packages-buffer'."
         (message "No result")
       (unless helm-current-prefix-arg
         (switch-to-buffer helm-system-packages-buffer)
+        (view-mode 0)
         (erase-buffer)
         (org-mode)
-        (view-mode 0)
         ;; This is does not work for pacman which needs a specialized function.
         (setq res (replace-regexp-in-string "\\`.*: " "* " res))
         (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))

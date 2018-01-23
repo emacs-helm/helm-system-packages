@@ -254,9 +254,9 @@ Otherwise display in `helm-system-packages-buffer'."
                 (buffer-string)))
         (unless prefix
           (switch-to-buffer helm-system-packages-buffer)
+          (view-mode 0)
           (erase-buffer)
           (org-mode)
-          (view-mode 0)
           (setq local-res (replace-regexp-in-string "\\`.*: " "* " local-res))
           (setq local-res (replace-regexp-in-string "\n\n.*: " "\n* " local-res)))
         (save-excursion (insert local-res)))
@@ -267,10 +267,10 @@ Otherwise display in `helm-system-packages-buffer'."
                 (buffer-string)))
         (unless prefix
           (switch-to-buffer helm-system-packages-buffer)
+          (view-mode 0)
           (unless local-res
             (erase-buffer)
             (org-mode))
-          (view-mode 0)
           ;; `pacman -Sii' returns:
           ;;
           ;; Repository      : community
