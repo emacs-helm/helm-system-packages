@@ -29,6 +29,10 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(declare-function term-line-mode "term")
+(declare-function term-char-mode "term")
+(declare-function term-send-input "term")
+
 (defvar helm-system-packages-dpkg-help-message
   "* Helm dpkg
 
@@ -46,6 +50,36 @@ Requirements:
 \\[helm-system-packages-dpkg-toggle-dependencies]\t\tToggle display of dependencies.
 \\[helm-system-packages-dpkg-toggle-residuals]\t\tToggle display of package with residual configuration files.
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
+
+(defvar helm-system-packages-dpkg-term-buffer nil)
+
+(defun helm-system-packages-dpkg-run-as-root (command &rest args)
+  "COMMAND to run over `helm-marked-candidates'.
+
+COMMAND will be run in a term-mode buffer `helm-system-packages-dpkg-term-buffer'.
+Eshell cannot be used for dpkg because of its \"configure\" mecanism which uses
+a curses interface."
+  (let ((arg-list (append args (helm-marked-candidates))))
+    ;; Refresh package list after command has completed.
+    (push command arg-list)
+    (push "sudo" arg-list)
+  (if (and helm-system-packages-dpkg-term-buffer
+           (buffer-live-p (get-buffer helm-system-packages-dpkg-term-buffer)))
+      (switch-to-buffer helm-system-packages-dpkg-term-buffer)
+    (ansi-term (getenv "SHELL") "term dpkg")
+    (setq helm-system-packages-dpkg-term-buffer (buffer-name))
+    (term-line-mode))
+  (goto-char (process-mark (get-buffer-process (current-buffer))))
+  ;; TODO: Detect if an existing process is still running.
+  (delete-region (point) (point-max))
+  (insert (mapconcat 'identity arg-list " "))
+  (term-char-mode)
+  ;; It seems that it's not possible to add a post-command hook with "term".
+  ;; Let's reset the cache right-away then.
+  (setq helm-system-packages-dpkg--names nil
+        helm-system-packages-dpkg--descriptions nil)
+  (when helm-system-packages-auto-send-commandline-p
+    (term-send-input))))
 
 (defvar helm-system-packages-dpkg-map
   (let ((map (make-sparse-keymap)))
@@ -217,10 +251,10 @@ Otherwise display in `helm-system-packages-buffer'."
        (helm-system-packages-print "apt-cache" "show")))
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
-       (helm-system-packages-run-as-root "apt-get" "install" (when helm-current-prefix-arg "--reinstall") )))
+       (helm-system-packages-dpkg-run-as-root "apt-get" "install" (when helm-current-prefix-arg "--reinstall") )))
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
-       (helm-system-packages-run-as-root "apt-get" "remove" (when helm-current-prefix-arg "--auto-remove"))))
+       (helm-system-packages-dpkg-run-as-root "apt-get" "remove" (when helm-current-prefix-arg "--auto-remove"))))
     ("Find files" .
      (lambda (_)
        (helm-system-packages-find-files "dpkg" "--listfiles")))
@@ -233,7 +267,7 @@ Otherwise display in `helm-system-packages-buffer'."
     ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
     ("Uninstall/Purge (`C-u' to include dependencies)" .
      (lambda (_)
-       (helm-system-packages-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))
+       (helm-system-packages-dpkg-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))
   "Actions for Helm dpkg."
     :group 'helm-system-packages
     :type '(alist :key-type string :value-type function))
