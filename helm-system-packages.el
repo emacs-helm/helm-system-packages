@@ -134,7 +134,7 @@ Otherwise display in `helm-system-packages-buffer'."
                                                   (let ((helm-ff-transformer-show-only-basename nil))
                                                     (mapcar 'helm-ff-filter-candidate-one-by-one files)))
                          :candidate-number-limit 'helm-ff-candidate-number-limit
-                         :persistent-action 'helm-find-files-persistent-action
+                         :persistent-action-if 'helm-find-files-persistent-action-if
                          :keymap 'helm-find-files-map
                          :action 'helm-find-files-actions)
               :buffer "*helm system package files*")))))
