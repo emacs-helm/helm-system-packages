@@ -164,30 +164,30 @@ Local packages can also be orphans, explicit or dependencies."
                   (call-process "pacman" nil t nil "--query" "--foreign" "--quiet")
                   (buffer-string))))
 
-;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-descriptions.
-(defun helm-system-packages-pacman-cache-names ()
-  "Cache all package names."
-  (with-temp-buffer
-    (call-process "expac" nil '(t nil) nil "--sync" "%n")
-    (apply 'call-process "expac" nil '(t nil) nil "--query" "%n" (helm-system-packages-pacman-list-locals))
-    (sort-lines nil (point-min) (point-max))
-    (buffer-string)))
-
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap."
   :group 'helm-system-packages
   :type 'integerp)
 
-;; TODO: Possible optimization: Re-use helm-system-packages-pacman-list-locals.
-(defun helm-system-packages-pacman-cache-descriptions ()
-  "Cache all package names with descriptions."
-  (with-temp-buffer
-    ;; TODO: Possible optimization: Output directly in Elisp?
-    (let ((format-string (format "%%-%dn  %%d" helm-system-packages-pacman-column-width)))
-      (call-process "expac" nil '(t nil) nil "--sync" format-string)
-      (apply 'call-process "expac" nil '(t nil) nil "--query" format-string (helm-system-packages-pacman-list-locals)))
-    (sort-lines nil (point-min) (point-max))
-    (buffer-string)))
+(defun helm-system-packages-pacman-cache (local-packages)
+  "Cache all package names with descriptions.
+LOCAL-PACKAGES is a list of strings.
+Return (NAMES . DESCRIPTIONS), a cons of two strings."
+  ;; We build both caches at the same time.  We could also build just-in-time, but
+  ;; benchmarks show that it only saves less than 20% when building one cache.
+  (let (names descriptions)
+    (setq descriptions
+          (with-temp-buffer
+            ;; TODO: Possible optimization: Output directly in Elisp?
+            (let ((format-string (format "%%-%dn  %%d" helm-system-packages-pacman-column-width)))
+              (call-process "expac" nil '(t nil) nil "--sync" format-string)
+              (apply 'call-process "expac" nil '(t nil) nil "--query" format-string local-packages))
+            (sort-lines nil (point-min) (point-max))
+            (buffer-string)))
+    ;; replace-regexp-in-string is faster than mapconcat over split-string.
+    (setq names
+          (replace-regexp-in-string " .*" "" descriptions))
+    (cons names descriptions)))
 
 (defun helm-system-packages-pacman-init ()
   "Cache package lists and create Helm buffer."
@@ -205,12 +205,13 @@ Local packages can also be orphans, explicit or dependencies."
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages-pacman--descriptions (helm-system-packages-pacman-cache-descriptions)
-        helm-system-packages-pacman--names (helm-system-packages-pacman-cache-names))
   (let ((explicit (helm-system-packages-pacman-list-explicit))
          (dependencies (helm-system-packages-pacman-list-dependencies))
          (orphans (helm-system-packages-pacman-list-orphans))
          (locals (helm-system-packages-pacman-list-locals)))
+    (let ((res (helm-system-packages-pacman-cache locals)))
+      (setq helm-system-packages-pacman--names (car res)
+            helm-system-packages-pacman--descriptions (cdr res)))
     (setq helm-system-packages--display-lists nil)
     (dolist (p explicit)
       (push (cons p '(helm-system-packages-pacman-explicit)) helm-system-packages--display-lists))
