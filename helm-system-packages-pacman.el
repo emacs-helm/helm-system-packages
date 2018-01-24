@@ -29,6 +29,8 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+(declare-function org-sort-entries "org.el")
+
 (defvar helm-system-packages-pacman-help-message
   "* Helm pacman
 
