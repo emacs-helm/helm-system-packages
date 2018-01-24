@@ -121,22 +121,28 @@ Otherwise display in `helm-system-packages-buffer'."
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
-(defun helm-system-packages-find-files (command &rest args)
+(defun helm-system-packages-build-file-source (package files)
+  "Build Helm file source for PACKAGE with FILES candidates.
+PACKAGES is a string and FILES is a list of strings."
   (require 'helm-files)
+  (helm-build-sync-source (concat package " files")
+    :candidates files
+    :candidate-transformer (lambda (files)
+                             (let ((helm-ff-transformer-show-only-basename nil))
+                               (mapcar 'helm-ff-filter-candidate-one-by-one files)))
+    :candidate-number-limit 'helm-ff-candidate-number-limit
+    :persistent-action-if 'helm-find-files-persistent-action-if
+    :keymap 'helm-find-files-map
+    :action 'helm-find-files-actions))
+
+(defun helm-system-packages-find-files (command &rest args)
   (let ((res (apply #'helm-system-packages-run command args)))
     (if (string-empty-p res)
-        (message "No result")
+        (message "No result") ; TODO: Error in helm-system-packages-run.
       (if helm-current-prefix-arg
           (insert res)
-        (helm :sources (helm-build-sync-source "Package files"
-                         :candidates (split-string res "\n")
-                         :candidate-transformer (lambda (files)
-                                                  (let ((helm-ff-transformer-show-only-basename nil))
-                                                    (mapcar 'helm-ff-filter-candidate-one-by-one files)))
-                         :candidate-number-limit 'helm-ff-candidate-number-limit
-                         :persistent-action-if 'helm-find-files-persistent-action-if
-                         :keymap 'helm-find-files-map
-                         :action 'helm-find-files-actions)
+        (helm :sources
+              (helm-system-packages-build-file-source "Packages" (split-string res "\n"))
               :buffer "*helm system package files*")))))
 
 (defun helm-system-packages-run-as-root (command &rest args)

@@ -227,113 +227,116 @@ Local packages can also be orphans, explicit or dependencies."
   :group 'helm-system-packages
   :type 'boolean)
 
+(defun helm-system-packages-pacman--run (commands)
+  "Run pacman COMMANDS over `helm-marked-candidates'.
+
+COMMANDS are a cons in the form of
+
+  ((\"local-command\" \"args\"...) .
+   (\"sync-command\" \"args\"...))
+
+The local/sync command will be run on the candidates which are/are not installed
+locally, respectively.
+
+Return (\"local-command-result\" . \"sync-command-result\")."
+  (let ((candidates (reverse (helm-marked-candidates)))
+        local sync)
+    (dolist (c candidates)
+      (push c (if (assoc c helm-system-packages--display-lists) local sync)))
+    (if (and (not local) (not sync))
+        (error "No result")
+      (cons
+       (with-temp-buffer
+         (when local
+           ;; We discard errors.
+           (apply #'call-process (caar commands) nil t nil (append (cdar commands) local))
+           (buffer-string)))
+       (with-temp-buffer
+         (when sync
+           (apply #'call-process (cadr commands) nil t nil (append (cddr commands) sync))
+           (buffer-string)))))))
+
 (defun helm-system-packages-pacman-info (_candidate)
   "Print information about the selected packages.
 
-The local database will be queried if possible, while the sync database is used as a fallback.
-Note that they don't hold the exact same information.
+The local database will be queried if possible, while the sync
+database is used as a fallback.  Note that they don't hold the
+exact same information.
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   ;; TODO: Sort buffer output? Or keep the mark order?
   (require 'org)
-  (let ((candidates (reverse (helm-marked-candidates)))
-        local local-res
-        sync sync-res
-        ;; Record the current prefix arg now because we will change buffer later.
-        (prefix helm-current-prefix-arg))
-    (dolist (c candidates)
-      (push c (if (assoc c helm-system-packages--display-lists) local sync)))
-    (if (and (not local) (not sync))
-        (message "No result")
-      ;; Get local candidates first, then sync candidates.
-      ;; TODO: Write directly to Org buffer.
-      (when local
-        (setq local-res
-              (with-temp-buffer
-                (apply #'call-process "pacman" nil t nil "--query" "--info" "--info" local)
+  (let* ((res (helm-system-packages-pacman--run '(("pacman" "--query" "--info" "--info") .
+                                                  ("pacman" "--sync" "--info" "--info"))))
+         (local-res (car res))
+         (sync-res (cdr res))
+         buf)
+    (setq buf (with-temp-buffer
+                (when local-res
+                  ;; We insert a double newline at the beginning so that the
+                  ;; regexp-replace works on the first entry as well.
+                  (save-excursion (insert "\n\n" local-res))
+                  (while (re-search-forward "\n\n.*: " nil t)
+                    (replace-match "\n* " nil nil)))
+                (goto-char (point-max))
+                (delete-blank-lines)
+                (when sync-res
+                  ;; Process sync candidates separately from local candidates.
+                  ;; `pacman -Sii' returns:
+                  ;;
+                  ;; Repository      : community
+                  ;; Name            : FOO
+                  ;;
+                  ;; We need to remove the second line and print `* FOO' at the top.
+                  (save-excursion (insert "\n\n" sync-res))
+                  (while (re-search-forward "\n\n\\(.*\\)\n.*: \\(.*\\)" nil t)
+                    (replace-match "\n* \\2\n\\1" nil nil)))
+                ;; Sort all entries.  org-sort-entries works on the whole buffer
+                ;; if it is strictly before the first entry.
+                (goto-char (point-min))
+                (org-mode)
+                (org-sort-entries nil ?a)
+                (goto-char (point-min))
+                (delete-blank-lines)
                 (buffer-string)))
-        (unless prefix
-          (switch-to-buffer helm-system-packages-buffer)
-          (view-mode 0)
-          (erase-buffer)
-          (org-mode)
-          (setq local-res (replace-regexp-in-string "\\`.*: " "* " local-res))
-          (setq local-res (replace-regexp-in-string "\n\n.*: " "\n* " local-res)))
-        (save-excursion (insert local-res)))
-      (when sync
-        (setq sync-res
-              (with-temp-buffer
-                (apply #'call-process "pacman" nil t nil "--sync" "--info" "--info" sync)
-                (buffer-string)))
-        (unless prefix
-          (switch-to-buffer helm-system-packages-buffer)
-          (view-mode 0)
-          (unless local-res
-            (erase-buffer)
-            (org-mode))
-          ;; `pacman -Sii' returns:
-          ;;
-          ;; Repository      : community
-          ;; Name            : FOO
-          ;;
-          ;; We need to remove the second line and print `* FOO'.
-          (setq sync-res (replace-regexp-in-string "\\`\\(.*\\)\n.*: \\(.*\\)" "* \\2\n\\1" sync-res))
-          (setq sync-res (replace-regexp-in-string "\n\n\\(.*\\)\n.*: \\(.*\\)" "\n* \\2\n\\1" sync-res)))
-        (save-excursion (insert sync-res)))
-      (unless prefix
-        (save-mark-and-excursion
-         (push-mark (point-max) nil t)
-         (goto-char (point-min))
-         (org-sort-entries nil ?a)))
+    (if helm-current-prefix-arg
+        (insert buf)
+      ;; TODO: Name temp buffer to helm-system-packages-buffer.
+      (switch-to-buffer helm-system-packages-buffer)
+      (view-mode 0)
+      (erase-buffer)
+      (org-mode)
+      (save-excursion (insert buf))
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
+  ;; TODO: Check for errors when file database does not exist.
   (require 'helm-files)
-  (let ((candidates (reverse (helm-marked-candidates)))
-        local sync buf)
-    (dolist (c candidates)
-      (push c (if (assoc c helm-system-packages--display-lists) local sync)))
-    (if (and (not local) (not sync))
-        (message "No result")
-      (setq buf
-            (with-temp-buffer
-              (when sync
-                ;; TODO: Check for errors when file database does not exist.
-                (apply #'call-process "pacman" nil t nil "--files" "--list" sync))
-              (when local
-                (apply #'call-process "pacman" nil t nil "--query" "--list" local))
-              (buffer-string)))
-      (if helm-current-prefix-arg
-          (insert buf)
-        (let (file-list) ; An alist of (package-name . (files...))
-          (with-temp-buffer
-            (insert buf)
-            (goto-char (point-min))
-            (let (pkg pkg-list)
-              (while (search-forward " " nil t)
-                (setq pkg (buffer-substring-no-properties (line-beginning-position) (1- (point))))
-                (setq pkg-list (assoc pkg file-list))
-                (unless pkg-list
-                  (push (setq pkg-list (list pkg)) file-list))
-                ;; pacman's file database queries do not include the leading '/'.
-                (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
-                                              (buffer-substring-no-properties (point) (line-end-position)))))
-                (forward-line))
-              (helm :sources (mapcar
-                              (lambda (pkg)
-                                (helm-build-sync-source (concat (car pkg) " files")
-                                  :candidates (cdr pkg)
-                                  :candidate-transformer (lambda (files)
-                                                           (let ((helm-ff-transformer-show-only-basename nil))
-                                                             (mapcar 'helm-ff-filter-candidate-one-by-one files)))
-                                  :candidate-number-limit 'helm-ff-candidate-number-limit
-                                  :persistent-action-if 'helm-find-files-persistent-action-if
-                                  :keymap 'helm-find-files-map
-                                  :action 'helm-find-files-actions))
-                              file-list)
-                    :buffer "*helm system package files*"))))))))
+  (let ((res (helm-system-packages-pacman--run '(("pacman" "--query" "--list") .
+                                                 ("pacman" "--files" "--list")))))
+    (if helm-current-prefix-arg
+        (insert res)
+      (let (file-list) ; An alist of (package-name . (files...))
+        (with-temp-buffer
+          (insert (car res) (or (cdr res) ""))
+          (goto-char (point-min))
+          (let (pkg pkg-list)
+            (while (search-forward " " nil t)
+              (setq pkg (buffer-substring-no-properties (line-beginning-position) (1- (point))))
+              (setq pkg-list (assoc pkg file-list))
+              (unless pkg-list
+                (push (setq pkg-list (list pkg)) file-list))
+              ;; pacman's file database queries do not include the leading '/'.
+              (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
+                                            (buffer-substring-no-properties (point) (line-end-position)))))
+              (forward-line))))
+        (helm :sources (mapcar
+                        (lambda (pkg)
+                          (helm-system-packages-build-file-source (car pkg) (cdr pkg)))
+                        file-list)
+              :buffer "*helm system package files*")))))
 
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
