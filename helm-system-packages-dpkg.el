@@ -1,11 +1,11 @@
 ;;; helm-system-packages-dpkg.el --- Helm UI for Debian's dpkg. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;;               2017        Pierre Neidhardt <ambrevar@gmail.com>
+;;               2017 ~ 2018 Pierre Neidhardt <ambrevar@gmail.com>
 
 ;; Author: Pierre Neidhardt <ambrevar@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.6.9
+;; Version: 1.7.0
 ;; Package-Requires: ((emacs "24.4") (helm "2.8.6"))
 ;; Keywords: helm, packages
 
