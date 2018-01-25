@@ -245,6 +245,44 @@ Otherwise display in `helm-system-packages-buffer'."
         (push (match-string 1 url) urls)))
     (helm-system-packages-browse-url urls)))
 
+(defvar helm-system-packages-dpkg--source-name "dpkg source")
+
+(defvar helm-system-packages-dpkg--descriptions-global nil
+  "All descriptions.
+Used to restore complete description list when browsing dependencies.")
+(defvar helm-system-packages-dpkg--names-global nil
+  "All names.
+Used to restore complete name list when browsing dependencies.")
+
+(defun helm-system-packages-dpkg-deps (_candidate &optional reverse)
+  "Run a Helm session over the packages returned by COMMAND run over `helm-marked-candidates'.
+With prefix argument, insert the output at point.
+
+If REVERSE is non-nil, show reverse dependencies instead."
+  (setq helm-system-packages-dpkg--descriptions (or helm-system-packages-dpkg--descriptions-global helm-system-packages-dpkg--descriptions)
+        helm-system-packages-dpkg--descriptions-global helm-system-packages-dpkg--descriptions)
+  (setq helm-system-packages-dpkg--names (or helm-system-packages-dpkg--names-global helm-system-packages-dpkg--names)
+        helm-system-packages-dpkg--names-global helm-system-packages-dpkg--names)
+  (let ((res (apply #'helm-system-packages-run "apt-cache" (if reverse "rdepends" "depends")))
+        desc-res)
+    (if (string= res "")
+        (message "No dependencies")
+      (setq res (with-temp-buffer
+                  (insert res)
+                  (sort-lines nil (point-min) (point-max))
+                  (delete-duplicate-lines (point-min) (point-max))
+                  (buffer-string)))
+      (dolist (name (split-string res "\n" t))
+        (when (string-match (concat "^" name "  .*$") helm-system-packages-dpkg--descriptions)
+          (setq desc-res (concat desc-res (match-string 0 helm-system-packages-dpkg--descriptions) "\n"))))
+      (let ((helm-system-packages-dpkg--descriptions desc-res)
+            (helm-system-packages-dpkg--names res)
+            (helm-system-packages-dpkg--source-name (concat
+                                                     (if reverse "Reverse deps" "Deps")
+                                                     " of "
+                                                     (mapconcat 'identity (helm-marked-candidates) " "))))
+        (helm-system-packages-dpkg)))))
+
 (defcustom helm-system-packages-dpkg-actions
   '(("Show package(s)" .
      (lambda (_)
@@ -269,11 +307,11 @@ Otherwise display in `helm-system-packages-buffer'."
      (lambda (_)
        (helm-system-packages-dpkg-run-as-root "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))
   "Actions for Helm dpkg."
-    :group 'helm-system-packages
-    :type '(alist :key-type string :value-type function))
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
 
-(defvar helm-system-packages-dpkg-source
-  (helm-build-in-buffer-source "dpkg source"
+(defun helm-system-packages-dpkg-build-source ()
+  (helm-build-in-buffer-source helm-system-packages-dpkg--source-name
     :init 'helm-system-packages-dpkg-init
     :candidate-transformer 'helm-system-packages-dpkg-transformer
     :candidate-number-limit helm-system-packages-candidate-limit
@@ -285,7 +323,7 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
-  (helm :sources '(helm-system-packages-dpkg-source)
+  (helm :sources (helm-system-packages-dpkg-build-source)
         :buffer "*helm dpkg*"
         :truncate-lines t
         :input (when helm-system-packages-use-symbol-at-point-p
