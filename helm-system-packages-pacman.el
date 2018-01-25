@@ -417,6 +417,9 @@ If REVERSE is non-nil, show reverse dependencies instead."
        (helm-system-packages-run-as-root "pacman" "--remove"
                                          (when helm-current-prefix-arg "--recursive")
                                          (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
+    ("Browse homepage URL" .
+     (lambda (_)
+       (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t))))
     ("Find files" . helm-system-packages-pacman-find-files)
     ("Show dependencies (`C-u' to include optional deps)" . helm-system-packages-pacman-deps)
     ("Show reverse dependencies" .
@@ -427,10 +430,7 @@ If REVERSE is non-nil, show reverse dependencies instead."
        (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
     ("Mark as explicit" .
      (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit")))
-    ("Browse homepage URL" .
-     (lambda (_)
-       (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t)))))
+       (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit"))))
   "Actions for Helm pacman."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))

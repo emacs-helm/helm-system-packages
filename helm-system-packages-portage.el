@@ -190,9 +190,9 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
        (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (if helm-current-prefix-arg "--depclean" "--unmerge"))))
-    ("Emerge-pretend" .
+    ("Browse homepage URL" .
      (lambda (_)
-       (helm-system-packages-print "emerge" "--pretend")))
+       (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t))))
     ("Find files" .
      (lambda (_)
        (helm-system-packages-find-files "equery" "--no-color" "files")))
@@ -202,6 +202,9 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     ("Show reverse dependencies" .
      (lambda (_)
        (helm-system-packages-print "equery" "--no-color" "depends")))
+    ("Emerge-pretend" .
+     (lambda (_)
+       (helm-system-packages-print "emerge" "--pretend")))
     ("Show history" .
      (lambda (_)
        (helm-system-packages-print "genlop" "-qe")))
@@ -214,10 +217,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
        ;; TODO: Test font-lock.
        (unless helm-current-prefix-arg
          (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
-         (font-lock-mode 1))))
-    ("Browse homepage URL" .
-     (lambda (_)
-       (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t)))))
+         (font-lock-mode 1)))))
   "Actions for Helm portage."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
