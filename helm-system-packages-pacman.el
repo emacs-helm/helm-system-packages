@@ -98,6 +98,10 @@ Requirements:
     (helm-update)))
 (put 'helm-system-packages-pacman-toggle-locals 'helm-only t)
 
+(defvar helm-system-packages-pacman--virtual-list nil
+  "List of virtual packages.
+This is only used for dependency display.")
+
 ;; TODO: Propertize the cache directly?
 (defun helm-system-packages-pacman-transformer (packages)
   ;; TODO: Possible optimization: Get rid of `reverse'.
@@ -105,7 +109,12 @@ Requirements:
     (dolist (p pkglist res)
       (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
         (cond
-         ((not face) (when helm-system-packages-pacman--show-uninstalled-p (push p res)))
+         ((and (not face) (member (helm-system-packages-extract-name p) helm-system-packages-pacman--virtual-list))
+          ;; When displaying dependencies, package may be virtual.
+          ;; Check first since it is also an "uninstalled" package.
+          (push (propertize p 'face 'helm-system-packages-pacman-virtual) res))
+         ((and (not face) helm-system-packages-pacman--show-uninstalled-p)
+               (push p res))
          ;; For filtering, we consider local packages and non-local packages
          ;; separately, thus we need to treat local packages first.
          ;; TODO: Add support for multiple faces.
@@ -131,6 +140,10 @@ Requirements:
 
 (defface helm-system-packages-pacman-locals '((t (:weight bold)))
   "Face for local packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-pacman-virtual '((t (:slant italic)))
+  "Face for virtual packages."
   :group 'helm-system-packages)
 
 (defvar helm-system-packages-pacman--names nil
@@ -339,6 +352,57 @@ Otherwise display in `helm-system-packages-buffer'."
                         file-list)
               :buffer "*helm system package files*")))))
 
+(defvar helm-system-packages--source-name "pacman source")
+
+(defvar helm-system-packages-pacman--descriptions-global nil
+  "All descriptions.
+Used to restore complete description list when browsing dependencies.")
+(defvar helm-system-packages-pacman--names-global nil
+  "All names.
+Used to restore complete name list when browsing dependencies.")
+
+(defun helm-system-packages-pacman-deps (_candidate &optional reverse)
+  "Run a Helm session over the packages returned by COMMAND run over `helm-marked-candidates'.
+With prefix argument, insert the output at point.
+
+If REVERSE is non-nil, show reverse dependencies instead."
+  (setq helm-system-packages-pacman--descriptions (or helm-system-packages-pacman--descriptions-global helm-system-packages-pacman--descriptions)
+        helm-system-packages-pacman--descriptions-global helm-system-packages-pacman--descriptions)
+  (setq helm-system-packages-pacman--names (or helm-system-packages-pacman--names-global helm-system-packages-pacman--names)
+        helm-system-packages-pacman--names-global helm-system-packages-pacman--names)
+  (let* ((format-string (if reverse "%N" (concat "%E" (and helm-current-prefix-arg "%o"))))
+         (res (helm-system-packages-pacman--run
+               (cons
+                (list "expac" "--query" "--listdelim" "\n" format-string)
+                (list "expac" "--sync" "--listdelim" "\n" format-string))))
+         desc-res)
+    ;; TODO: Possible optimization: split-string + sort + del-dups instead of working on buffer.
+    (setq res (with-temp-buffer
+                (insert
+                 (or (car res) "")
+                 (or (cdr res) ""))
+                (sort-lines nil (point-min) (point-max))
+                (delete-duplicate-lines (point-min) (point-max))
+                (buffer-string)))
+    (if (string= res "")
+        (message "No dependencies") ; TODO: Do not quit Helm session.
+      (dolist (name (split-string res "\n" t))
+        (if (string-match (concat "^" name "  .*$") helm-system-packages-pacman--descriptions)
+            (setq desc-res (concat desc-res (match-string 0 helm-system-packages-pacman--descriptions) "\n"))
+          (push name helm-system-packages-pacman--virtual-list)
+          (setq desc-res (concat desc-res
+                                 name
+                                 (make-string (- helm-system-packages-pacman-column-width (length name)) ? )
+                                 "  <virtual package>"
+                                 "\n"))))
+      (let ((helm-system-packages-pacman--descriptions desc-res)
+            (helm-system-packages-pacman--names res)
+            (helm-system-packages--source-name (concat
+                                                (if reverse "Reverse deps" "Deps")
+                                                " of "
+                                                (mapconcat 'identity (helm-marked-candidates) " "))))
+        (helm-system-packages-pacman)))))
+
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
     ("Install (`C-u' to reinstall)" .
@@ -352,13 +416,10 @@ Otherwise display in `helm-system-packages-buffer'."
                                          (when helm-current-prefix-arg "--recursive")
                                          (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
     ("Find files" . helm-system-packages-pacman-find-files)
-    ("Show dependencies" .
-     (lambda (_)
-       ;; TODO: As an optimization, --query could be used and --sync could be a fallback.
-       (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%E")))
+    ("Show dependencies (`C-u' to include optional deps)" . helm-system-packages-pacman-deps)
     ("Show reverse dependencies" .
      (lambda (_)
-       (helm-system-packages-print "expac" "--sync" "--listdelim" "\n" "%N")))
+       (helm-system-packages-pacman-deps _ 'reverse)))
     ("Mark as dependency" .
      (lambda (_)
        (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
@@ -372,8 +433,9 @@ Otherwise display in `helm-system-packages-buffer'."
     :group 'helm-system-packages
     :type '(alist :key-type string :value-type function))
 
-(defvar helm-system-packages-pacman-source
-  (helm-build-in-buffer-source "pacman source"
+(defun helm-system-packages-pacman-build-source ()
+  "Build Helm source for pacman."
+  (helm-build-in-buffer-source helm-system-packages--source-name
     :init 'helm-system-packages-pacman-init
     :candidate-transformer 'helm-system-packages-pacman-transformer
     :candidate-number-limit helm-system-packages-candidate-limit
@@ -385,7 +447,7 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defun helm-system-packages-pacman ()
   "Preconfigured `helm' for pacman."
-  (helm :sources '(helm-system-packages-pacman-source)
+  (helm :sources (helm-system-packages-pacman-build-source)
         :buffer "*helm pacman*"
         :truncate-lines t
         :input (when helm-system-packages-use-symbol-at-point-p
