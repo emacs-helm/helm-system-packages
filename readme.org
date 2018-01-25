@@ -60,15 +60,6 @@ A candidate can have multiple faces.
 The =helm-system-packages.el= file provides some helper functions for Helm actions.
 
 ** Roadmap
-*** REVIEW Add defcustom for commands.
-To allow different command switches, e.g. the ~--needed~ switch for pacman, or ~--oneshot~ for emerge.
-
-Maybe ~--oneshot~ would deserve a separate action.
-
-~apt-get~ has ~remove~ and ~purge~.  I think ~purge~ is ill-designed, but maybe we could trigger it with ~C-u~?
-
-~C-u~ could be used to force installation of already installed packages.
-~C-u~ could be used to uninstall unrequired dependencies.
 *** TODO Factor all "info" actions?
 We can add Org subsections for files, dependencies, etc.
 Those sections should be folded by default.
@@ -76,6 +67,7 @@ Those sections should be folded by default.
 We probably still need specific "info" actions to insert at point.
 *** TODO Use bindings reflecting helm-list-elisp-packages
 *** TODO [#A] Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
+Done for pacman.
 *** Add option to display multiline candidates for long descriptions.
 *** Stand-alone version?
 Should load emacs with --no-desktop?
