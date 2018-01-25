@@ -2,7 +2,12 @@
 
 * Introduction
 
-Helm-System-Packages is a Helm interface to the package manager of your operating system.
+Helm-System-Packages is an Emacs-based interface to the package manager of your
+operating system.
+
+Emacs is knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version for
+non-Emacs users.  Run the script and everything should be self-explanatory.  If
+it's not, it's bug, please report it.
 
 Start ~helm-system-packages~ to list all available packages (with installed
 packages as well as dependencies displayed in their own respective face).
@@ -69,8 +74,6 @@ We probably still need specific "info" actions to insert at point.
 *** TODO [#A] Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
 Done for pacman.
 *** Add option to display multiline candidates for long descriptions.
-*** Stand-alone version?
-Should load emacs with --no-desktop?
 *** find-file action: Split packages in sources
 Done for pacman.
 *** With filtering, the displayed condidates won't include those above the candidate limit

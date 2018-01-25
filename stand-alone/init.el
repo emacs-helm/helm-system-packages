@@ -1,0 +1,59 @@
+;; helm-system-packages
+
+(let ((minver "24.4"))
+  (when (version< emacs-version minver)
+    (switch-to-buffer "*Messages*")
+    (error "Helm-System-Packages requires Emacs v%s or higher" minver)))
+
+;; Set up.
+(setq
+ user-emacs-directory (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME"))
+ user-init-file (expand-file-name "init.el" (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME")))
+ package-user-dir (expand-file-name "elpa" (expand-file-name "helm-system-packages" (getenv "XDG_CACHE_HOME"))))
+
+(unless (and (require 'helm-system-packages nil t)
+             (require 'zenburn-theme nil t))
+  (when (require 'package)
+    ;; TODO: Use HTTPS?  It may be confusing to newcomers.
+    (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
+    (package-initialize)
+    (unless (fboundp 'helm-system-packages)
+      (package-refresh-contents)
+      (package-install 'zenburn-theme t) ; TODO: Use official theme?
+      (package-install 'helm t)
+      (package-install 'helm-system-packages t))))
+
+(defcustom helm-system-packages-inhibit-default-settings-p nil
+  "Non-nil to skip the default settings of `helm-system-packages'."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+;; Load user config.
+(when (getenv "XDG_CONFIG_HOME")
+  (load (expand-file-name
+         "init.el"
+         (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME")))
+        t))
+
+;; Clean up.
+(unless helm-system-packages-inhibit-default-settings-p
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  (load-theme 'zenburn t)
+  (kill-buffer "*scratch*")
+  (setq inhibit-startup-screen t)
+  (delete-other-windows)
+  (setq helm-full-frame t))
+
+;; Start.
+(helm-system-packages)
+
+;; TODO: Create status buffer with
+;; - Search (<return>)
+;; - Resume search (<space>)
+;; - Last info buffer (<backspace>)
+;; - Last shell buffer (?)
+;; - List of common bindings (C-p, C-n)
+;; - Customize.
+;; - Quit (Q)
+;; Make the entries clickable.
