@@ -219,9 +219,9 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
   "Refresh the package list."
   (interactive)
   (let ((explicit (helm-system-packages-pacman-list-explicit))
-         (dependencies (helm-system-packages-pacman-list-dependencies))
-         (orphans (helm-system-packages-pacman-list-orphans))
-         (locals (helm-system-packages-pacman-list-locals)))
+        (dependencies (helm-system-packages-pacman-list-dependencies))
+        (orphans (helm-system-packages-pacman-list-orphans))
+        (locals (helm-system-packages-pacman-list-locals)))
     (let ((res (helm-system-packages-pacman-cache locals)))
       (setq helm-system-packages-pacman--names (car res)
             helm-system-packages-pacman--descriptions (cdr res)))
@@ -429,9 +429,9 @@ If REVERSE is non-nil, show reverse dependencies instead."
     ("Browse homepage URL" .
      (lambda (_)
        (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t)))))
-    "Actions for Helm pacman."
-    :group 'helm-system-packages
-    :type '(alist :key-type string :value-type function))
+  "Actions for Helm pacman."
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
 
 (defun helm-system-packages-pacman-build-source ()
   "Build Helm source for pacman."
