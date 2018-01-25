@@ -7,8 +7,8 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 	cat<<EOF
 Usage: ${0##*/}
 
-Cache is stored in $HOME/.cache/helm-system-packages.
-Configuration is stored in $HOME/.cache/helm-system-packages/init.el.
+Cache is stored in $XDG_CACHE_HOME/helm-system-packages/.
+Configuration is stored in $XDG_CONFIG_HOME/helm-system-packages/init.el.
 
 EOF
 	exit
