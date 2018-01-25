@@ -31,6 +31,11 @@
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
+;; Shutup byte compiler
+(declare-function eshell-interactive-process "esh-cmd.el")
+(declare-function eshell-send-input "esh-mode.el")
+(defvar eshell-buffer-name)
+
 ;; TODO: Don't refresh when eshell-last-command-status is not 0?
 (defvar helm-system-packages-refresh nil
   "Function to refresh the package list.
