@@ -39,6 +39,7 @@ It is called:
 - whenever a shell command completes.")
 
 ;; TODO: Possible optimization: turn into hash table.
+;; TODO: This is an implementation detail: move to every package interface that needs it?
 (defvar helm-system-packages--display-lists nil
   "List of (package . (faces...)).")
 
@@ -107,7 +108,7 @@ such as the package description."
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (let ((res (apply #'helm-system-packages-run command args)))
-    (if (string-empty-p res)
+    (if (string= res "")
         (message "No result")
       (unless helm-current-prefix-arg
         (switch-to-buffer helm-system-packages-buffer)
@@ -137,7 +138,7 @@ PACKAGES is a string and FILES is a list of strings."
 
 (defun helm-system-packages-find-files (command &rest args)
   (let ((res (apply #'helm-system-packages-run command args)))
-    (if (string-empty-p res)
+    (if (string= res "")
         (message "No result") ; TODO: Error in helm-system-packages-run.
       (if helm-current-prefix-arg
           (insert res)
