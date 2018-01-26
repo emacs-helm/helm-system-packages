@@ -16,33 +16,17 @@ fi
 
 mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
  cat<<\EOF > "$XDG_CACHE_HOME/helm-system-packages/init.el"
+;; Auto-generated file: do not edit.
+
 (let ((minver "24.4"))
   (when (version< emacs-version minver)
     (switch-to-buffer "*Messages*")
     (error "Helm-System-Packages requires Emacs v%s or higher" minver)))
 
-;; Set up.
 (setq
  user-emacs-directory (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME"))
  user-init-file (expand-file-name "init.el" (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME")))
  package-user-dir (expand-file-name "elpa" (expand-file-name "helm-system-packages" (getenv "XDG_CACHE_HOME"))))
-
-(unless (and (require 'helm-system-packages nil t)
-             (require 'zenburn-theme nil t))
-  (when (require 'package)
-    ;; TODO: Use HTTPS?  It may be confusing to newcomers.
-    (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
-    (package-initialize)
-    (unless (fboundp 'helm-system-packages)
-      (package-refresh-contents)
-      (package-install 'zenburn-theme t) ; TODO: Use official theme?
-      (package-install 'helm t)
-      (package-install 'helm-system-packages t))))
-
-(defcustom helm-system-packages-inhibit-default-settings-p nil
-  "Non-nil to skip the default settings of `helm-system-packages'."
-  :group 'helm-system-packages
-  :type 'boolean)
 
 ;; Load user config.
 (when (getenv "XDG_CONFIG_HOME")
@@ -51,28 +35,60 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
          (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME")))
         t))
 
-;; Clean up.
-(unless helm-system-packages-inhibit-default-settings-p
+(unless (require 'helm-system-packages nil t)
+  (when (require 'package)
+    ;; TODO: Use HTTPS?  It may be confusing to newcomers.
+    (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
+    (package-initialize)
+    (unless (fboundp 'helm-system-packages)
+      (package-refresh-contents)
+      (package-install 'helm t)
+      (package-install 'helm-system-packages t))))
+(require 'helm-system-packages)
+
+(defcustom helm-system-packages-inhibit-default-settings-p nil
+  "Non-nil to skip the default settings of `helm-system-packages'."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defcustom helm-system-packages-search-on-startup-p nil
+  "Non-nil to start with the search view."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defun helm-system-packages-default-settings ()
   (tool-bar-mode -1)
   (menu-bar-mode -1)
-  (load-theme 'zenburn t)
+  (load-theme 'tango-dark t)
+  ;; (load-theme 'wombat t) ; Similar to tango-dark but with lower contrast.
   (kill-buffer "*scratch*")
   (setq inhibit-startup-screen t)
   (delete-other-windows)
   (setq helm-full-frame t))
 
-;; Start.
-(helm-system-packages)
+(unless helm-system-packages-inhibit-default-settings-p
+  (helm-system-packages-default-settings))
+
+(defun helm-system-packages-menu ()
+  (switch-to-buffer "*helm-system-packages-menu*")
+  (text-mode)
+  (insert "hello world"))
+
+(helm-system-packages-menu)
+
+(when helm-system-packages-search-on-startup-p
+  (helm-system-packages))
 
 ;; TODO: Create status buffer with
 ;; - Search (<return>)
 ;; - Resume search (<space>)
 ;; - Last info buffer (<backspace>)
 ;; - Last shell buffer (?)
-;; - List of common bindings (C-p, C-n)
-;; - Customize.
-;; - Quit (Q)
+;; - List of common bindings (C-p, C-n, C-h C-h, C-h m, org-mode tab and C-c C-o.)
+;; - Customize helm-system-packages.
+;; - Customize theme.
+;; - Quit (C-x C-c, Q)
 ;; Make the entries clickable.
 EOF
 
-exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el"
+exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
