@@ -25,7 +25,7 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
 
 (setq
  user-emacs-directory (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME"))
- user-init-file (expand-file-name "init.el" (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME")))
+ user-init-file (expand-file-name "init.el" user-emacs-directory)
  package-user-dir (expand-file-name "elpa" (expand-file-name "helm-system-packages" (getenv "XDG_CACHE_HOME"))))
 
 ;; Load user config.
@@ -44,7 +44,6 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
       (package-refresh-contents)
       (package-install 'helm t)
       (package-install 'helm-system-packages t))))
-(require 'helm-system-packages)
 
 (defcustom helm-system-packages-inhibit-default-settings-p nil
   "Non-nil to skip the default settings of `helm-system-packages'."
@@ -56,7 +55,111 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
   :group 'helm-system-packages
   :type 'boolean)
 
+(defun helm-system-packages-switch-to-info-buffer ()
+  "Switch to last info buffer if any."
+  (interactive)
+  (when (get-buffer helm-system-packages-buffer)
+    (switch-to-buffer helm-system-packages-buffer)))
+
+(defun helm-system-packages-switch-to-shell-buffer ()
+  "Switch to the shell buffer if any."
+  (interactive)
+  (when (get-buffer helm-system-packages-eshell-buffer)
+    (switch-to-buffer helm-system-packages-eshell-buffer)))
+
+(defvar helm-system-packages-menu-buffer "*helm-system-packages-menu*")
+
+(defun helm-system-packages-menu ()
+  "Switch to a helper buffer for `helm-system-packages'."
+  (interactive)
+
+  (if (get-buffer helm-system-packages-menu-buffer)
+      (switch-to-buffer helm-system-packages-menu-buffer)
+    (switch-to-buffer helm-system-packages-menu-buffer)
+    (view-mode 0)
+    (erase-buffer)
+    (org-mode)
+    (use-local-map org-mode-map)
+    (local-set-key (kbd "<return>") 'helm-system-packages)
+    (local-set-key (kbd "<backspace>") 'helm-resume)
+    (save-excursion
+      (insert "You can return to this page anytime with <f5>.
+
+- <return> to start a search.
+- <escape> or <C-g> to cancel a search.
+- <backspace> to resume a cancelled search.
+- <f5> to show this menu.
+- <f6> to show the information window.
+- <f7> to show the shell window.
+
+In the following menu, press <tab> to toggle a section, <S-tab>
+to toggle them all.
+
+Notes: In Emacs terminology, key bindings with \"C-\" mean \"use
+the Control key\" and key bindings with \"M-\" mean \"use the
+Meta key (often equivalent to the Alt key).
+")
+      (insert (concat "
+* Introduction
+
+Helm-System-Packages is an interface to your system package
+manager.
+
+Separate the search terms with spaces, the order of the terms
+won't matter.
+
+Select multiple packages at once with <C-space>.
+
+Press <tab> on a package or with a selection of packages to
+display the action menu.
+
+Press <C-j> to display package information without exiting the
+search.
+
+In the info display and in this buffer, press <C-c C-o> to follow
+a link.
+
+* Customization
+
+Helm-System-Packages configuration is stored in
+
+  [[" user-init-file "]].
+
+Configuration can be done graphically with
+
+: M-x customize-group <return> helm-system-packages.
+
+You can customize the them with
+
+: M-x customize-themes
+
+The configuration can also be done manually: it is written in
+Emacs Lisp which allows for great extensibility.
+See the Emacs manual and the Elisp manual.
+
+* Uninstall
+
+The cache is stored in
+
+  [[" (expand-file-name "helm-system-packages" (getenv "XDG_CACHE_HOME")) "]].
+
+This is the only location used by helm-system-packages beside the
+configuration file.
+
+* Getting more help
+
+- \\[help-for-help]: Entry point to all help sections.
+- \\[help-with-tutorial]:
+- \\[info-emacs-manual]: Read the Emacs manual.
+- \\[describe-mode]: Contextual help with quick summary and key bindings.
+- \\[describe-bindings]: Describe all bindings.
+")))
+    (toggle-truncate-lines)
+    (org-global-cycle)
+    (view-mode)))
+
 (defun helm-system-packages-default-settings ()
+  "Taylor Emacs for a stand-alone Helm System Packages experience."
   (tool-bar-mode -1)
   (menu-bar-mode -1)
   (load-theme 'tango-dark t)
@@ -64,31 +167,32 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
   (kill-buffer "*scratch*")
   (setq inhibit-startup-screen t)
   (delete-other-windows)
+  (setq frame-title-format "Helm System Packages")
+  ;; Cache sudo passwords.
+  (require 'em-tramp)
+  (setq password-cache t)
+  (setq password-cache-expiry 300)
+  ;; Bindings.
+  (global-set-key (kbd "<f5>") 'helm-system-packages-menu)
+  (global-set-key (kbd "<f6>") 'helm-system-packages-switch-to-info-buffer)
+  (global-set-key (kbd "<f7>") 'helm-system-packages-switch-to-shell-buffer)
+  (global-set-key (kbd "<escape>") 'keyboard-quit)
+  (with-eval-after-load 'view
+    (define-key view-mode-map (kbd "Q") 'kill-emacs))
+  (with-eval-after-load 'helm
+    (define-key helm-map (kbd "<escape>") 'helm-keyboard-quit))
   (setq helm-full-frame t))
 
 (unless helm-system-packages-inhibit-default-settings-p
   (helm-system-packages-default-settings))
-
-(defun helm-system-packages-menu ()
-  (switch-to-buffer "*helm-system-packages-menu*")
-  (text-mode)
-  (insert "hello world"))
 
 (helm-system-packages-menu)
 
 (when helm-system-packages-search-on-startup-p
   (helm-system-packages))
 
-;; TODO: Create status buffer with
-;; - Search (<return>)
-;; - Resume search (<space>)
-;; - Last info buffer (<backspace>)
-;; - Last shell buffer (?)
-;; - List of common bindings (C-p, C-n, C-h C-h, C-h m, org-mode tab and C-c C-o.)
-;; - Customize helm-system-packages.
-;; - Customize theme.
-;; - Quit (C-x C-c, Q)
-;; Make the entries clickable.
+;; TODO: Add clickable items in menu?
+;; TODO: Check if customize helm-system-packages works.
 EOF
 
 exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
