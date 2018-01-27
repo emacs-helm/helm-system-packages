@@ -168,6 +168,8 @@ configuration file.
   (setq inhibit-startup-screen t)
   (delete-other-windows)
   (setq frame-title-format "Helm System Packages")
+  (with-eval-after-load 'esh-module
+    (push 'eshell-tramp eshell-modules-list))
   ;; Cache sudo passwords.
   (require 'em-tramp)
   (setq password-cache t)
