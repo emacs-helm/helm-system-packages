@@ -193,7 +193,7 @@ curses interface."
         (when (string= (cadr pkg) "deinstall")
           (push (car pkg) res))))))
 
-(defun helm-system-packages-dpkg-cache-names ()
+(defun helm-system-packages-dpkg-cache-names () ; TODO: Build from --descriptions instead like pacman?
   "Cache all package names."
   (with-temp-buffer
     (call-process "apt-cache" nil t nil "pkgnames")
