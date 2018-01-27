@@ -21,7 +21,7 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
 (let ((minver "24.4"))
   (when (version< emacs-version minver)
     (switch-to-buffer "*Messages*")
-    (error "Helm-System-Packages requires Emacs v%s or higher" minver)))
+    (error "Helm System Packages requires Emacs v%s or higher" minver)))
 
 (setq
  user-emacs-directory (expand-file-name "helm-system-packages" (getenv "XDG_CONFIG_HOME"))
@@ -58,14 +58,16 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
 (defun helm-system-packages-switch-to-info-buffer ()
   "Switch to last info buffer if any."
   (interactive)
-  (when (get-buffer helm-system-packages-buffer)
-    (switch-to-buffer helm-system-packages-buffer)))
+  (if (get-buffer helm-system-packages-buffer)
+      (switch-to-buffer helm-system-packages-buffer)
+    (message "The information window has not been opened yet.")))
 
 (defun helm-system-packages-switch-to-shell-buffer ()
   "Switch to the shell buffer if any."
   (interactive)
-  (when (get-buffer helm-system-packages-eshell-buffer)
-    (switch-to-buffer helm-system-packages-eshell-buffer)))
+  (if (get-buffer helm-system-packages-eshell-buffer)
+      (switch-to-buffer helm-system-packages-eshell-buffer)
+    (message "The shell window has not been opened yet.")))
 
 (defvar helm-system-packages-menu-buffer "*helm-system-packages-menu*")
 
@@ -85,24 +87,32 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
     (save-excursion
       (insert "You can return to this page anytime with <f5>.
 
-- <return> to start a search.
+- ")
+      (insert-button "Start a search" 'action (lambda (_) (helm-system-packages)) 'follow-link t)
+      (insert " (<return>)
 - <escape> or <C-g> to cancel a search.
-- <backspace> to resume a cancelled search.
-- <f5> to show this menu.
-- <f6> to show the information window.
-- <f7> to show the shell window.
+- ")
+      (insert-button "Resume a search" 'action (lambda (_) (if (fboundp 'helm-resume) (helm-resume nil) (message "Start a search first."))) 'follow-link t)
+      (insert " (<backspace>)
+- Show this menu (<f5>)
+- ")
+      (insert-button "Show the information window" 'action (lambda (_) (helm-system-packages-switch-to-info-buffer)) 'follow-link t)
+      (insert " (<f6>)
+- ")
+      (insert-button "Show the shell window" 'action (lambda (_) (helm-system-packages-switch-to-shell-buffer)) 'follow-link t)
+      (insert " (<f7>)
 
 In the following menu, press <tab> to toggle a section, <S-tab>
 to toggle them all.
 
-Notes: In Emacs terminology, key bindings with \"C-\" mean \"use
-the Control key\" and key bindings with \"M-\" mean \"use the
-Meta key (often equivalent to the Alt key).
+Notes: In Emacs key bindings terminology, \"C-\" is short for the
+Control key, \"M-\" is short for the Meta key (often equivalent
+to the Alt key) and \"S-\" is short for the Shift key.
 ")
       (insert (concat "
 * Introduction
 
-Helm-System-Packages is an interface to your system package
+Helm System Packages is an interface to your system package
 manager.
 
 Separate the search terms with spaces, the order of the terms
@@ -116,12 +126,12 @@ display the action menu.
 Press <C-j> to display package information without exiting the
 search.
 
-In the info display and in this buffer, press <C-c C-o> to follow
-a link.
+In the info display and in this buffer, click or press <C-c C-o>
+to follow a link.
 
 * Customization
 
-Helm-System-Packages configuration is stored in
+Helm System Packages configuration is stored in
 
   [[" user-init-file "]].
 
@@ -129,9 +139,9 @@ Configuration can be done graphically with
 
 : M-x customize-group <return> helm-system-packages.
 
-You can customize the them with
-
-: M-x customize-themes
+You can also "))
+      (insert-button "customize the themes" 'action (lambda (_) (customize-themes)) 'follow-link t)
+      (insert (concat ".
 
 The configuration can also be done manually: it is written in
 Emacs Lisp which allows for great extensibility.
@@ -148,12 +158,22 @@ configuration file.
 
 * Getting more help
 
-- \\[help-for-help]: Entry point to all help sections.
-- \\[help-with-tutorial]:
-- \\[info-emacs-manual]: Read the Emacs manual.
-- \\[describe-mode]: Contextual help with quick summary and key bindings.
-- \\[describe-bindings]: Describe all bindings.
-")))
+- "))
+      (insert-button "List all help sections" 'action (lambda (_) (help-for-help)) 'follow-link t)
+      (insert " (<C-h C-h>)
+- ")
+      (insert-button "Emacs tutorial" 'action (lambda (_) (help-with-tutorial)) 'follow-link t)
+      (insert " (<C-h t>)
+- ")
+      (insert-button "Emacs manual" 'action (lambda (_) (info-emacs-manual)) 'follow-link t)
+      (insert " (<C-h i>)
+- ")
+      (insert-button "Contextual help with quick summary and key bindings" 'action (lambda (_) (describe-mode)) 'follow-link t)
+      (insert " (<C-h m>)
+- ")
+      (insert-button "List all key bindings" 'action (lambda (_) (describe-bindings)) 'follow-link t)
+      (insert " (<C-h b>)
+"))
     (toggle-truncate-lines)
     (org-global-cycle)
     (view-mode)))
@@ -194,8 +214,11 @@ configuration file.
 (when helm-system-packages-search-on-startup-p
   (helm-system-packages))
 
-;; TODO: Add clickable items in menu?
 ;; TODO: Check if customize helm-system-packages works.
+;; TODO: Click on org-sections should expand them.
+;; TODO: Modernize mode-line appearance?
+;; TODO: Add .desktop file?
+;; TODO: Add bindings for zooming.
 EOF
 
 exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
