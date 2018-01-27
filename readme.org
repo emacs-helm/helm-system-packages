@@ -1,13 +1,13 @@
-#+TITLE: Helm-System-Packages
+#+TITLE: Helm System Packages
 
 * Introduction
 
-Helm-System-Packages is an Emacs-based interface to the package manager of your
+Helm System Packages is an Emacs-based interface to the package manager of your
 operating system.
 
-Emacs is knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version for
+Emacs' knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version for
 non-Emacs users.  Run the script and everything should be self-explanatory.  If
-it's not, it's bug, please report it.
+it's not then it's bug, please report it.
 
 Start ~helm-system-packages~ to list all available packages (with installed
 packages as well as dependencies displayed in their own respective face).
@@ -19,7 +19,8 @@ Fuzzy-search, mark and execute the desired action over any set of packages:
 - Find files
 - And much more.
 
-Some package managers come with their specific actions and even specific sources, e.g. Portage's USE flags.
+Some package managers come with their specific actions and even specific
+sources, e.g. Portage's USE flags.
 
 * Usage
 
@@ -40,7 +41,8 @@ to use its own version of sudo via TRAMP:
 
 * Motivation
 
-Most of the package managers GUIs out there do not provide much efficiency over their commandline counterparts.
+Most of the package managers GUIs out there do not provide much efficiency over
+their commandline counterparts.
 
 The commandline workflow is centered around a cumbersome try-repeat loop:
 
