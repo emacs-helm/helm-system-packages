@@ -235,8 +235,8 @@ configuration file.
 
 ;; TODO: Check if customize helm-system-packages works.
 ;; TODO: Click on org-sections should expand them.
+;; TODO: Make sure RET follows links/buttons.
 ;; TODO: Modernize mode-line appearance?
-;; TODO: Add .desktop file?
 ;; TODO: Add bindings for zooming.
 EOF
 

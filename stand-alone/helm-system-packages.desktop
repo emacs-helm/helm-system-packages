@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Helm System Packages
+GenericName=package manager
+Comment=A Helm interface to your package manager
+Keywords=package;manager;system;pacman;dpkg;apt;portage;emerge;
+Exec=helm-system-packages %f
+Icon=helm
+Type=Application
+Categories=System;Utility;
