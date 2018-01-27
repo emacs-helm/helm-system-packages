@@ -168,6 +168,7 @@ configuration file.
   (setq inhibit-startup-screen t)
   (delete-other-windows)
   (setq frame-title-format "Helm System Packages")
+  (setq eshell-banner-message (propertize "Press <f5> to return to the menu.\n\n" 'face font-lock-warning-face))
   (with-eval-after-load 'esh-module
     (push 'eshell-tramp eshell-modules-list))
   ;; Cache sudo passwords.
