@@ -55,14 +55,17 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
         t))
 
 (unless (and (require 'helm-system-packages nil t)
+             (require 'zenburn-theme nil t)
              (require 'telephone-line nil t))
   (when (require 'package)
     ;; TODO: Use HTTPS?  It may be confusing to newcomers.
     (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
     (package-initialize)
     (unless (and (fboundp 'helm-system-packages)
+                 (boundp 'zenburn-override-colors-alist)
                  (fboundp 'telephone-line-mode))
       (package-refresh-contents)
+      (package-install 'zenburn-theme)
       (package-install 'telephone-line)
       (package-install 'helm t)
       (package-install 'helm-system-packages t))))
@@ -233,7 +236,8 @@ configuration file.
         telephone-line-secondary-right-separator 'telephone-line-cubed-hollow-right)
   (setq telephone-line-height 24)
   (telephone-line-mode)
-  (load-theme 'tango-dark t)
+  (load-theme 'zenburn t)
+  ;; (load-theme 'tango-dark t)
   ;; (load-theme 'wombat t) ; Similar to tango-dark but with lower contrast.
   (kill-buffer "*scratch*")
   (setq inhibit-startup-screen t)
@@ -279,7 +283,6 @@ configuration file.
 (when helm-system-packages-search-on-startup-p
   (helm-system-packages))
 
-;; TODO: Check if customize helm-system-packages works.
 ;; TODO: Use toolbar?
 EOF
 
