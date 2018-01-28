@@ -66,10 +66,9 @@ It is called:
 
 (defcustom helm-system-packages-candidate-limit 1000
   "Maximum number of candidates to display at once.
-
 0 means display all."
   :group 'helm-system-packages
-  :type 'integerp)
+  :type 'integer)
 
 (defcustom helm-system-packages-use-symbol-at-point-p nil
   "Whether to use symbol at point as a default search entry."

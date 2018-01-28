@@ -134,7 +134,8 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 
 (defcustom helm-system-packages-portage-column-width 36
   "Column at which descriptions are aligned, excluding a double-space gap."
-  :group 'helm-system-packages)
+  :group 'helm-system-packages
+  :type 'integer)
 
 (defun helm-system-packages-portage-cache-descriptions ()
   "Cache all package names with descriptions."

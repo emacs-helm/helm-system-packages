@@ -182,7 +182,7 @@ Local packages can also be orphans, explicit or dependencies."
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap."
   :group 'helm-system-packages
-  :type 'integerp)
+  :type 'integer)
 
 (defun helm-system-packages-pacman-cache (local-packages)
   "Cache all package names with descriptions.

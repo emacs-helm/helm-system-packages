@@ -202,7 +202,8 @@ curses interface."
 
 (defcustom helm-system-packages-dpkg-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap."
-  :group 'helm-system-packages)
+  :group 'helm-system-packages
+  :type 'interger)
 
 (defun helm-system-packages-dpkg-cache-descriptions ()
   "Cache all package names with descriptions."
