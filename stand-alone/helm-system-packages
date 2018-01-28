@@ -233,9 +233,9 @@ configuration file.
     (tool-bar-local-item "jump-to" 'helm-system-packages-resume 'helm-system-packages-resume map
                          :help "Resume (\\[helm-system-packages-resume])")
     (tool-bar-local-item "describe" 'helm-system-packages-switch-to-info-buffer 'helm-system-packages-info map
-                         :vert-only t :help "Information (\\[helm-system-packages-switch-to-info-buffer])")
+                         :enable '(get-buffer helm-system-packages-buffer) :vert-only t :help "Information (\\[helm-system-packages-switch-to-info-buffer])")
     (tool-bar-local-item "index" 'helm-system-packages-switch-to-shell-buffer 'helm-system-packages-shell map
-                         :vert-only t :help "Shell (\\[helm-system-packages-switch-to-shell-buffer])")
+                         :enable '(get-buffer helm-system-packages-eshell-buffer) :vert-only t :help "Shell (\\[helm-system-packages-switch-to-shell-buffer])")
     map))
 
 (defun helm-system-packages-default-settings ()
