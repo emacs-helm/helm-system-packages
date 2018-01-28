@@ -249,6 +249,11 @@ configuration file.
   (global-set-key (kbd "<f7>") 'helm-system-packages-switch-to-info-buffer)
   (global-set-key (kbd "<f8>") 'helm-system-packages-switch-to-shell-buffer)
   (global-set-key (kbd "<f9>") 'helm-system-packages-menu)
+  (global-set-key (kbd "C-<wheel-down>") 'text-scale-decrease)
+  (global-set-key (kbd "C-<mouse-5>") 'text-scale-decrease)
+  (global-set-key (kbd "C-<wheel-up>") 'text-scale-increase)
+  (global-set-key (kbd "C-<mouse-4>") 'text-scale-increase)
+  (setq text-scale-mode-step 1.1)
   (with-eval-after-load 'view
     (define-key view-mode-map (kbd "Q") 'kill-emacs))
   (when (display-graphic-p)
@@ -275,7 +280,6 @@ configuration file.
   (helm-system-packages))
 
 ;; TODO: Check if customize helm-system-packages works.
-;; TODO: Add bindings for zooming.
 ;; TODO: Use toolbar?
 EOF
 
