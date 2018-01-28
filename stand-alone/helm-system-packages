@@ -90,6 +90,17 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
 
 (defvar helm-system-packages-menu-buffer "*helm-system-packages-menu*")
 
+(defun helm-system-packages-menu-cycle ()
+  (interactive)
+  (when (org-on-heading-p)
+    (org-cycle)))
+
+(defun helm-system-packages-resume (&optional _)
+  (interactive)
+  (if (fboundp 'helm-resume)
+      (helm-resume nil)
+    (message "Start a search first.")))
+
 (defun helm-system-packages-menu ()
   "Switch to a helper buffer for `helm-system-packages'."
   (interactive)
@@ -101,25 +112,30 @@ mkdir -p "$XDG_CACHE_HOME/helm-system-packages" && \
     (erase-buffer)
     (org-mode)
     (use-local-map org-mode-map)
-    (local-set-key (kbd "<return>") 'helm-system-packages)
-    (local-set-key (kbd "<backspace>") 'helm-resume)
+    (local-set-key (kbd "<mouse-1>") 'helm-system-packages-menu-cycle)
     (save-excursion
-      (insert "You can return to this page anytime with <f5>.
+      (insert "You can return to this page anytime with "
+              (substitute-command-keys "\\[helm-system-packages-menu]") ".
 
 - ")
-      (insert-button "Start a search" 'action (lambda (_) (helm-system-packages)) 'follow-link t)
-      (insert " (<return>)
+      (insert-button "Start a search"
+                     'action (lambda (_) (helm-system-packages)) 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[helm-system-packages]") ")
 - <escape> or <C-g> to cancel a search.
 - ")
-      (insert-button "Resume a search" 'action (lambda (_) (if (fboundp 'helm-resume) (helm-resume nil) (message "Start a search first."))) 'follow-link t)
-      (insert " (<backspace>)
-- Show this menu (<f5>)
+      (insert-button "Resume a search"
+                     'action 'helm-system-packages-resume 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[helm-system-packages-resume]") ")
 - ")
-      (insert-button "Show the information window" 'action (lambda (_) (helm-system-packages-switch-to-info-buffer)) 'follow-link t)
-      (insert " (<f6>)
+      (insert-button "Show the information window"
+                     'action (lambda (_) (helm-system-packages-switch-to-info-buffer))
+                     'follow-link t)
+      (insert " (" (substitute-command-keys "\\[helm-system-packages-switch-to-info-buffer]") ")
 - ")
-      (insert-button "Show the shell window" 'action (lambda (_) (helm-system-packages-switch-to-shell-buffer)) 'follow-link t)
-      (insert " (<f7>)
+      (insert-button "Show the shell window"
+                     'action (lambda (_) (helm-system-packages-switch-to-shell-buffer))
+                     'follow-link t)
+      (insert " (" (substitute-command-keys "\\[helm-system-packages-switch-to-shell-buffer]") ")
 
 In the following menu, press <tab> to toggle a section, <S-tab>
 to toggle them all.
@@ -128,7 +144,7 @@ Notes: In Emacs key bindings terminology, \"C-\" is short for the
 Control key, \"M-\" is short for the Meta key (often equivalent
 to the Alt key) and \"S-\" is short for the Shift key.
 ")
-      (insert (concat "
+      (insert "
 * Introduction
 
 Helm System Packages is an interface to your system package
@@ -154,13 +170,15 @@ Helm System Packages configuration is stored in
 
   [[" user-init-file "]].
 
-Configuration can be done graphically with
+Configuration can be done with the ")
+      (insert-button "customization menu"
+                     'action (lambda (_) (customize-group 'helm-system-packages)) 'follow-link t)
+      (insert ".
 
-: M-x customize-group <return> helm-system-packages.
-
-You can also "))
-      (insert-button "customize the themes" 'action (lambda (_) (customize-themes)) 'follow-link t)
-      (insert (concat ".
+You can also ")
+      (insert-button "customize the themes"
+                     'action (lambda (_) (customize-themes)) 'follow-link t)
+      (insert ".
 
 The configuration can also be done manually: it is written in
 Emacs Lisp which allows for great extensibility.
@@ -177,21 +195,26 @@ configuration file.
 
 * Getting more help
 
-- "))
-      (insert-button "List all help sections" 'action (lambda (_) (help-for-help)) 'follow-link t)
-      (insert " (<C-h C-h>)
 - ")
-      (insert-button "Emacs tutorial" 'action (lambda (_) (help-with-tutorial)) 'follow-link t)
-      (insert " (<C-h t>)
+      (insert-button "List all help sections"
+                     'action (lambda (_) (help-for-help)) 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[help-for-help]") ")
 - ")
-      (insert-button "Emacs manual" 'action (lambda (_) (info-emacs-manual)) 'follow-link t)
-      (insert " (<C-h i>)
+      (insert-button "Emacs tutorial"
+                     'action (lambda (_) (help-with-tutorial)) 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[help-with-tutorial]") ")
 - ")
-      (insert-button "Contextual help with quick summary and key bindings" 'action (lambda (_) (describe-mode)) 'follow-link t)
-      (insert " (<C-h m>)
+      (insert-button "Emacs manual"
+                     'action (lambda (_) (info-emacs-manual)) 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[info-emacs-manual]") ")
 - ")
-      (insert-button "List all key bindings" 'action (lambda (_) (describe-bindings)) 'follow-link t)
-      (insert " (<C-h b>)
+      (insert-button "Contextual help with quick summary and key bindings"
+                     'action (lambda (_) (describe-mode)) 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[describe-mode]") ")
+- ")
+      (insert-button "List all key bindings"
+                     'action (lambda (_) (describe-bindings)) 'follow-link t)
+      (insert " (" (substitute-command-keys "\\[describe-bindings]") ")
 "))
     (toggle-truncate-lines)
     (org-global-cycle)
@@ -207,22 +230,31 @@ configuration file.
   (setq inhibit-startup-screen t)
   (delete-other-windows)
   (setq frame-title-format "Helm System Packages")
-  (setq eshell-banner-message (propertize "Press <f5> to return to the menu.\n\n" 'face font-lock-warning-face))
-  (with-eval-after-load 'esh-module
-    (push 'eshell-tramp eshell-modules-list))
   ;; Cache sudo passwords.
   (require 'em-tramp)
   (setq password-cache t)
   (setq password-cache-expiry 300)
   ;; Bindings.
-  (global-set-key (kbd "<f5>") 'helm-system-packages-menu)
-  (global-set-key (kbd "<f6>") 'helm-system-packages-switch-to-info-buffer)
-  (global-set-key (kbd "<f7>") 'helm-system-packages-switch-to-shell-buffer)
-  (global-set-key (kbd "<escape>") 'keyboard-quit)
+  (global-set-key (kbd "<f5>") 'helm-system-packages)
+  (global-set-key (kbd "<f6>") 'helm-system-packages-resume)
+  (global-set-key (kbd "<f7>") 'helm-system-packages-switch-to-info-buffer)
+  (global-set-key (kbd "<f8>") 'helm-system-packages-switch-to-shell-buffer)
+  (global-set-key (kbd "<f9>") 'helm-system-packages-menu)
   (with-eval-after-load 'view
     (define-key view-mode-map (kbd "Q") 'kill-emacs))
-  (with-eval-after-load 'helm
-    (define-key helm-map (kbd "<escape>") 'helm-keyboard-quit))
+  (when (display-graphic-p)
+    ;; <escape> is required in TTYs as a substitute to <M->.
+    (global-set-key (kbd "<escape>") 'keyboard-quit)
+    (with-eval-after-load 'helm
+      (define-key helm-map (kbd "<escape>") 'helm-keyboard-quit)))
+  ;; Shell.
+  (setq eshell-banner-message
+        (propertize (concat "Press "
+                            (substitute-command-keys "\\[helm-system-packages-menu]")
+                            " to return to the menu.\n\n")
+                    'face font-lock-warning-face))
+  (with-eval-after-load 'esh-module
+    (push 'eshell-tramp eshell-modules-list))
   (setq helm-full-frame t))
 
 (unless helm-system-packages-inhibit-default-settings-p
@@ -234,10 +266,9 @@ configuration file.
   (helm-system-packages))
 
 ;; TODO: Check if customize helm-system-packages works.
-;; TODO: Click on org-sections should expand them.
-;; TODO: Make sure RET follows links/buttons.
 ;; TODO: Modernize mode-line appearance?
 ;; TODO: Add bindings for zooming.
+;; TODO: Use toolbar?
 EOF
 
 exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
