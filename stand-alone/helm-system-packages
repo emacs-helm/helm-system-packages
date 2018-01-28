@@ -226,9 +226,21 @@ configuration file.
     (org-global-cycle)
     (view-mode)))
 
+(defvar helm-system-packages-tool-bar-map
+  (let ((map (make-sparse-keymap)))
+    (tool-bar-local-item "search" 'helm-system-packages 'helm-system-packages map
+                         :help "Search (\\[helm-system-packages])")
+    (tool-bar-local-item "jump-to" 'helm-system-packages-resume 'helm-system-packages-resume map
+                         :help "Resume (\\[helm-system-packages-resume])")
+    (tool-bar-local-item "describe" 'helm-system-packages-switch-to-info-buffer 'helm-system-packages-info map
+                         :vert-only t :help "Information (\\[helm-system-packages-switch-to-info-buffer])")
+    (tool-bar-local-item "index" 'helm-system-packages-switch-to-shell-buffer 'helm-system-packages-shell map
+                         :vert-only t :help "Shell (\\[helm-system-packages-switch-to-shell-buffer])")
+    map))
+
 (defun helm-system-packages-default-settings ()
   "Taylor Emacs for a stand-alone Helm System Packages experience."
-  (tool-bar-mode -1)
+  (setq-default tool-bar-map helm-system-packages-tool-bar-map)
   (menu-bar-mode -1)
   (setq telephone-line-primary-left-separator 'telephone-line-cubed-left
         telephone-line-secondary-left-separator 'telephone-line-cubed-hollow-left
@@ -283,7 +295,7 @@ configuration file.
 (when helm-system-packages-search-on-startup-p
   (helm-system-packages))
 
-;; TODO: Use toolbar?
+;;; init.el ends here
 EOF
 
 exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
