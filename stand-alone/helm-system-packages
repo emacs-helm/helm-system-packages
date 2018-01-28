@@ -236,6 +236,8 @@ configuration file.
                          :enable '(get-buffer helm-system-packages-buffer) :vert-only t :help "Information (\\[helm-system-packages-switch-to-info-buffer])")
     (tool-bar-local-item "index" 'helm-system-packages-switch-to-shell-buffer 'helm-system-packages-shell map
                          :enable '(get-buffer helm-system-packages-eshell-buffer) :vert-only t :help "Shell (\\[helm-system-packages-switch-to-shell-buffer])")
+    (tool-bar-local-item "home" 'helm-system-packages-menu 'helm-system-packages-menu map
+                         :vert-only t :help "Menu (\\[helm-system-packages-menu])")
     map))
 
 (defun helm-system-packages-default-settings ()
