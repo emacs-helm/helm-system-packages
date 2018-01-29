@@ -57,13 +57,13 @@ Helm sessions can also be resumed.
 * Screencasts
 
 - Display information of multiple packages in an Org buffer, resume the search and finally install.
-#+ATTR_HTML: :width 90%
+  #+ATTR_HTML: :width 800px
   [[./screencasts/helm-system-packages-info-and-install.gif]]
 - Use Helm to find files of multiple packages across different sources.
-#+ATTR_HTML: :width 90%
+  #+ATTR_HTML: :width 800px
   [[./screencasts/helm-system-packages-find-files.gif]]
 - Use Helm to explore the graph of the (reverse) dependencies.
-#+ATTR_HTML: :width 90%
+  #+ATTR_HTML: :width 800px
   [[./screencasts/helm-system-packages-deps.gif]]
 
 * Development
