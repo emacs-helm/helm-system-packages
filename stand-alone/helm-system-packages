@@ -287,6 +287,7 @@ configuration file.
                     'face font-lock-warning-face))
   (with-eval-after-load 'esh-module
     (push 'eshell-tramp eshell-modules-list))
+  (setq helm-allow-mouse t)
   (setq helm-full-frame t))
 
 (unless helm-system-packages-inhibit-default-settings-p
