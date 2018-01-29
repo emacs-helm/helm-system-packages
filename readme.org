@@ -54,6 +54,15 @@ The commandline workflow is centered around a cumbersome try-repeat loop:
 With Helm all those actions get factored into one.
 Helm sessions can also be resumed.
 
+* Screecasts
+
+- Display information of multiple packages in an Org buffer, resume the search and finally install.
+  [[./screencasts/helm-system-packages-info-and-install.gif]]
+- Use Helm to find files of multiple packages across different sources.
+  [[./screencasts/helm-system-packages-find-files.gif]]
+- Use Helm to explore the graph of the (reverse) dependencies.
+  [[./screencasts/helm-system-packages-deps.gif]]
+
 * Development
 
 Each module is rather straightforward, it only need to define the following:
