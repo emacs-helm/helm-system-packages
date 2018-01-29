@@ -50,10 +50,11 @@ Requirements:
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
 
 (defvar helm-system-packages-portage-map
+  ;; M-U is reserved for `helm-unmark-all'.
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
     (define-key map (kbd "M-I")   'helm-system-packages-portage-toggle-explicit)
-    (define-key map (kbd "M-U")   'helm-system-packages-portage-toggle-uninstalled)
+    (define-key map (kbd "M-N")   'helm-system-packages-portage-toggle-uninstalled)
     (define-key map (kbd "M-D")   'helm-system-packages-portage-toggle-dependencies)
     (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))

@@ -49,10 +49,11 @@ Requirements:
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
 
 (defvar helm-system-packages-pacman-map
+  ;; M-U is reserved for `helm-unmark-all'.
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
     (define-key map (kbd "M-I")   'helm-system-packages-pacman-toggle-explicit)
-    (define-key map (kbd "M-U")   'helm-system-packages-pacman-toggle-uninstalled)
+    (define-key map (kbd "M-N")   'helm-system-packages-pacman-toggle-uninstalled)
     (define-key map (kbd "M-D")   'helm-system-packages-pacman-toggle-dependencies)
     (define-key map (kbd "M-O")   'helm-system-packages-pacman-toggle-orphans)
     (define-key map (kbd "M-L")   'helm-system-packages-pacman-toggle-locals)

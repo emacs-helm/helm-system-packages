@@ -314,7 +314,5 @@ EOF
 ## TODO: Customize actions does not work.
 ## TODO: Mouse-controlled helm. (setq helm-allow-mouse t)
 ## https://github.com/emacs-helm/helm/issues/1957
-## TODO: Change M-U to M-D so that we can un-select all?
-## https://github.com/emacs-helm/helm/issues/1959
 
 exec "$EMACS" --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"

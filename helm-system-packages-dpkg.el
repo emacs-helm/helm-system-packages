@@ -89,10 +89,11 @@ curses interface."
       (term-send-input))))
 
 (defvar helm-system-packages-dpkg-map
+  ;; M-U is reserved for `helm-unmark-all'.
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
     (define-key map (kbd "M-I")   'helm-system-packages-dpkg-toggle-explicit)
-    (define-key map (kbd "M-U")   'helm-system-packages-dpkg-toggle-uninstalled)
+    (define-key map (kbd "M-N")   'helm-system-packages-dpkg-toggle-uninstalled)
     (define-key map (kbd "M-D")   'helm-system-packages-dpkg-toggle-dependencies)
     (define-key map (kbd "M-R")   'helm-system-packages-dpkg-toggle-residuals)
     (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
