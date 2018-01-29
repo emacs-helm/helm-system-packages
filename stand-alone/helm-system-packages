@@ -21,13 +21,20 @@
 
 [ -z "$XDG_CONFIG_HOME" ] && export XDG_CONFIG_HOME="$HOME/.config"
 [ -z "$XDG_CACHE_HOME" ] && export XDG_CACHE_HOME="$HOME/.cache"
+[ -z "$EMACS" ] && EMACS=emacs
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 	cat<<EOF
 Usage: ${0##*/}
 
-Cache is stored in $XDG_CACHE_HOME/helm-system-packages/.
-Configuration is stored in $XDG_CONFIG_HOME/helm-system-packages/init.el.
+# Emacs path:
+\$EMACS=$EMACS
+
+# Cache storage:
+\$XDG_CACHE_HOME/helm-system-packages/=$XDG_CACHE_HOME/helm-system-packages/
+
+# Configuration storage:
+\$XDG_CONFIG_HOME/helm-system-packages/init.el=$XDG_CONFIG_HOME/helm-system-packages/init.el
 
 EOF
 	exit
@@ -304,4 +311,10 @@ configuration file.
 ;;; init.el ends here
 EOF
 
-exec emacs --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
+## TODO: Customize actions does not work.
+## TODO: Mouse-controlled helm. (setq helm-allow-mouse t)
+## https://github.com/emacs-helm/helm/issues/1957
+## TODO: Change M-U to M-D so that we can un-select all?
+## https://github.com/emacs-helm/helm/issues/1959
+
+exec "$EMACS" --no-init-file --load "$XDG_CACHE_HOME/helm-system-packages/init.el" "$@"
