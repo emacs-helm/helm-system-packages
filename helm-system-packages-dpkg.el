@@ -38,11 +38,6 @@
 
 Requirements:
 
-- dpkg
-- apt-get
-- apt-cache
-- apt-mark
-
 ** Commands
 \\<helm-system-packages-dpkg-map>
 \\[helm-system-packages-dpkg-toggle-explicit]\t\tToggle display of explicitly installed packages.
@@ -356,11 +351,12 @@ If REVERSE is non-nil, show reverse dependencies instead."
 
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
-  (helm :sources (helm-system-packages-dpkg-build-source)
-        :buffer "*helm dpkg*"
-        :truncate-lines t
-        :input (when helm-system-packages-use-symbol-at-point-p
-                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
+  (unless (helm-system-packages-missing-dependencies-p "apt-get" "apt-cache" "apt-mark")
+    (helm :sources (helm-system-packages-dpkg-build-source)
+          :buffer "*helm dpkg*"
+          :truncate-lines t
+          :input (when helm-system-packages-use-symbol-at-point-p
+                   (substring-no-properties (or (thing-at-point 'symbol) ""))))))
 
 (provide 'helm-system-packages-dpkg)
 

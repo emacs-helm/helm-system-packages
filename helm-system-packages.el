@@ -183,6 +183,15 @@ With prefix argument, insert the output at point."
    (helm-current-prefix-arg (insert urls))
    (t (mapc 'browse-url (helm-comp-read "URL: " urls :must-match t :exec-when-only-one t :marked-candidates t)))))
 
+(defun helm-system-packages-missing-dependencies-p (&rest deps)
+  "Return non-nil if some DEPS are missing."
+  (let ((missing-deps (delq nil (mapcar
+                                 (lambda (exe) (if (not (executable-find exe)) exe))
+                                 deps))))
+    (when missing-deps
+      (message "Dependencies are missing (%s), please install them"
+               (mapconcat 'identity missing-deps ", ")))))
+
 ;;;###autoload
 (defun helm-system-packages ()
   "Helm user interface for system packages."

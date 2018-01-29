@@ -34,11 +34,6 @@
 (defvar helm-system-packages-pacman-help-message
   "* Helm pacman
 
-Requirements:
-
-- pacman
-- expac
-
 ** Commands
 \\<helm-system-packages-pacman-map>
 \\[helm-system-packages-pacman-toggle-explicit]\t\tToggle display of explicitly installed packages.
@@ -450,11 +445,12 @@ If REVERSE is non-nil, show reverse dependencies instead."
 
 (defun helm-system-packages-pacman ()
   "Preconfigured `helm' for pacman."
-  (helm :sources (helm-system-packages-pacman-build-source)
-        :buffer "*helm pacman*"
-        :truncate-lines t
-        :input (when helm-system-packages-use-symbol-at-point-p
-                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
+  (unless (helm-system-packages-missing-dependencies-p "expac")
+    (helm :sources (helm-system-packages-pacman-build-source)
+          :buffer "*helm pacman*"
+          :truncate-lines t
+          :input (when helm-system-packages-use-symbol-at-point-p
+                   (substring-no-properties (or (thing-at-point 'symbol) ""))))))
 
 (provide 'helm-system-packages-pacman)
 

@@ -33,15 +33,6 @@
 (defvar helm-system-packages-portage-help-message
   "* Helm Portage
 
-Requirements:
-
-- emerge
-- eix
-- qlist
-- euse (USE flags)
-- portageq (USE flags)
-- genlop (history)
-
 ** Commands
 \\<helm-system-packages-portage-map>
 \\[helm-system-packages-portage-toggle-explicit]\t\tToggle display of explicitly installed packages.
@@ -288,12 +279,13 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 
 (defun helm-system-packages-portage ()
   "Preconfigured `helm' for Portage."
-  (helm :sources '(helm-system-packages-portage-source
-                   helm-system-packages-portage-use-source)
-        :buffer "*helm portage*"
-        :truncate-lines t
-        :input (when helm-system-packages-use-symbol-at-point-p
-                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
+  (unless (helm-system-packages-missing-dependencies-p "eix" "qlist" "euse " "portageq " "genlop")
+    (helm :sources '(helm-system-packages-portage-source
+                     helm-system-packages-portage-use-source)
+          :buffer "*helm portage*"
+          :truncate-lines t
+          :input (when helm-system-packages-use-symbol-at-point-p
+                   (substring-no-properties (or (thing-at-point 'symbol) ""))))))
 
 (provide 'helm-system-packages-portage)
 
