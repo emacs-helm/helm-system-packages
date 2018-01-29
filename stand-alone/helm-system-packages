@@ -156,13 +156,15 @@ to the Alt key) and \"S-\" is short for the Shift key.
 Helm System Packages is an interface to your system package
 manager.
 
-Separate the search terms with spaces, the order of the terms
-won't matter.
+Everything starts from the search window.  Separate the search
+terms with spaces, the order of the terms won't matter.
 
-Select multiple packages at once with <C-space>.
+Select multiple packages at once with <C-space>, <M-a> to select
+all visible packages and <M-m> to toggle the selection.
 
-Press <tab> on a package or with a selection of packages to
-display the action menu.
+Alternate-click or press <tab> on a package or with a selection
+of packages to display the action menu.  Middle-click or press
+<return> to confirm an action.
 
 Press <C-j> to display package information without exiting the
 search.
@@ -217,6 +219,7 @@ configuration file.
       (insert-button "Contextual help with quick summary and key bindings"
                      'action (lambda (_) (describe-mode)) 'follow-link t)
       (insert " (" (substitute-command-keys "\\[describe-mode]") ")
+  Use this from a search window to get extensive help.
 - ")
       (insert-button "List all key bindings"
                      'action (lambda (_) (describe-bindings)) 'follow-link t)
