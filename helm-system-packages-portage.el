@@ -279,7 +279,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 
 (defun helm-system-packages-portage ()
   "Preconfigured `helm' for Portage."
-  (unless (helm-system-packages-missing-dependencies-p "eix" "qlist" "euse " "portageq " "genlop")
+  (unless (helm-system-packages-missing-dependencies-p "eix" "qlist" "euse" "portageq" "genlop")
     (helm :sources '(helm-system-packages-portage-source
                      helm-system-packages-portage-use-source)
           :buffer "*helm portage*"
