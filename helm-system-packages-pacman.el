@@ -41,6 +41,7 @@
 \\[helm-system-packages-pacman-toggle-dependencies]\t\tToggle display of required dependencies.
 \\[helm-system-packages-pacman-toggle-orphans]\t\tToggle display of unrequired dependencies.
 \\[helm-system-packages-pacman-toggle-locals]\t\tToggle display of local packages.
+\\[helm-system-packages-pacman-toggle-groups]\t\tToggle display of package groups.
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
 
 (defvar helm-system-packages-pacman-map
@@ -52,6 +53,7 @@
     (define-key map (kbd "M-D")   'helm-system-packages-pacman-toggle-dependencies)
     (define-key map (kbd "M-O")   'helm-system-packages-pacman-toggle-orphans)
     (define-key map (kbd "M-L")   'helm-system-packages-pacman-toggle-locals)
+    (define-key map (kbd "M-G")   'helm-system-packages-pacman-toggle-groups)
     (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))
 
@@ -60,6 +62,7 @@
 (defvar helm-system-packages-pacman--show-dependencies-p t)
 (defvar helm-system-packages-pacman--show-orphans-p t)
 (defvar helm-system-packages-pacman--show-locals-p t)
+(defvar helm-system-packages-pacman--show-groups-p t)
 
 (defun helm-system-packages-pacman-toggle-explicit ()
   (interactive)
@@ -96,6 +99,13 @@
     (helm-update)))
 (put 'helm-system-packages-pacman-toggle-locals 'helm-only t)
 
+(defun helm-system-packages-pacman-toggle-groups ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-pacman--show-groups-p (not helm-system-packages-pacman--show-groups-p))
+    (helm-update)))
+(put 'helm-system-packages-pacman-toggle-groups 'helm-only t)
+
 (defvar helm-system-packages-pacman--virtual-list nil
   "List of virtual packages.
 This is only used for dependency display.")
@@ -121,7 +131,8 @@ This is only used for dependency display.")
          ((or
            (and helm-system-packages-pacman--show-explicit-p (memq 'helm-system-packages-pacman-explicit face))
            (and helm-system-packages-pacman--show-dependencies-p (memq 'helm-system-packages-pacman-dependencies face))
-           (and helm-system-packages-pacman--show-orphans-p (memq 'helm-system-packages-pacman-orphans face)))
+           (and helm-system-packages-pacman--show-orphans-p (memq 'helm-system-packages-pacman-orphans face))
+           (and helm-system-packages-pacman--show-groups-p (memq 'helm-system-packages-pacman-groups face)))
           (push (propertize p 'face (car face)) res)))))))
 
 (defface helm-system-packages-pacman-explicit '((t (:inherit font-lock-warning-face)))
@@ -138,6 +149,10 @@ This is only used for dependency display.")
 
 (defface helm-system-packages-pacman-locals '((t (:weight bold)))
   "Face for local packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-pacman-groups '((t (:inherit font-lock-doc-face)))
+  "Face for package groups."
   :group 'helm-system-packages)
 
 (defface helm-system-packages-pacman-virtual '((t (:slant italic)))
@@ -175,12 +190,20 @@ Local packages can also be orphans, explicit or dependencies."
                   (call-process "pacman" nil t nil "--query" "--foreign" "--quiet")
                   (buffer-string))))
 
+(defun helm-system-packages-pacman-list-groups ()
+  "List groups.
+Groups can be (un)installed.  Dependency queries list the
+packages belonging to the group."
+  (split-string (with-temp-buffer
+                  (call-process "pacman" nil t nil "--sync" "--groups")
+                  (buffer-string))))
+
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap."
   :group 'helm-system-packages
   :type 'integer)
 
-(defun helm-system-packages-pacman-cache (local-packages)
+(defun helm-system-packages-pacman-cache (local-packages groups)
   "Cache all package names with descriptions.
 LOCAL-PACKAGES is a list of strings.
 Return (NAMES . DESCRIPTIONS), a cons of two strings."
@@ -193,6 +216,10 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
             (let ((format-string (format "%%-%dn  %%d" helm-system-packages-pacman-column-width)))
               (call-process "expac" nil '(t nil) nil "--sync" format-string)
               (apply 'call-process "expac" nil '(t nil) nil "--query" format-string local-packages))
+            (dolist (g groups)
+              (insert (concat g
+                              (make-string (- helm-system-packages-pacman-column-width (length g)) ? )
+                              "  <group>\n")))
             (sort-lines nil (point-min) (point-max))
             (buffer-string)))
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
@@ -219,8 +246,9 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
   (let ((explicit (helm-system-packages-pacman-list-explicit))
         (dependencies (helm-system-packages-pacman-list-dependencies))
         (orphans (helm-system-packages-pacman-list-orphans))
-        (locals (helm-system-packages-pacman-list-locals)))
-    (let ((res (helm-system-packages-pacman-cache locals)))
+        (locals (helm-system-packages-pacman-list-locals))
+        (groups (helm-system-packages-pacman-list-groups)))
+    (let ((res (helm-system-packages-pacman-cache locals groups)))
       (setq helm-system-packages-pacman--names (car res)
             helm-system-packages-pacman--descriptions (cdr res)))
     (setq helm-system-packages--display-lists nil)
@@ -232,7 +260,9 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
       (push (cons p '(helm-system-packages-pacman-orphans)) helm-system-packages--display-lists))
     (dolist (p locals)
       ;; Local packages are necessarily either explicitly installed or a required dependency or an orphan.
-      (push 'helm-system-packages-pacman-locals (cdr (assoc p helm-system-packages--display-lists))))))
+      (push 'helm-system-packages-pacman-locals (cdr (assoc p helm-system-packages--display-lists))))
+    (dolist (p groups)
+      (push (cons p '(helm-system-packages-pacman-groups)) helm-system-packages--display-lists))))
 
 (defcustom helm-system-packages-pacman-confirm-p t
   "Prompt for confirmation before proceding with transaction."
@@ -276,23 +306,27 @@ Otherwise display in `helm-system-packages-buffer'."
            '((uninstalled helm-system-packages-pacman-info-uninstalled)
              (all helm-system-packages-info))
            (helm-system-packages-mapalist '((uninstalled (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--sync" "--info" "--info") p)))
+                                            (groups ignore)
                                             (all (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--query" "--info" "--info") p))))
                                           (helm-system-packages-categorize (helm-marked-candidates)))))
          (buf (with-temp-buffer
                 (mapc 'insert (mapcar 'cadr desc-alist))
                 (buffer-string))))
     ;; TODO: Sort buffer output? Or keep the mark order?
-    (if helm-current-prefix-arg
-        (insert buf)
+    (cond
+     ((not desc-alist)
+      (message "No information for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
+     (helm-current-prefix-arg
+      (insert buf))
       ;; TODO: Name temp buffer to helm-system-packages-buffer.
-      (switch-to-buffer helm-system-packages-buffer)
-      (view-mode 0)
-      (erase-buffer)
-      (org-mode)
-      (save-excursion (insert buf))
-      (org-sort-entries nil ?a)
-      (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
-        (view-mode 1)))))
+     (t (switch-to-buffer helm-system-packages-buffer)
+        (view-mode 0)
+        (erase-buffer)
+        (org-mode)
+        (save-excursion (insert buf))
+        (org-sort-entries nil ?a)
+        (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
+          (view-mode 1))))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
   "Print information about the selected packages.
@@ -308,40 +342,45 @@ Otherwise display in `helm-system-packages-buffer'."
           (helm-system-packages-mapalist
            '((uninstalled (lambda (&rest p)
                             (apply 'helm-system-packages-call '("pacman" "--files" "--list") p)))
+             (groups ignore)
              (all (lambda (&rest p)
                     (apply 'helm-system-packages-call '("pacman" "--query" "--list") p))))
            (helm-system-packages-categorize (helm-marked-candidates)))))
-    (if helm-current-prefix-arg
-        (insert res)
-      (let (file-list) ; An alist of (package-name . (files...))
-        (with-temp-buffer
-          (mapc 'insert (mapcar 'cadr file-alist))
-          (goto-char (point-min))
-          (let (pkg pkg-list)
-            (while (search-forward " " nil t)
-              (setq pkg (buffer-substring-no-properties (line-beginning-position) (1- (point))))
-              (setq pkg-list (assoc pkg file-list))
-              (unless pkg-list
-                (push (setq pkg-list (list pkg)) file-list))
-              ;; pacman's file database queries do not include the leading '/'.
-              ;; TODO: Prepend in mapalist:
-              ;; (replace-regexp-in-string "\\([^ ]+ \\)" "\\1/" s))
-              ;; TODO: Only reverse the file list in the end. Or simpler: reverse buffer.
-              (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
-                                            (buffer-substring-no-properties (point) (line-end-position)))))
-              (forward-line))))
-        (require 'helm-files)
-        (helm :sources (mapcar
-                        (lambda (pkg)
-                          (helm-system-packages-build-file-source (car pkg) (cdr pkg)))
-                        file-list)
-              :buffer "*helm system package files*")))))
+    (cond
+     ((not file-alist)
+      (message "No file list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
+     (helm-current-prefix-arg
+      (mapc 'insert (mapcar 'cadr file-alist)))
+     (t (let (file-list) ; An alist of (package-name . (files...))
+          (with-temp-buffer
+            (mapc 'insert (mapcar 'cadr file-alist))
+            (goto-char (point-min))
+            (let (pkg pkg-list)
+              (while (search-forward " " nil t)
+                (setq pkg (buffer-substring-no-properties (line-beginning-position) (1- (point))))
+                (setq pkg-list (assoc pkg file-list))
+                (unless pkg-list
+                  (push (setq pkg-list (list pkg)) file-list))
+                ;; pacman's file database queries do not include the leading '/'.
+                ;; TODO: Prepend in mapalist:
+                ;; (replace-regexp-in-string "\\([^ ]+ \\)" "\\1/" s))
+                ;; TODO: Only reverse the file list in the end. Or simpler: reverse buffer.
+                (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
+                                              (buffer-substring-no-properties (point) (line-end-position)))))
+                (forward-line))))
+          (require 'helm-files)
+          (helm :sources (mapcar
+                          (lambda (pkg)
+                            (helm-system-packages-build-file-source (car pkg) (cdr pkg)))
+                          file-list)
+                :buffer "*helm system package files*"))))))
 
 (defvar helm-system-packages--source-name "pacman source")
 
 (defvar helm-system-packages-pacman--descriptions-global nil
   "All descriptions.
 Used to restore complete description list when browsing dependencies.")
+
 (defvar helm-system-packages-pacman--names-global nil
   "All names.
 Used to restore complete name list when browsing dependencies.")
@@ -351,43 +390,58 @@ Used to restore complete name list when browsing dependencies.")
 With prefix argument, insert the output at point.
 
 If REVERSE is non-nil, show reverse dependencies instead."
-  (setq helm-system-packages-pacman--descriptions (or helm-system-packages-pacman--descriptions-global helm-system-packages-pacman--descriptions)
-        helm-system-packages-pacman--descriptions-global helm-system-packages-pacman--descriptions)
-  (setq helm-system-packages-pacman--names (or helm-system-packages-pacman--names-global helm-system-packages-pacman--names)
-        helm-system-packages-pacman--names-global helm-system-packages-pacman--names)
+  (setq helm-system-packages-pacman--descriptions
+        (or helm-system-packages-pacman--descriptions-global
+            helm-system-packages-pacman--descriptions))
+  (setq helm-system-packages-pacman--descriptions-global
+        helm-system-packages-pacman--descriptions)
+  (setq helm-system-packages-pacman--names
+        (or helm-system-packages-pacman--names-global
+            helm-system-packages-pacman--names))
+  (setq helm-system-packages-pacman--names-global
+        helm-system-packages-pacman--names)
   (let* ((format-string (if reverse "%N" (concat "%E" (and helm-current-prefix-arg "%o"))))
          (deps-alist
           (helm-system-packages-mapalist
            `((uninstalled (lambda (&rest p)
-                            (apply 'helm-system-packages-call '("expac" "--sync" "--listdelim" "n" ,format-string) p)))
+                            (apply 'helm-system-packages-call '("expac" "--sync" "--listdelim" "\n" ,format-string) p)))
+             (groups ,(if reverse 'ignore
+                        (lambda (&rest p)
+                          ;; Warning: "--group" seems to be different from "-g".
+                          (apply 'helm-system-packages-call '("expac" "--sync" "-g" "%n") p))))
              (all (lambda (&rest p)
                     (apply 'helm-system-packages-call '("expac" "--query" "--listdelim" "\n" ,format-string) p))))
            (helm-system-packages-categorize (helm-marked-candidates))))
+         buf
          desc-res)
     ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
-    (setq res (with-temp-buffer
+    (setq buf (with-temp-buffer
                 (mapc 'insert (mapcar 'cadr deps-alist))
                 (sort-lines nil (point-min) (point-max))
                 (delete-duplicate-lines (point-min) (point-max))
                 (buffer-string)))
-    (if (string= res "")
-        (message "No dependencies") ; TODO: Do not quit Helm session.
-      (dolist (name (split-string res "\n" t))
-        (if (string-match (concat "^" name "  .*$") helm-system-packages-pacman--descriptions)
-            (setq desc-res (concat desc-res (match-string 0 helm-system-packages-pacman--descriptions) "\n"))
-          (push name helm-system-packages-pacman--virtual-list)
-          (setq desc-res (concat desc-res
-                                 name
-                                 (make-string (- helm-system-packages-pacman-column-width (length name)) ? )
-                                 "  <virtual package>"
-                                 "\n"))))
-      (let ((helm-system-packages-pacman--descriptions desc-res)
-            (helm-system-packages-pacman--names res)
-            (helm-system-packages--source-name (concat
-                                                (if reverse "Reverse deps" "Deps")
-                                                " of "
-                                                (mapconcat 'identity (helm-marked-candidates) " "))))
-        (helm-system-packages-pacman)))))
+    (cond
+     ((not deps-alist)
+      ;; TODO: Do not quit Helm session.
+      (message "No dependency list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
+     (helm-current-prefix-arg
+      (insert buf))
+     (t (dolist (name (split-string buf "\n" t))
+          (if (string-match (concat "^" name "  .*$") helm-system-packages-pacman--descriptions)
+              (setq desc-res (concat desc-res (match-string 0 helm-system-packages-pacman--descriptions) "\n"))
+            (push name helm-system-packages-pacman--virtual-list)
+            (setq desc-res (concat desc-res
+                                   name
+                                   (make-string (- helm-system-packages-pacman-column-width (length name)) ? )
+                                   "  <virtual package>"
+                                   "\n"))))
+        (let ((helm-system-packages-pacman--descriptions desc-res)
+              (helm-system-packages-pacman--names buf)
+              (helm-system-packages--source-name (concat
+                                                  (if reverse "Reverse dependencies" "Dependencies")
+                                                  " of "
+                                                  (mapconcat 'identity (helm-marked-candidates) " "))))
+          (helm-system-packages-pacman))))))
 
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
