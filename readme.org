@@ -22,6 +22,9 @@ Fuzzy-search, mark and execute the desired action over any set of packages:
 Some package managers come with their specific actions and even specific
 sources, e.g. Portage's USE flags.
 
+Note: While similar to https://github.com/jabranham/system-packages, Helm System
+Packages is not based on it.
+
 * Usage
 
 There is only one entry point: ~helm-system-packages~.
