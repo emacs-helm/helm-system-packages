@@ -196,10 +196,10 @@ With prefix argument, insert the output at point."
 (defun helm-system-packages ()
   "Helm user interface for system packages."
   (interactive)
-  (let ((managers (seq-filter 'executable-find '("emerge" "dpkg" "pacman"))))
+  (let ((managers (seq-filter (lambda (p) (executable-find (car p))) '(("emerge" "portage") ("dpkg") ("pacman")))))
     (if (not managers)
         (message "No supported package manager was found")
-      (let ((manager (car managers)))
+      (let ((manager (car (last (car managers)))))
         (require (intern (concat "helm-system-packages-" manager)))
         (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
         (funcall (intern (concat "helm-system-packages-" manager)))))))
