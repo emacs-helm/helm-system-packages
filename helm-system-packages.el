@@ -82,6 +82,44 @@ the window."
   :group 'helm-system-packages
   :type 'boolean)
 
+(defun helm-system-packages-mapalist (fun-alist alist)
+  "Apply the FUN-ALIST function to each element in ALIST with the same key.
+Return the alist of the results.
+Keys must be symbols.
+The special key `all' matches all members in ALIST.
+Only the first match is applied.
+If a member of ALIST does not have a matching function, it is dropped.
+
+To explicitly drop an element, use the `ignore' function.
+To explicitly keep an element, use the `identity' function."
+  (let ((fun-all (car (alist-get 'all fun-alist)))
+        (result '()))
+    (dolist (e alist)
+      (let* ((fun (or (car (alist-get (car e) fun-alist))
+                      fun-all))
+             (res (and fun (apply fun (cdr e)))))
+        (when res
+          (push (list (car e) res) result))))
+    (nreverse result)))
+
+(defun helm-system-packages-categorize (packages)
+  "Return an alist of PACKAGES indexed by category.
+PACKAGES must be a list.
+Order is presever within categories.
+Categories are infered from `helm-system-packages--display-lists': it's the last
+word of the first associated symbol.
+If not found, category is `uninstalled'."
+  (let ((result '())) ; TODO: Include in dolist.
+    (dolist (p packages)
+      (let* ((e (assoc p helm-system-packages--display-lists))
+             (category (or (and e (intern (replace-regexp-in-string ".*\\W\\(\\w+\\)$" "\\1" (symbol-name (cadr e)))))
+                           'uninstalled))
+             (cell (assoc category result)))
+        (if cell
+            (setcdr cell (nconc (cdr cell) (list p)))
+          (push (list category p) result))))
+    result))
+
 (defun helm-system-packages-toggle-descriptions ()
   "Toggle description column."
   (interactive)
@@ -100,6 +138,37 @@ such as the package description."
       (car (split-string package))
     package))
 
+(defun helm-system-packages-info (info-string)
+  "Format INFO-STRING to be suitable for display in an Org buffer.
+This assumes the following format for INFO-STRING:
+
+.*: package-foo
+.*
+
+.*: package-bar
+.*"
+  (when info-string
+    (with-temp-buffer
+      ;; We insert a double newline at the beginning so that the
+      ;; regexp-replace works on the first entry as well.
+      (save-excursion (insert "\n\n" info-string))
+      (while (re-search-forward "\n\n.*: " nil t)
+        (replace-match "\n* " nil nil))
+      (goto-char (point-min))
+      (delete-blank-lines)
+      (buffer-string))))
+
+;; TODO: If we do not make 'args' a &rest, then `apply' can be removed in the caller.
+(defun helm-system-packages-call (commandline &rest args)
+  "COMMANDLINE to run over ARGS.
+COMMANDLINE is a list where the `car' is the command and the
+`cdr' are the options."
+  (with-temp-buffer
+    ;; We discard errors.
+    (apply #'call-process (car commandline) nil t nil (append (cdr commandline) args))
+    (buffer-string)))
+
+;; TODO: Replace -run by -call.
 (defun helm-system-packages-run (command &rest args)
   "COMMAND to run over `helm-marked-candidates'."
   (let ((arg-list (append args (helm-marked-candidates))))
@@ -108,6 +177,7 @@ such as the package description."
       (apply #'call-process command nil t nil arg-list)
       (buffer-string))))
 
+;; TODO: Replace -print by -info or factor with -pacman-info.
 (defun helm-system-packages-print (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
 

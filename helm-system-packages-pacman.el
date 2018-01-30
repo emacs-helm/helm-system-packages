@@ -239,34 +239,28 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
   :group 'helm-system-packages
   :type 'boolean)
 
-(defun helm-system-packages-pacman--run (commands)
-  "Run pacman COMMANDS over `helm-marked-candidates'.
+(defun helm-system-packages-pacman-info-uninstalled (info-string)
+  "Like `helm-system-packages-info' for uninstalled packages.
+This assumes the following format for INFO-STRING:
 
-COMMANDS are a cons in the form of
+Repository      : community
+Name            : FOO
+...
 
-  ((\"local-command\" \"args\"...) .
-   (\"sync-command\" \"args\"...))
-
-The local/sync command will be run on the candidates which are/are not installed
-locally, respectively.
-
-Return (\"local-command-result\" . \"sync-command-result\")."
-  (let ((candidates (reverse (helm-marked-candidates)))
-        local sync)
-    (dolist (c candidates)
-      (push c (if (assoc c helm-system-packages--display-lists) local sync)))
-    (if (and (not local) (not sync))
-        (error "No result")
-      (cons
-       (with-temp-buffer
-         (when local
-           ;; We discard errors.
-           (apply #'call-process (caar commands) nil t nil (append (cdar commands) local))
-           (buffer-string)))
-       (with-temp-buffer
-         (when sync
-           (apply #'call-process (cadr commands) nil t nil (append (cddr commands) sync))
-           (buffer-string)))))))
+Repository      : community
+Name            : BAR
+..."
+  (when info-string
+    ;; Process sync candidates separately from local candidates.
+    ;; `pacman -Sii' returns:
+    ;; We need to remove the second line and print `* FOO' at the top.
+    (with-temp-buffer
+      (save-excursion (insert "\n\n" info-string))
+      (while (re-search-forward "\n\n\\(.*\\)\n.*: \\(.*\\)" nil t)
+        (replace-match "\n* \\2\n\\1" nil nil))
+      (goto-char (point-min))
+      (delete-blank-lines)
+      (buffer-string))))
 
 (defun helm-system-packages-pacman-info (_candidate)
   "Print information about the selected packages.
@@ -277,41 +271,17 @@ exact same information.
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  ;; TODO: Sort buffer output? Or keep the mark order?
-  (require 'org)
-  (let* ((res (helm-system-packages-pacman--run '(("pacman" "--query" "--info" "--info") .
-                                                  ("pacman" "--sync" "--info" "--info"))))
-         (local-res (car res))
-         (sync-res (cdr res))
-         buf)
-    (setq buf (with-temp-buffer
-                (when local-res
-                  ;; We insert a double newline at the beginning so that the
-                  ;; regexp-replace works on the first entry as well.
-                  (save-excursion (insert "\n\n" local-res))
-                  (while (re-search-forward "\n\n.*: " nil t)
-                    (replace-match "\n* " nil nil)))
-                (goto-char (point-max))
-                (delete-blank-lines)
-                (when sync-res
-                  ;; Process sync candidates separately from local candidates.
-                  ;; `pacman -Sii' returns:
-                  ;;
-                  ;; Repository      : community
-                  ;; Name            : FOO
-                  ;;
-                  ;; We need to remove the second line and print `* FOO' at the top.
-                  (save-excursion (insert "\n\n" sync-res))
-                  (while (re-search-forward "\n\n\\(.*\\)\n.*: \\(.*\\)" nil t)
-                    (replace-match "\n* \\2\n\\1" nil nil)))
-                ;; Sort all entries.  org-sort-entries works on the whole buffer
-                ;; if it is strictly before the first entry.
-                (goto-char (point-min))
-                (org-mode)
-                (org-sort-entries nil ?a)
-                (goto-char (point-min))
-                (delete-blank-lines)
-                (buffer-string)))
+  (let* ((desc-alist
+          (helm-system-packages-mapalist
+           '((uninstalled helm-system-packages-pacman-info-uninstalled)
+             (all helm-system-packages-info))
+           (helm-system-packages-mapalist '((uninstalled (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--sync" "--info" "--info") p)))
+                                            (all (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--query" "--info" "--info") p))))
+                                          (helm-system-packages-categorize (helm-marked-candidates)))))
+         (buf (with-temp-buffer
+                (mapc 'insert (mapcar 'cadr desc-alist))
+                (buffer-string))))
+    ;; TODO: Sort buffer output? Or keep the mark order?
     (if helm-current-prefix-arg
         (insert buf)
       ;; TODO: Name temp buffer to helm-system-packages-buffer.
@@ -320,19 +290,32 @@ Otherwise display in `helm-system-packages-buffer'."
       (erase-buffer)
       (org-mode)
       (save-excursion (insert buf))
+      (org-sort-entries nil ?a)
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
+  "Print information about the selected packages.
+
+The local database will be queried if possible, while the sync
+database is used as a fallback.  Note that they don't hold the
+exact same information.
+
+With prefix argument, insert the output at point.
+Otherwise display in `helm-system-packages-buffer'."
   ;; TODO: Check for errors when file database does not exist.
-  (require 'helm-files)
-  (let ((res (helm-system-packages-pacman--run '(("pacman" "--query" "--list") .
-                                                 ("pacman" "--files" "--list")))))
+  (let* ((file-alist
+          (helm-system-packages-mapalist
+           '((uninstalled (lambda (&rest p)
+                            (apply 'helm-system-packages-call '("pacman" "--files" "--list") p)))
+             (all (lambda (&rest p)
+                    (apply 'helm-system-packages-call '("pacman" "--query" "--list") p))))
+           (helm-system-packages-categorize (helm-marked-candidates)))))
     (if helm-current-prefix-arg
         (insert res)
       (let (file-list) ; An alist of (package-name . (files...))
         (with-temp-buffer
-          (insert (car res) (or (cdr res) ""))
+          (mapc 'insert (mapcar 'cadr file-alist))
           (goto-char (point-min))
           (let (pkg pkg-list)
             (while (search-forward " " nil t)
@@ -341,9 +324,13 @@ Otherwise display in `helm-system-packages-buffer'."
               (unless pkg-list
                 (push (setq pkg-list (list pkg)) file-list))
               ;; pacman's file database queries do not include the leading '/'.
+              ;; TODO: Prepend in mapalist:
+              ;; (replace-regexp-in-string "\\([^ ]+ \\)" "\\1/" s))
+              ;; TODO: Only reverse the file list in the end. Or simpler: reverse buffer.
               (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
                                             (buffer-substring-no-properties (point) (line-end-position)))))
               (forward-line))))
+        (require 'helm-files)
         (helm :sources (mapcar
                         (lambda (pkg)
                           (helm-system-packages-build-file-source (car pkg) (cdr pkg)))
@@ -369,16 +356,17 @@ If REVERSE is non-nil, show reverse dependencies instead."
   (setq helm-system-packages-pacman--names (or helm-system-packages-pacman--names-global helm-system-packages-pacman--names)
         helm-system-packages-pacman--names-global helm-system-packages-pacman--names)
   (let* ((format-string (if reverse "%N" (concat "%E" (and helm-current-prefix-arg "%o"))))
-         (res (helm-system-packages-pacman--run
-               (cons
-                (list "expac" "--query" "--listdelim" "\n" format-string)
-                (list "expac" "--sync" "--listdelim" "\n" format-string))))
+         (deps-alist
+          (helm-system-packages-mapalist
+           `((uninstalled (lambda (&rest p)
+                            (apply 'helm-system-packages-call '("expac" "--sync" "--listdelim" "n" ,format-string) p)))
+             (all (lambda (&rest p)
+                    (apply 'helm-system-packages-call '("expac" "--query" "--listdelim" "\n" ,format-string) p))))
+           (helm-system-packages-categorize (helm-marked-candidates))))
          desc-res)
-    ;; TODO: Possible optimization: split-string + sort + del-dups instead of working on buffer.
+    ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
     (setq res (with-temp-buffer
-                (insert
-                 (or (car res) "")
-                 (or (cdr res) ""))
+                (mapc 'insert (mapcar 'cadr deps-alist))
                 (sort-lines nil (point-min) (point-max))
                 (delete-duplicate-lines (point-min) (point-max))
                 (buffer-string)))
