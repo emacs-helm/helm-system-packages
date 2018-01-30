@@ -29,9 +29,13 @@
 (require 'helm)
 (require 'helm-system-packages)
 
-(declare-function term-line-mode "term")
-(declare-function term-char-mode "term")
-(declare-function term-send-input "term")
+
+(defcustom helm-system-packages-dpkg-confirm-p t
+  "By default readline interface is used to prompt questions.
+If this variable is nil, then the default answers will be used
+for all questions (noninteractive mode of dpkg)."
+  :group 'helm-system-packages
+  :type 'bool)
 
 (defvar helm-system-packages-dpkg-help-message
   "* Helm dpkg
@@ -51,37 +55,6 @@ Requirements:
 
 (defvar helm-system-packages-dpkg--descriptions nil
   "Cache of all package names with descriptions.")
-
-(defvar helm-system-packages-dpkg-term-buffer nil)
-
-(defun helm-system-packages-dpkg-run-as-root (command &rest args)
-  "COMMAND to run over `helm-marked-candidates'.
-
-COMMAND will be run in a term-mode buffer
-`helm-system-packages-dpkg-term-buffer'.  Eshell cannot be used
-for dpkg because of its \"configure\" mecanism which uses a
-curses interface."
-  (let ((arg-list (append args (helm-marked-candidates))))
-    ;; Refresh package list after command has completed.
-    (push command arg-list)
-    (push "sudo" arg-list)
-    (if (and helm-system-packages-dpkg-term-buffer
-             (buffer-live-p (get-buffer helm-system-packages-dpkg-term-buffer)))
-        (switch-to-buffer helm-system-packages-dpkg-term-buffer)
-      (ansi-term (getenv "SHELL") "term dpkg")
-      (setq helm-system-packages-dpkg-term-buffer (buffer-name))
-      (term-line-mode))
-    (goto-char (process-mark (get-buffer-process (current-buffer))))
-    ;; TODO: Detect if an existing process is still running.
-    (delete-region (point) (point-max))
-    (insert (mapconcat 'identity arg-list " "))
-    (term-char-mode)
-    ;; It seems that it's not possible to add a post-command hook with "term".
-    ;; Let's reset the cache right-away then.
-    (setq helm-system-packages-dpkg--names nil
-          helm-system-packages-dpkg--descriptions nil)
-    (when helm-system-packages-auto-send-commandline-p
-      (term-send-input))))
 
 (defvar helm-system-packages-dpkg-map
   ;; M-U is reserved for `helm-unmark-all'.
@@ -308,18 +281,26 @@ If REVERSE is non-nil, show reverse dependencies instead."
                      (mapconcat 'identity (helm-marked-candidates) " "))))
         (helm-system-packages-dpkg)))))
 
+(defun helm-system-packages-make-apt-get-command ( &rest args)
+  (let ((comm (append '("apt-get" "--quiet") args)))
+    (if helm-system-packages-dpkg-confirm-p
+        (push "DEBIAN_FRONTEND=readline" comm)
+      (push "DEBIAN_FRONTEND=noninteractive" comm))))
+
 (defcustom helm-system-packages-dpkg-actions
   '(("Show package(s)" .
      (lambda (_)
        (helm-system-packages-print "apt-cache" "show")))
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
-       (helm-system-packages-dpkg-run-as-root
-        "apt-get" "install" (when helm-current-prefix-arg "--reinstall"))))
+       (apply 'helm-system-packages-run-as-root
+              (helm-system-packages-make-apt-get-command "install"
+                                                         (when helm-current-prefix-arg "--reinstall")))))
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
-       (helm-system-packages-dpkg-run-as-root
-        "apt-get" "remove" (when helm-current-prefix-arg "--auto-remove"))))
+       (apply 'helm-system-packages-run-as-root
+              (helm-system-packages-make-apt-get-command "remove"
+                                                         (when helm-current-prefix-arg "--auto-remove")))))
     ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
     ("Find files" .
      (lambda (_)
@@ -332,8 +313,9 @@ If REVERSE is non-nil, show reverse dependencies instead."
        (helm-system-packages-print "apt-cache" "rdepends")))
     ("Uninstall/Purge (`C-u' to include dependencies)" .
      (lambda (_)
-       (helm-system-packages-dpkg-run-as-root
-        "apt-get" "purge" (when helm-current-prefix-arg "--auto-remove")))))
+       (apply 'helm-system-packages-run-as-root
+              (helm-system-packages-make-apt-get-command "purge"
+                                                         (when helm-current-prefix-arg "--auto-remove"))))))
   "Actions for Helm dpkg."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
