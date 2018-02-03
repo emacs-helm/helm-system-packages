@@ -139,13 +139,13 @@ Requirements:
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
-                  (call-process "apt-mark" nil t nil "showmanual")
+                  (process-file "apt-mark" nil t nil "showmanual")
                   (buffer-string))))
 
 (defun helm-system-packages-dpkg-list-dependencies ()
   "List packages installed as a dependency."
   (split-string (with-temp-buffer
-                  (call-process "apt-mark" nil t nil "showauto")
+                  (process-file "apt-mark" nil t nil "showauto")
                   (buffer-string))))
 
 (defun helm-system-packages-dpkg-list-residuals ()
@@ -154,7 +154,7 @@ Requirements:
     (dolist (pkgline
              (split-string
               (with-temp-buffer
-                (call-process "dpkg" nil t nil "--get-selections")
+                (process-file "dpkg" nil t nil "--get-selections")
                 (buffer-string))
               "\n")
              res)
@@ -165,7 +165,7 @@ Requirements:
 (defun helm-system-packages-dpkg-cache-names () ; TODO: Build from --descriptions instead like pacman?
   "Cache all package names."
   (with-temp-buffer
-    (call-process "apt-cache" nil t nil "pkgnames")
+    (process-file "apt-cache" nil t nil "pkgnames")
     ;; (sort-lines nil (point-min) (point-max))
     (buffer-string)))
 
@@ -178,7 +178,7 @@ Requirements:
   "Cache all package names with descriptions."
   (with-temp-buffer
     ;; `apt-cache search` is much faster than `apt-cache show`.
-    (call-process "apt-cache" nil '(t nil) nil "search" ".")
+    (process-file "apt-cache" nil '(t nil) nil "search" ".")
     ;; apt-cache's output format is "pkg - desc".  Remove "-" and align to
     ;; column.
     (goto-char (point-min))
