@@ -105,7 +105,7 @@ such as the package description."
   (let ((arg-list (append args (helm-marked-candidates))))
     (with-temp-buffer
       ;; We discard errors.
-      (apply #'call-process command nil t nil arg-list)
+      (apply #'process-file command nil t nil arg-list)
       (buffer-string))))
 
 (defun helm-system-packages-print (command &rest args)

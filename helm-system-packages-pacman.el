@@ -153,26 +153,26 @@ This is only used for dependency display.")
 (defun helm-system-packages-pacman-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--explicit" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--explicit" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-dependencies ()
   "List packages installed as a required dependency."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--deps" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--deps" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-orphans ()
   "List orphan packages (unrequired dependencies)."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--deps" "--unrequired" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--deps" "--unrequired" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-locals ()
   "List explicitly installed local packages.
 Local packages can also be orphans, explicit or dependencies."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--foreign" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--foreign" "--quiet")
                   (buffer-string))))
 
 (defcustom helm-system-packages-pacman-column-width 40
@@ -191,8 +191,8 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
           (with-temp-buffer
             ;; TODO: Possible optimization: Output directly in Elisp?
             (let ((format-string (format "%%-%dn  %%d" helm-system-packages-pacman-column-width)))
-              (call-process "expac" nil '(t nil) nil "--sync" format-string)
-              (apply 'call-process "expac" nil '(t nil) nil "--query" format-string local-packages))
+              (process-file "expac" nil '(t nil) nil "--sync" format-string)
+              (apply 'process-file "expac" nil '(t nil) nil "--query" format-string local-packages))
             (sort-lines nil (point-min) (point-max))
             (buffer-string)))
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
@@ -261,11 +261,11 @@ Return (\"local-command-result\" . \"sync-command-result\")."
        (with-temp-buffer
          (when local
            ;; We discard errors.
-           (apply #'call-process (caar commands) nil t nil (append (cdar commands) local))
+           (apply #'process-file (caar commands) nil t nil (append (cdar commands) local))
            (buffer-string)))
        (with-temp-buffer
          (when sync
-           (apply #'call-process (cadr commands) nil t nil (append (cddr commands) sync))
+           (apply #'process-file (cadr commands) nil t nil (append (cddr commands) sync))
            (buffer-string)))))))
 
 (defun helm-system-packages-pacman-info (_candidate)
