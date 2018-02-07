@@ -222,7 +222,7 @@ such as the package description."
 
 (defun helm-system-packages-show-information (desc-alist)
   "Show package information contained in DESC-ALIST.
-DESC-ALIST's cars are ignored, the cdrs are in the form
+DESC-ALIST's keys are ignored, the values are in the form
 
 .*: PACKAGE-NAME
 PACKAGE-INFO...
@@ -305,8 +305,31 @@ PACKAGES is a string and FILES is a list of strings."
     :keymap 'helm-find-files-map
     :action 'helm-find-files-actions))
 
-;; TODO: Replace by -pacman-find-files.
-(defun helm-system-packages-find-files (command &rest args)
+(defun helm-system-packages-find-files (files)
+  "Run a `helm-find-files' over files in FILES
+FILES are either
+
+- a hash table whose keys are the package names and the values the list of files,
+- or a single list of files.
+
+In case of a hash table, one Helm source per package will be created."
+  (if (not files)
+      (message "No file list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
+    (require 'helm-files)
+    (if (hash-table-p files)
+        (let (sources)
+          (maphash
+           (lambda (package files)
+             (push (helm-system-packages-build-file-source package files) sources))
+           files)
+          (helm :sources sources
+                :buffer "*helm system package files*"))
+      (helm :sources
+            (helm-system-packages-build-file-source "Package files" files)
+            :buffer "*helm system package files*"))))
+
+;; TODO: Replace by -find-files.
+(defun helm-system-packages-files (command &rest args)
   (let ((res (apply #'helm-system-packages-run command args)))
     (if (string= res "")
         (message "No result") ; TODO: Error in helm-system-packages-run.

@@ -304,7 +304,7 @@ If REVERSE is non-nil, show reverse dependencies instead."
     ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
     ("Find files" .
      (lambda (_)
-       (helm-system-packages-find-files "dpkg" "--listfiles")))
+       (helm-system-packages-files "dpkg" "--listfiles")))
     ("Show dependencies" .
      (lambda (_)
        (helm-system-packages-print "apt-cache" "depends")))

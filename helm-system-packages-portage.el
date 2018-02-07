@@ -188,7 +188,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
        (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t))))
     ("Find files" .
      (lambda (_)
-       (helm-system-packages-find-files "equery" "--no-color" "files")))
+       (helm-system-packages-files "equery" "--no-color" "files")))
     ("Show dependencies" .
      (lambda (_)
        (helm-system-packages-print "equery" "--no-color" "depgraph")))

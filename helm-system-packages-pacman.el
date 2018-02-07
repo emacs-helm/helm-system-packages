@@ -222,51 +222,31 @@ Otherwise display in `helm-system-packages-buffer'."
                                    (helm-system-packages-categorize (helm-marked-candidates))))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
-  "Print information about the selected packages.
+  "List candidate files for display in `helm-system-packages-find-files'.
 
 The local database will be queried if possible, while the sync
 database is used as a fallback.  Note that they don't hold the
-exact same information.
-
-With prefix argument, insert the output at point.
-Otherwise display in `helm-system-packages-buffer'."
+exact same information."
   ;; TODO: Check for errors when file database does not exist.
-  (let* ((file-alist
-          (helm-system-packages-mapalist
-           '((uninstalled (lambda (&rest p)
-                            (apply 'helm-system-packages-call '("pacman" "--files" "--list") p)))
-             (groups ignore)
-             (all (lambda (&rest p)
-                    (apply 'helm-system-packages-call '("pacman" "--query" "--list") p))))
-           (helm-system-packages-categorize (helm-marked-candidates)))))
-    (cond
-     ((not file-alist)
-      (message "No file list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
-     (helm-current-prefix-arg
-      (mapc 'insert (mapcar 'cadr file-alist)))
-     (t (let (file-list) ; An alist of (package-name . (files...))
-          (with-temp-buffer
-            (mapc 'insert (mapcar 'cadr file-alist))
-            (goto-char (point-min))
-            (let (pkg pkg-list)
-              (while (search-forward " " nil t)
-                (setq pkg (buffer-substring-no-properties (line-beginning-position) (1- (point))))
-                (setq pkg-list (assoc pkg file-list))
-                (unless pkg-list
-                  (push (setq pkg-list (list pkg)) file-list))
-                ;; pacman's file database queries do not include the leading '/'.
-                ;; TODO: Prepend in mapalist:
-                ;; (replace-regexp-in-string "\\([^ ]+ \\)" "\\1/" s))
-                ;; TODO: Only reverse the file list in the end. Or simpler: reverse buffer.
-                (nconc pkg-list (list (concat (unless (char-equal (char-after (point)) ?/) "/")
-                                              (buffer-substring-no-properties (point) (line-end-position)))))
-                (forward-line))))
-          (require 'helm-files)
-          (helm :sources (mapcar
-                          (lambda (pkg)
-                            (helm-system-packages-build-file-source (car pkg) (cdr pkg)))
-                          file-list)
-                :buffer "*helm system package files*"))))))
+  (let ((file-hash (make-hash-table :test 'equal)))
+    (dolist (file-string
+             (mapcar 'cadr
+                     (helm-system-packages-mapalist
+                      '((uninstalled (lambda (&rest p)
+                                       ;; Prepend the missing leading '/' to pacman's file database queries.'
+                                       (replace-regexp-in-string
+                                        "\\([^ ]+ \\)" "\\1/"
+                                        (apply 'helm-system-packages-call '("pacman" "--files" "--list") p))))
+                        (groups ignore)
+                        (all (lambda (&rest p)
+                               (apply 'helm-system-packages-call '("pacman" "--query" "--list") p))))
+                      (helm-system-packages-categorize (helm-marked-candidates)))))
+      ;; The first word of the line (package name) is the hash table key,
+      ;; the rest is pushed to the value (list of files).
+      (string-match "" file-string) ;; Reset search indexes.
+      (while (string-match "\n?\\([^ ]+\\) \\(.*\\)" file-string (match-end 0))
+        (push (match-string 2 file-string) (gethash (match-string 1 file-string) file-hash))))
+    (helm-system-packages-find-files file-hash)))
 
 (defvar helm-system-packages-pacman--descriptions-global nil
   "All descriptions.
