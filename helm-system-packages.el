@@ -31,12 +31,94 @@
 (defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
+(defvar helm-system-packages--show-uninstalled-p t)
+(defvar helm-system-packages--show-explicit-p t)
+(defvar helm-system-packages--show-dependencies-p t)
+(defvar helm-system-packages--show-orphans-p t)
+(defvar helm-system-packages--show-locals-p t)
+(defvar helm-system-packages--show-groups-p t)
+
+(defvar helm-system-packages--source-name "package source")
+
+(defvar helm-system-packages--names nil
+  "Cache of all packages.")
+
+(defvar helm-system-packages--descriptions nil
+  "Cache of all package names with descriptions.")
+
+(defface helm-system-packages-explicit '((t (:inherit font-lock-warning-face)))
+  "Face for explicitly installed packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
+  "Face for packages installed as dependencies."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-orphans '((t (:inherit font-lock-string-face :slant italic)))
+  "Face for orphan packages (unrequired dependencies)."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-locals '((t (:weight bold)))
+  "Face for local packages."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-groups '((t (:inherit font-lock-doc-face)))
+  "Face for package groups."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-virtual '((t (:slant italic)))
+  "Face for virtual packages."
+  :group 'helm-system-packages)
+
 ;; Shut up byte compiler
 (declare-function eshell-interactive-process "esh-cmd.el")
 (declare-function eshell-send-input "esh-mode.el")
 (defvar eshell-buffer-name)
 (defvar helm-ff-transformer-show-only-basename)
 (declare-function helm-comp-read "helm-mode.el")
+(declare-function org-sort-entries "org.el")
+
+(defun helm-system-packages-toggle-explicit ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-explicit-p (not helm-system-packages--show-explicit-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-explicit 'helm-only t)
+
+(defun helm-system-packages-toggle-uninstalled ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-uninstalled-p (not helm-system-packages--show-uninstalled-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-uninstalled 'helm-only t)
+
+(defun helm-system-packages-toggle-dependencies ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-dependencies-p (not helm-system-packages--show-dependencies-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-dependencies 'helm-only t)
+
+(defun helm-system-packages-toggle-orphans ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-orphans-p (not helm-system-packages--show-orphans-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-orphans 'helm-only t)
+
+(defun helm-system-packages-toggle-locals ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-locals-p (not helm-system-packages--show-locals-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-locals 'helm-only t)
+
+(defun helm-system-packages-toggle-groups ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-groups-p (not helm-system-packages--show-groups-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-groups 'helm-only t)
 
 ;; TODO: Don't refresh when eshell-last-command-status is not 0?
 (defvar helm-system-packages-refresh nil
@@ -212,6 +294,7 @@ PACKAGES is a string and FILES is a list of strings."
     :keymap 'helm-find-files-map
     :action 'helm-find-files-actions))
 
+;; TODO: Replace by -pacman-find-files.
 (defun helm-system-packages-find-files (command &rest args)
   (let ((res (apply #'helm-system-packages-run command args)))
     (if (string= res "")
@@ -266,6 +349,7 @@ With prefix argument, insert the output at point."
 (defun helm-system-packages ()
   "Helm user interface for system packages."
   (interactive)
+  ;; "portage" does not have an executable of the same name, hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
   (let ((managers (seq-filter (lambda (p) (executable-find (car p))) '(("emerge" "portage") ("dpkg") ("pacman")))))
     (if (not managers)
         (message "No supported package manager was found")
