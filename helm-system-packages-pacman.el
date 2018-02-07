@@ -268,6 +268,23 @@ If REVERSE is non-nil, list reverse dependencies instead."
                (apply 'helm-system-packages-call '("expac" "--query" "--listdelim" "\n" ,format-string) p))))
       (helm-system-packages-categorize (helm-marked-candidates))))))
 
+(defun helm-system-packages-pacman-history (_candidate)
+  "Filter pacman logs by candidates."
+  (switch-to-buffer helm-system-packages-buffer)
+  (view-mode 0)
+  (erase-buffer)
+  (save-excursion (insert-file-contents-literally
+                   ;; Find log file location from `pacman' output.
+                   (with-temp-buffer
+                     (call-process "pacman" nil t nil "--verbose")
+                     (goto-char (point-min))
+                     (keep-lines "^Log File")
+                     (search-forward ":" nil t)
+                     (buffer-substring-no-properties (1+ (point)) (line-end-position)))))
+  (keep-lines
+   (concat "\\[PACMAN\\].*"
+           (regexp-opt (helm-marked-candidates)))))
+
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
     ("Install (`C-u' to reinstall)" .
@@ -293,7 +310,8 @@ If REVERSE is non-nil, list reverse dependencies instead."
        (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
     ("Mark as explicit" .
      (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit"))))
+       (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit")))
+    ("Show history" . helm-system-packages-pacman-history))
   "Actions for Helm pacman."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))

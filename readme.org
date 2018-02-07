@@ -105,16 +105,11 @@ Those sections should be folded by default.
 
 We probably still need specific "info" actions to insert at point.
 *** TODO Use bindings reflecting helm-list-elisp-packages
-*** TODO [#A] Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
-Done for pacman.
+*** TODO [#A] Port factorization to dpkg, portage
 *** Auto-refresh databases after some days.
 *** Add option to display multiline candidates for long descriptions.
-*** find-file action: Split packages in sources
-Done for pacman.
 *** With filtering, the displayed condidates won't include those above the candidate limit
 Can we include as many filtered candidates as possible?
-*** Logging
-Add for pacman.
 *** Add xbps (Void Linux) support
 *** Add guix support
 *** Add homebrew support
