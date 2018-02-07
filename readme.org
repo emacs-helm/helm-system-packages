@@ -5,25 +5,30 @@
 Helm System Packages is an Emacs-based interface to the package manager of your
 operating system.
 
-Emacs' knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version for
+Emacs' knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version targeted at
 non-Emacs users.  Run the script and everything should be self-explanatory.  If
-it's not then it's bug, please report it.
+not then it's bug, please report it.
 
 Start ~helm-system-packages~ to list all available packages (with installed
 packages as well as dependencies displayed in their own respective face).
 Fuzzy-search, mark and execute the desired action over any set of packages:
 
-- Install
-- Uninstall
-- Display packages details or insert details at point
-- Find files
+- Install.
+- Uninstall.
+- Display packages details (in Org Mode!) or insert details at point.
+- Find files owned by packages.
 - And much more.
 
-Some package managers come with their specific actions and even specific
-sources, e.g. Portage's USE flags.
+Helm System Packages provides a uniform interface over the following package
+managers:
 
-Note: While similar to https://github.com/jabranham/system-packages, Helm System
-Packages is not based on it.
+- =dpkg= (apt & friends)
+- =pacman=
+- =portage= (emerge & friends)
+- And (hopefully) more to come!  Contributions are welcome.
+
+Some package managers come with their specific actions and even specific
+Helm sources, e.g. Portage's USE flags.
 
 * Usage
 
@@ -32,6 +37,18 @@ There is only one entry point: ~helm-system-packages~.
 Use the persistent action to view the details of the marked packages.
 
 Most actions can be called with a prefix argument to insert the result at point.
+
+** Maintenance & other operations
+
+Helm System Packages only works over lists of packages.  It does not feature any
+maintenance-related operations such as cleaning the cache or synchronizing the
+database.
+
+[[https://github.com/jabranham/system-packages][system-packages]] is an Emacs package providing Emacs with universal commands for
+such operations.
+It is unrelated to Helm System Packages but both work well together.
+
+** Privileges
 
 Transactions such as installing and removing packages are run via the `sudo`
 command in Eshell.
@@ -71,7 +88,7 @@ Helm sessions can also be resumed.
 
 * Development
 
-Each module is rather straightforward, it only need to define the following:
+Each module is rather straightforward, it only needs to define the following:
 
 - A ~helm-system-packages-FOO~ function that starts a Helm session.
 - An interactive ~helm-system-packages-FOO-refresh~ function to refresh the package list either manually or after transactions.
@@ -90,11 +107,14 @@ We probably still need specific "info" actions to insert at point.
 *** TODO Use bindings reflecting helm-list-elisp-packages
 *** TODO [#A] Dependencies/Reverse dependencies should fire up a new Helm-System-Packages session.
 Done for pacman.
+*** Auto-refresh databases after some days.
 *** Add option to display multiline candidates for long descriptions.
 *** find-file action: Split packages in sources
 Done for pacman.
 *** With filtering, the displayed condidates won't include those above the candidate limit
 Can we include as many filtered candidates as possible?
+*** Logging
+Add for pacman.
 *** Add xbps (Void Linux) support
 *** Add guix support
 *** Add homebrew support
