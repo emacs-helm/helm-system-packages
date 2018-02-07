@@ -285,11 +285,33 @@ If REVERSE is non-nil, list reverse dependencies instead."
    (concat "\\[PACMAN\\].*"
            (regexp-opt (helm-marked-candidates)))))
 
+(defcustom helm-system-packages-pacman-synchronize-threshold 86400
+  "Auto-synchronize database on installation if older than this many seconds.
+If nil, no automatic action is taken."
+  :group 'helm-system-packages
+  :type 'integer)
+
+(defun helm-system-packages-pacman-synchronize-database ()
+  "Synchronize the database when older then `helm-system-packages-pacman-synchronize-threshold'."
+  (when helm-system-packages-pacman-synchronize-threshold
+    (let ((db-path (with-temp-buffer
+                     (call-process "pacman" nil t nil "--verbose")
+                     (goto-char (point-min))
+                     (keep-lines "^DB Path")
+                     (search-forward ":" nil t)
+                     (buffer-substring-no-properties (1+ (point)) (line-end-position)))))
+      (time-less-p (car (sort (mapcar
+                               (lambda (file) (nth 5 (file-attributes file)))
+                               (file-expand-wildcards (expand-file-name "sync/*.db" db-path)))
+                              'time-less-p))
+                   (time-subtract (current-time) (seconds-to-time helm-system-packages-pacman-synchronize-threshold))))))
+
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
        (helm-system-packages-run-as-root "pacman" "--sync"
+                                         (when (helm-system-packages-pacman-synchronize-database) "--refresh")
                                          (unless helm-current-prefix-arg "--needed")
                                          (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
     ("Uninstall (`C-u' to include dependencies)" .

@@ -106,7 +106,6 @@ Those sections should be folded by default.
 We probably still need specific "info" actions to insert at point.
 *** TODO Use bindings reflecting helm-list-elisp-packages
 *** TODO [#A] Port factorization to dpkg, portage
-*** Auto-refresh databases after some days.
 *** Add option to display multiline candidates for long descriptions.
 *** With filtering, the displayed condidates won't include those above the candidate limit
 Can we include as many filtered candidates as possible?
