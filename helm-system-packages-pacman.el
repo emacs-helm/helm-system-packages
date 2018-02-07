@@ -190,31 +190,6 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
   :group 'helm-system-packages
   :type 'boolean)
 
-;; TODO: Only swap name and repository here, leave the rest to
-;; `helm-system-packages-info'.
-(defun helm-system-packages-pacman-info-uninstalled (info-string)
-  "Like `helm-system-packages-info' for uninstalled packages.
-This assumes the following format for INFO-STRING:
-
-Repository      : community
-Name            : FOO
-...
-
-Repository      : community
-Name            : BAR
-..."
-  (when info-string
-    ;; Process sync candidates separately from local candidates.
-    ;; `pacman -Sii' returns:
-    ;; We need to remove the second line and print `* FOO' at the top.
-    (with-temp-buffer
-      (save-excursion (insert "\n\n" info-string))
-      (while (re-search-forward "\n\n\\(.*\\)\n.*: \\(.*\\)" nil t)
-        (replace-match "\n* \\2\n\\1" nil nil))
-      (goto-char (point-min))
-      (delete-blank-lines)
-      (buffer-string))))
-
 (defun helm-system-packages-pacman-info (_candidate)
   "Print information about the selected packages.
 
@@ -224,33 +199,27 @@ exact same information.
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (let* ((desc-alist
-          (helm-system-packages-mapalist
-           '((uninstalled helm-system-packages-pacman-info-uninstalled)
-             (all helm-system-packages-info))
-           (helm-system-packages-mapalist '((uninstalled (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--sync" "--info" "--info") p)))
-                                            (groups ignore)
-                                            (all (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--query" "--info" "--info") p))))
-                                          (helm-system-packages-categorize (helm-marked-candidates)))))
-         (buf (with-temp-buffer
-                (mapc 'insert (mapcar 'cadr desc-alist))
-                (buffer-string))))
-    ;; TODO: Sort buffer output? Or keep the mark order?
-    ;; TODO: Move to `helm-system-packages-info'.
-    (cond
-     ((not desc-alist)
-      (message "No information for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
-     (helm-current-prefix-arg
-      (insert buf))
-      ;; TODO: Name temp buffer to helm-system-packages-buffer.
-     (t (switch-to-buffer helm-system-packages-buffer)
-        (view-mode 0)
-        (erase-buffer)
-        (org-mode)
-        (save-excursion (insert buf))
-        (org-sort-entries nil ?a)
-        (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
-          (view-mode 1))))))
+  (helm-system-packages-show-information
+   (helm-system-packages-mapalist
+    '((uninstalled (lambda (info-string)
+                     ;; Normalize `pacman -Sii' output.", e.g.
+                     ;;
+                     ;;   Repository      : community
+                     ;;   Name            : FOO
+                     ;;   ...
+                     ;;
+                     ;; to
+                     ;;
+                     ;;   Name            : FOO
+                     ;;   Repository      : community
+                     ;;   ...
+                     (replace-regexp-in-string "\n\n\\(.*\\)\n\\(.*\\)" "\n\n\\2\n\\1"
+                                               (concat "\n\n" info-string))))
+      (all identity))
+    (helm-system-packages-mapalist '((uninstalled (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--sync" "--info" "--info") p)))
+                                     (groups ignore)
+                                     (all (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--query" "--info" "--info") p))))
+                                   (helm-system-packages-categorize (helm-marked-candidates))))))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
   "Print information about the selected packages.

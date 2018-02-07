@@ -220,25 +220,36 @@ such as the package description."
       (car (split-string package))
     package))
 
-(defun helm-system-packages-info (info-string)
-  "Format INFO-STRING to be suitable for display in an Org buffer.
-This assumes the following format for INFO-STRING:
+(defun helm-system-packages-show-information (desc-alist)
+  "Show package information contained in DESC-ALIST.
+DESC-ALIST's cars are ignored, the cdrs are in the form
 
-.*: package-foo
-.*
+.*: PACKAGE-NAME
+PACKAGE-INFO...
 
-.*: package-bar
-.*"
-  (when info-string
-    (with-temp-buffer
-      ;; We insert a double newline at the beginning so that the
-      ;; regexp-replace works on the first entry as well.
-      (save-excursion (insert "\n\n" info-string))
+.*: OTHER-PACKAGE-NAME
+..."
+  (cond
+   ((not desc-alist)
+    (message "No information for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
+   ;; TODO: Sort buffer output? Or keep the mark order?
+   (helm-current-prefix-arg
+    (mapc 'insert (mapcar 'cadr desc-alist)))
+   (t (switch-to-buffer helm-system-packages-buffer)
+      (view-mode 0)
+      (erase-buffer)
+      (insert "\n\n")
+      (mapc 'insert (mapcar 'cadr desc-alist))
+      (goto-char (point-min))
       (while (re-search-forward "\n\n.*: " nil t)
-        (replace-match "\n* " nil nil))
+        (replace-match "\n* "))
+      (goto-char (point-min))
+      (org-mode)
+      (org-sort-entries nil ?a)
       (goto-char (point-min))
       (delete-blank-lines)
-      (buffer-string))))
+      (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
+        (view-mode 1)))))
 
 ;; TODO: If we do not make 'args' a &rest, then `apply' can be removed in the caller.
 (defun helm-system-packages-call (commandline &rest args)
@@ -259,7 +270,7 @@ COMMANDLINE is a list where the `car' is the command and the
       (apply #'call-process command nil t nil arg-list)
       (buffer-string))))
 
-;; TODO: Replace -print by -info or factor with -pacman-info.
+;; TODO: Replace -print by -show-information.
 (defun helm-system-packages-print (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
 
