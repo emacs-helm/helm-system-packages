@@ -46,6 +46,18 @@
 (defvar helm-system-packages--descriptions nil
   "Cache of all package names with descriptions.")
 
+(defvar helm-system-packages--descriptions-global nil
+  "All descriptions.
+Used to restore complete description list when browsing dependencies.")
+
+(defvar helm-system-packages--names-global nil
+  "All names.
+Used to restore complete name list when browsing dependencies.")
+
+(defvar helm-system-packages--virtual-list nil
+  "List of virtual packages.
+This is only used for dependency display.")
+
 (defface helm-system-packages-explicit '((t (:inherit font-lock-warning-face)))
   "Face for explicitly installed packages."
   :group 'helm-system-packages)
@@ -135,6 +147,11 @@ It is called:
 (defgroup helm-system-packages nil
   "Predefined configurations for `helm-system-packages'."
   :group 'helm)
+
+(defcustom helm-system-packages-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap."
+  :group 'helm-system-packages
+  :type 'integer)
 
 (defcustom helm-system-packages-show-descriptions-p t
   "Always show descriptions in package list when non-nil."
@@ -360,6 +377,43 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
       (insert (mapconcat 'identity arg-list " "))
       (when helm-system-packages-auto-send-commandline-p
         (eshell-send-input)))))
+
+(defun helm-system-packages-show-packages (package-alist)
+  "Run a Helm session over the packages in PACKAGE-ALIST.
+The key of the alist is ignore and the package lists are considered as one
+single list.  This may change in the future."
+  (setq helm-system-packages--descriptions
+        (or helm-system-packages--descriptions-global
+            helm-system-packages--descriptions))
+  (setq helm-system-packages--descriptions-global
+        helm-system-packages--descriptions)
+  (setq helm-system-packages--names
+        (or helm-system-packages--names-global
+            helm-system-packages--names))
+  (setq helm-system-packages--names-global
+        helm-system-packages--names)
+  (if (not package-alist)
+      ;; TODO: Do not quit Helm session.
+      (message "No dependency list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
+    ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
+    (let (desc-res
+          (buf (with-temp-buffer
+                 (mapc 'insert (mapcar 'cadr package-alist))
+                 (sort-lines nil (point-min) (point-max))
+                 (delete-duplicate-lines (point-min) (point-max))
+                 (buffer-string))))
+         (dolist (name (split-string buf "\n" t))
+           (if (string-match (concat "^" name "  .*$") helm-system-packages--descriptions)
+               (setq desc-res (concat desc-res (match-string 0 helm-system-packages--descriptions) "\n"))
+             (push name helm-system-packages--virtual-list)
+             (setq desc-res (concat desc-res
+                                    name
+                                    (make-string (- helm-system-packages-column-width (length name)) ? )
+                                    "  <virtual package>"
+                                    "\n"))))
+         (let ((helm-system-packages--descriptions desc-res)
+               (helm-system-packages--names buf))
+           (helm-system-packages)))))
 
 (defun helm-system-packages-browse-url (urls)
   "Browse homepage URLs of `helm-marked-candidates'.
