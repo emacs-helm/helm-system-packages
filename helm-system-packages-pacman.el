@@ -32,6 +32,12 @@
 (defvar helm-system-packages-pacman-help-message
   "* Helm pacman
 
+** Options
+
+- `helm-system-packages-pacman-confirm-p'
+- `helm-system-packages-pacman-sync-threshold'
+- `helm-system-packages-pacman-auto-clean-cache'
+
 ** Commands
 \\<helm-system-packages-pacman-map>
 \\[helm-system-packages-pacman-toggle-explicit]\t\tToggle display of explicitly installed packages.
@@ -306,10 +312,29 @@ If nil, no automatic action is taken."
                               'time-less-p))
                    (time-subtract (current-time) (seconds-to-time helm-system-packages-pacman-synchronize-threshold))))))
 
+(defcustom helm-system-packages-pacman-auto-clean-cache nil
+  "Clean cache before installing.
+The point of keeping previous version in cache is that you can revert back if
+something fails.
+By always cleaning before installing, the previous version in kept in cache.
+This is only healthy if you test every version you install.
+Installing two upgrades (or the same version) will effectively leave you with no
+tested package to fall back on."
+  :group 'helm-system-packages
+  :type 'boolean)
+
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
+       (when helm-system-packages-pacman-auto-clean-cache
+         (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
+           (eshell)
+           (unless (eshell-interactive-process)
+             (goto-char (point-max))
+             (insert "sudo pacman --sync --clean "
+                     (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
+                     "&& "))))
        (helm-system-packages-run-as-root "pacman" "--sync"
                                          (when (helm-system-packages-pacman-synchronize-database) "--refresh")
                                          (unless helm-current-prefix-arg "--needed")
