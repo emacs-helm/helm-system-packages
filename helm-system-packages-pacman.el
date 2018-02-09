@@ -40,12 +40,12 @@
 
 ** Commands
 \\<helm-system-packages-pacman-map>
-\\[helm-system-packages-pacman-toggle-explicit]\t\tToggle display of explicitly installed packages.
-\\[helm-system-packages-pacman-toggle-uninstalled]\t\tToggle display of non-installed.
-\\[helm-system-packages-pacman-toggle-dependencies]\t\tToggle display of required dependencies.
-\\[helm-system-packages-pacman-toggle-orphans]\t\tToggle display of unrequired dependencies.
-\\[helm-system-packages-pacman-toggle-locals]\t\tToggle display of local packages.
-\\[helm-system-packages-pacman-toggle-groups]\t\tToggle display of package groups.
+\\[helm-system-packages-toggle-explicit]\t\tToggle display of explicitly installed packages.
+\\[helm-system-packages-toggle-uninstalled]\t\tToggle display of non-installed.
+\\[helm-system-packages-toggle-dependencies]\t\tToggle display of required dependencies.
+\\[helm-system-packages-toggle-orphans]\t\tToggle display of unrequired dependencies.
+\\[helm-system-packages-toggle-locals]\t\tToggle display of local packages.
+\\[helm-system-packages-toggle-groups]\t\tToggle display of package groups.
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
 
 (defvar helm-system-packages-pacman-map
