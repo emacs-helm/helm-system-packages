@@ -30,7 +30,7 @@
 ;; Since package lists can be memory consuming, we use
 ;; `helm-build-in-buffer-source' to make Helm search faster.
 ;;
-;; The core of the machanism evolves around the two buffer caches:
+;; The core of the mechanism evolves around the two buffer caches:
 ;; - the "name" cache with one name per line,
 ;; - the "description" cache with one "name <whitespace> description" per line.
 ;;
@@ -212,9 +212,10 @@ the window."
   :type 'boolean)
 
 (defun helm-system-packages-mapalist (fun-alist alist)
-  "Apply the FUN-ALIST function to each element in ALIST with the same key.
+  "Apply each function of FUN-ALIST to the list with the same key in ALIST.
 Return the alist of the results.
 Keys must be symbols.
+
 The special key `all' matches all members in ALIST.
 Only the first match is applied.
 If a member of ALIST does not have a matching function, it is dropped.
@@ -301,6 +302,7 @@ PACKAGE-INFO...
 ;; TODO: If we do not make 'args' a &rest, then `apply' can be removed in the caller.
 (defun helm-system-packages-call (commandline &rest args)
   "COMMANDLINE to run over ARGS.
+Return the result as a string.
 COMMANDLINE is a list where the `car' is the command and the
 `cdr' are the options."
   (with-temp-buffer
