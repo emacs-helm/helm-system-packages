@@ -67,6 +67,7 @@
 (defvar helm-system-packages--show-orphans-p t)
 (defvar helm-system-packages--show-locals-p t)
 (defvar helm-system-packages--show-groups-p t)
+(defvar helm-system-packages--show-pinned-p t)
 
 (defvar helm-system-packages--source-name "package source")
 
@@ -106,6 +107,10 @@ This is only used for dependency display.")
 
 (defface helm-system-packages-groups '((t (:inherit font-lock-doc-face)))
   "Face for package groups."
+  :group 'helm-system-packages)
+
+(defface helm-system-packages-pinned '((t (:weight bold)))
+  "Face for pinned packages."
   :group 'helm-system-packages)
 
 (defface helm-system-packages-virtual '((t (:slant italic)))
@@ -161,6 +166,13 @@ This is only used for dependency display.")
     (setq helm-system-packages--show-groups-p (not helm-system-packages--show-groups-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-groups 'helm-only t)
+
+(defun helm-system-packages-toggle-pinned ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages--show-pinned-p (not helm-system-packages--show-pinned-p))
+    (helm-update)))
+(put 'helm-system-packages-toggle-pinned 'helm-only t)
 
 ;; TODO: Don't refresh when eshell-last-command-status is not 0?
 (defvar helm-system-packages-refresh nil
@@ -487,7 +499,7 @@ With prefix argument, insert the output at point."
   "Helm user interface for system packages."
   (interactive)
   ;; "portage" does not have an executable of the same name, hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
-  (let ((managers (seq-filter (lambda (p) (executable-find (car p))) '(("emerge" "portage") ("dpkg") ("pacman")))))
+  (let ((managers (seq-filter (lambda (p) (executable-find (car p))) '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")))))
     (if (not managers)
         (message "No supported package manager was found")
       (let ((manager (car (last (car managers)))))
