@@ -296,7 +296,7 @@ DESC-ALIST's keys are ignored, the values are in the form
       (dolist (desc (sort
                      (apply 'append (mapcar 'cdr desc-alist))
                      (lambda (a b) (string< (car a) (car b)))))
-        (insert "* " (car desc) "\n" (cdr desc) "\n"))
+        (insert "* " (car desc) "\n" (replace-regexp-in-string "^* " "- " (cdr desc)) "\n"))
       (goto-char (point-min))
       (org-mode)
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
