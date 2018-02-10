@@ -251,16 +251,15 @@ Order is presever within categories.
 Categories are infered from `helm-system-packages--display-lists': it's the last
 word of the first associated symbol.
 If not found, category is `uninstalled'."
-  (let ((result '())) ; TODO: Include in dolist.
-    (dolist (p packages)
+  (let ((result '()))
+    (dolist (p packages result)
       (let* ((e (assoc p helm-system-packages--display-lists))
              (category (or (and e (intern (replace-regexp-in-string ".*\\W\\(\\w+\\)$" "\\1" (symbol-name (cadr e)))))
                            'uninstalled))
              (cell (assoc category result)))
         (if cell
             (setcdr cell (nconc (cdr cell) (list p)))
-          (push (list category p) result))))
-    result))
+          (push (list category p) result))))))
 
 (defun helm-system-packages-toggle-descriptions ()
   "Toggle description column."
@@ -322,7 +321,6 @@ COMMANDLINE is a list where the `car' is the command and the
     (apply #'call-process (car commandline) nil t nil (append (cdr commandline) args))
     (buffer-string)))
 
-;; TODO: Replace -run by -call.
 (defun helm-system-packages-run (command &rest args)
   "COMMAND to run over `helm-marked-candidates'."
   (let ((arg-list (append args (helm-marked-candidates))))
@@ -330,8 +328,8 @@ COMMANDLINE is a list where the `car' is the command and the
       ;; We discard errors.
       (apply #'call-process command nil t nil arg-list)
       (buffer-string))))
+(make-obsolete 'helm-system-packages-run 'helm-system-packages-call "1.9.0")
 
-;; TODO: Replace -print by -show-information.
 (defun helm-system-packages-print (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
 
@@ -351,6 +349,7 @@ Otherwise display in `helm-system-packages-buffer'."
       (save-excursion (insert res))
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
+(make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
 
 (defun helm-system-packages-build-file-source (package files)
   "Build Helm file source for PACKAGE with FILES candidates.
@@ -389,16 +388,16 @@ In case of a hash table, one Helm source per package will be created."
             (helm-system-packages-build-file-source "Package files" files)
             :buffer "*helm system package files*"))))
 
-;; TODO: Replace by -find-files.
 (defun helm-system-packages-files (command &rest args)
   (let ((res (apply #'helm-system-packages-run command args)))
     (if (string= res "")
-        (message "No result") ; TODO: Error in helm-system-packages-run.
+        (message "No result")
       (if helm-current-prefix-arg
           (insert res)
         (helm :sources
               (helm-system-packages-build-file-source "Packages" (split-string res "\n"))
               :buffer "*helm system package files*")))))
+(make-obsolete 'helm-system-packages-files 'helm-system-packages-find-files "1.9.0")
 
 (defun helm-system-packages-run-as-root (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
