@@ -390,30 +390,47 @@ In case of a hash table, one Helm source per package will be created."
 
 (defun helm-system-packages-run-as-root (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
+COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
+  (helm-system-packages-call-as-root command (helm-marked-candidates args)))
 
-COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
+(defun helm-system-packages-run-as-root-over-installed (command &rest args)
+  "COMMAND to run over installed packages among `helm-marked-candidates'.
+COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
+  (helm-system-packages-call-as-root
+   command
+   args
+   (seq-filter (lambda (p) (assoc p helm-system-packages--display-lists))
+               (helm-marked-candidates))))
+
+(defun helm-system-packages-call-as-root (command args packages)
+  "Call COMMAND ARGS PACKAGES as root.
+ARGS and PACKAGES must be lists.
+COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
   (require 'esh-mode)
-  (let ((arg-list (append args (helm-marked-candidates)))
-        (eshell-buffer-name helm-system-packages-eshell-buffer))
-    ;; Refresh package list after command has completed.
-    (push command arg-list)
-    (push "sudo" arg-list)
-    (eshell)
-    (if (eshell-interactive-process)
-        (message "A process is already running")
-      (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
-      (add-hook 'eshell-post-command-hook
-                (lambda () (remove-hook 'eshell-post-command-hook 'helm-system-packages-refresh t))
-                t t)
-      (goto-char (point-max))
-      (insert (mapconcat 'identity arg-list " "))
-      (when helm-system-packages-auto-send-commandline-p
-        (eshell-send-input)))))
+  (if (not packages)
+      (message "No suitable package selected")
+    (let ((arg-list (append args packages))
+          (eshell-buffer-name helm-system-packages-eshell-buffer))
+      ;; Refresh package list after command has completed.
+      (eshell)
+      (if (eshell-interactive-process)
+          (message "A process is already running")
+        (push command arg-list)
+        (push "sudo" arg-list)
+        (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
+        (add-hook 'eshell-post-command-hook
+                  (lambda () (remove-hook 'eshell-post-command-hook 'helm-system-packages-refresh t))
+                  t t)
+        (goto-char (point-max))
+        (insert (mapconcat 'identity arg-list " "))
+        (when helm-system-packages-auto-send-commandline-p
+          (eshell-send-input))))))
 
 (defun helm-system-packages-show-packages (package-alist)
   "Run a Helm session over the packages in PACKAGE-ALIST.
-The key of the alist is ignore and the package lists are considered as one
-single list.  This may change in the future."
+The key of the alist is ignored and the package lists are considered as one
+single list.  This may change in the future.
+The value is a string buffer, like the cache."
   (setq helm-system-packages--descriptions
         (or helm-system-packages--descriptions-global
             helm-system-packages--descriptions))
@@ -434,18 +451,18 @@ single list.  This may change in the future."
                  (sort-lines nil (point-min) (point-max))
                  (delete-duplicate-lines (point-min) (point-max))
                  (buffer-string))))
-         (dolist (name (split-string buf "\n" t))
-           (if (string-match (concat "^" name "  .*$") helm-system-packages--descriptions)
-               (setq desc-res (concat desc-res (match-string 0 helm-system-packages--descriptions) "\n"))
-             (push name helm-system-packages--virtual-list)
-             (setq desc-res (concat desc-res
-                                    name
-                                    (make-string (- helm-system-packages-column-width (length name)) ? )
-                                    "  <virtual package>"
-                                    "\n"))))
-         (let ((helm-system-packages--descriptions desc-res)
-               (helm-system-packages--names buf))
-           (helm-system-packages)))))
+      (dolist (name (split-string buf "\n" t))
+        (if (string-match (concat "^" name "  .*$") helm-system-packages--descriptions)
+            (setq desc-res (concat desc-res (match-string 0 helm-system-packages--descriptions) "\n"))
+          (push name helm-system-packages--virtual-list)
+          (setq desc-res (concat desc-res
+                                 name
+                                 (make-string (- helm-system-packages-column-width (length name)) ? )
+                                 "  <virtual package>"
+                                 "\n"))))
+      (let ((helm-system-packages--descriptions desc-res)
+            (helm-system-packages--names buf))
+        (helm-system-packages)))))
 
 (defun helm-system-packages-browse-url (urls)
   "Browse homepage URLs of `helm-marked-candidates'.
