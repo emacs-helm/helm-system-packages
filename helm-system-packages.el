@@ -403,7 +403,7 @@ In case of a hash table, one Helm source per package will be created."
 (defun helm-system-packages-run-as-root (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
 COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
-  (helm-system-packages-call-as-root command (helm-marked-candidates args)))
+  (helm-system-packages-call-as-root command args (helm-marked-candidates)))
 
 (defun helm-system-packages-run-as-root-over-installed (command &rest args)
   "COMMAND to run over installed packages among `helm-marked-candidates'.
