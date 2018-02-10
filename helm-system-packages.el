@@ -399,20 +399,6 @@ In case of a hash table, one Helm source per package will be created."
               :buffer "*helm system package files*")))))
 (make-obsolete 'helm-system-packages-files 'helm-system-packages-find-files "1.9.0")
 
-(defun helm-system-packages-run-as-root (command &rest args)
-  "COMMAND to run over `helm-marked-candidates'.
-COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
-  (helm-system-packages-call-as-root command args (helm-marked-candidates)))
-
-(defun helm-system-packages-run-as-root-over-installed (command &rest args)
-  "COMMAND to run over installed packages among `helm-marked-candidates'.
-COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
-  (helm-system-packages-call-as-root
-   command
-   args
-   (seq-filter (lambda (p) (assoc p helm-system-packages--display-lists))
-               (helm-marked-candidates))))
-
 (defun helm-system-packages-call-as-root (command args packages)
   "Call COMMAND ARGS PACKAGES as root.
 ARGS and PACKAGES must be lists.
@@ -436,6 +422,20 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
         (insert (mapconcat 'identity arg-list " "))
         (when helm-system-packages-auto-send-commandline-p
           (eshell-send-input))))))
+
+(defun helm-system-packages-run-as-root (command &rest args)
+  "COMMAND to run over `helm-marked-candidates'.
+COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
+  (helm-system-packages-call-as-root command args (helm-marked-candidates)))
+
+(defun helm-system-packages-run-as-root-over-installed (command &rest args)
+  "COMMAND to run over installed packages among `helm-marked-candidates'.
+COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
+  (helm-system-packages-call-as-root
+   command
+   args
+   (seq-filter (lambda (p) (assoc p helm-system-packages--display-lists))
+               (helm-marked-candidates))))
 
 (defun helm-system-packages-show-packages (package-alist)
   "Run a Helm session over the packages in PACKAGE-ALIST.
