@@ -297,8 +297,8 @@ If nil, no automatic action is taken."
   :group 'helm-system-packages
   :type 'integer)
 
-(defun helm-system-packages-pacman-synchronize-database ()
-  "Synchronize the database when older then `helm-system-packages-pacman-synchronize-threshold'."
+(defun helm-system-packages-pacman-outdated-database-p ()
+  "Return non-nil when database is older than `helm-system-packages-pacman-synchronize-threshold'."
   (when helm-system-packages-pacman-synchronize-threshold
     (let ((db-path (with-temp-buffer
                      (call-process "pacman" nil t nil "--verbose")
@@ -306,10 +306,12 @@ If nil, no automatic action is taken."
                      (keep-lines "^DB Path")
                      (search-forward ":" nil t)
                      (buffer-substring-no-properties (1+ (point)) (line-end-position)))))
-      (time-less-p (car (sort (mapcar
-                               (lambda (file) (nth 5 (file-attributes file)))
-                               (file-expand-wildcards (expand-file-name "sync/*.db" db-path)))
-                              'time-less-p))
+      ;; Check the date of the youngest database.
+      (time-less-p (car (nreverse
+                         (sort (mapcar
+                                (lambda (file) (nth 5 (file-attributes file)))
+                                (file-expand-wildcards (expand-file-name "sync/*.db" db-path)))
+                               'time-less-p)))
                    (time-subtract (current-time) (seconds-to-time helm-system-packages-pacman-synchronize-threshold))))))
 
 (defcustom helm-system-packages-pacman-auto-clean-cache nil
@@ -336,7 +338,7 @@ tested package to fall back on."
                      (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
                      "&& "))))
        (helm-system-packages-run-as-root "pacman" "--sync"
-                                         (when (helm-system-packages-pacman-synchronize-database) "--refresh")
+                                         (when (helm-system-packages-pacman-outdated-database-p) "--refresh")
                                          (unless helm-current-prefix-arg "--needed")
                                          (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
     ("Uninstall (`C-u' to include dependencies)" .
