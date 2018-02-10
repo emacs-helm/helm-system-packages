@@ -326,27 +326,32 @@ tested package to fall back on."
   :group 'helm-system-packages
   :type 'boolean)
 
+(defun helm-system-packages-pacman-install (_)
+  "Install marked candidates."
+  (when helm-system-packages-pacman-auto-clean-cache
+    (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
+      (eshell)
+      (unless (eshell-interactive-process)
+        (goto-char (point-max))
+        (insert "sudo pacman --sync --clean "
+                (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
+                "&& "))))
+  (helm-system-packages-run-as-root "pacman" "--sync"
+                                    (when (helm-system-packages-pacman-outdated-database-p) "--refresh")
+                                    (unless helm-current-prefix-arg "--needed")
+                                    (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
+
+(defun helm-system-packages-pacman-uninstall (_)
+  "Uninstall marked candidates."
+  (helm-system-packages-run-as-root-over-installed
+   "pacman" "--remove"
+   (when helm-current-prefix-arg "--recursive")
+   (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
+
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)
-    ("Install (`C-u' to reinstall)" .
-     (lambda (_)
-       (when helm-system-packages-pacman-auto-clean-cache
-         (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
-           (eshell)
-           (unless (eshell-interactive-process)
-             (goto-char (point-max))
-             (insert "sudo pacman --sync --clean "
-                     (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
-                     "&& "))))
-       (helm-system-packages-run-as-root "pacman" "--sync"
-                                         (when (helm-system-packages-pacman-outdated-database-p) "--refresh")
-                                         (unless helm-current-prefix-arg "--needed")
-                                         (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
-    ("Uninstall (`C-u' to include dependencies)" .
-     (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--remove"
-                                         (when helm-current-prefix-arg "--recursive")
-                                         (unless helm-system-packages-pacman-confirm-p "--noconfirm"))))
+    ("Install (`C-u' to reinstall)" . helm-system-packages-pacman-install)
+    ("Uninstall (`C-u' to include dependencies)" . helm-system-packages-pacman-uninstall)
     ("Browse homepage URL" .
      (lambda (_)
        (helm-system-packages-browse-url (split-string (helm-system-packages-run "expac" "--sync" "%u") "\n" t))))
@@ -357,10 +362,10 @@ tested package to fall back on."
        (helm-system-packages-pacman-show-dependencies _ 'reverse)))
     ("Mark as dependency" .
      (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--database" "--asdeps")))
+       (helm-system-packages-run-as-root-over-installed "pacman" "--database" "--asdeps")))
     ("Mark as explicit" .
      (lambda (_)
-       (helm-system-packages-run-as-root "pacman" "--database" "--asexplicit")))
+       (helm-system-packages-run-as-root-over-installed "pacman" "--database" "--asexplicit")))
     ("Show history" . helm-system-packages-pacman-history))
   "Actions for Helm pacman."
   :group 'helm-system-packages
