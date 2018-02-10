@@ -289,7 +289,8 @@ If REVERSE is non-nil, list reverse dependencies instead."
                      (buffer-substring-no-properties (1+ (point)) (line-end-position)))))
   (keep-lines
    (concat "\\[PACMAN\\].*"
-           (regexp-opt (helm-marked-candidates)))))
+           (regexp-opt (helm-marked-candidates))))
+  (log-view-mode))
 
 (defcustom helm-system-packages-pacman-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
