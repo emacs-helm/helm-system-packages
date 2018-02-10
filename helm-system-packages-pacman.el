@@ -120,12 +120,6 @@ packages belonging to the group."
                   (call-process "pacman" nil t nil "--sync" "--groups")
                   (buffer-string))))
 
-(defcustom helm-system-packages-pacman-column-width 40
-  "Column at which descriptions are aligned, excluding a double-space gap.
-If nil, then use `helm-system-package-column-width'."
-  :group 'helm-system-packages
-  :type 'integer)
-
 (defun helm-system-packages-pacman-cache (local-packages groups)
   "Cache all package names with descriptions.
 LOCAL-PACKAGES and GROUPS are lists of strings.
@@ -150,18 +144,11 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
           (replace-regexp-in-string " .*" "" descriptions))
     (cons names descriptions)))
 
-(defun helm-system-packages-pacman-init ()
-  "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages--names helm-system-packages--descriptions)
-    (helm-system-packages-pacman-refresh))
-  ;; TODO: We should only create the buffer if it does not already exist.
-  ;; On the other hand, we need to be able to override the package list.
-  ;; (unless (helm-candidate-buffer) ...
-  (helm-init-candidates-in-buffer
-      'global
-    (if helm-system-packages-show-descriptions-p
-        helm-system-packages--descriptions
-      helm-system-packages--names)))
+(defcustom helm-system-packages-pacman-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap.
+If nil, then use `helm-system-package-column-width'."
+  :group 'helm-system-packages
+  :type 'integer)
 
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
@@ -191,10 +178,41 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
     (dolist (p groups)
       (push (cons p '(helm-system-pacman-groups)) helm-system-packages--display-lists))))
 
-(defcustom helm-system-packages-pacman-confirm-p t
-  "Prompt for confirmation before proceeding with transaction."
+(defun helm-system-packages-pacman-init ()
+  "Cache package lists and create Helm buffer."
+  (unless (and helm-system-packages--names helm-system-packages--descriptions)
+    (helm-system-packages-pacman-refresh))
+  ;; TODO: We should only create the buffer if it does not already exist.
+  ;; On the other hand, we need to be able to override the package list.
+  ;; (unless (helm-candidate-buffer) ...
+  (helm-init-candidates-in-buffer
+      'global
+    (if helm-system-packages-show-descriptions-p
+        helm-system-packages--descriptions
+      helm-system-packages--names)))
+
+(defcustom helm-system-packages-pacman-synchronize-threshold 86400
+  "Auto-synchronize database on installation if older than this many seconds.
+If nil, no automatic action is taken."
   :group 'helm-system-packages
-  :type 'boolean)
+  :type 'integer)
+
+(defun helm-system-packages-pacman-outdated-database-p ()
+  "Return non-nil when database is older than `helm-system-packages-pacman-synchronize-threshold'."
+  (when helm-system-packages-pacman-synchronize-threshold
+    (let ((db-path (with-temp-buffer
+                     (call-process "pacman" nil t nil "--verbose")
+                     (goto-char (point-min))
+                     (keep-lines "^DB Path")
+                     (search-forward ":" nil t)
+                     (buffer-substring-no-properties (1+ (point)) (line-end-position)))))
+      ;; Check the date of the youngest database.
+      (time-less-p (car (nreverse
+                         (sort (mapcar
+                                (lambda (file) (nth 5 (file-attributes file)))
+                                (file-expand-wildcards (expand-file-name "sync/*.db" db-path)))
+                               'time-less-p)))
+                   (time-subtract (current-time) (seconds-to-time helm-system-packages-pacman-synchronize-threshold))))))
 
 (defun helm-system-packages-pacman-info (_candidate)
   "Print information about the selected packages.
@@ -226,6 +244,44 @@ Otherwise display in `helm-system-packages-buffer'."
                                      (groups ignore)
                                      (all (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--query" "--info" "--info") p))))
                                    (helm-system-packages-categorize (helm-marked-candidates))))))
+
+(defcustom helm-system-packages-pacman-auto-clean-cache nil
+  "Clean cache before installing.
+The point of keeping previous version in cache is that you can revert back if
+something fails.
+By always cleaning before installing, the previous version in kept in cache.
+This is only healthy if you test every version you install.
+Installing two upgrades (or the same version) will effectively leave you with no
+tested package to fall back on."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defcustom helm-system-packages-pacman-confirm-p t
+  "Prompt for confirmation before proceeding with transaction."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defun helm-system-packages-pacman-install (_)
+  "Install marked candidates."
+  (when helm-system-packages-pacman-auto-clean-cache
+    (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
+      (eshell)
+      (unless (eshell-interactive-process)
+        (goto-char (point-max))
+        (insert "sudo pacman --sync --clean "
+                (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
+                "&& "))))
+  (helm-system-packages-run-as-root "pacman" "--sync"
+                                    (when (helm-system-packages-pacman-outdated-database-p) "--refresh")
+                                    (unless helm-current-prefix-arg "--needed")
+                                    (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
+
+(defun helm-system-packages-pacman-uninstall (_)
+  "Uninstall marked candidates."
+  (helm-system-packages-run-as-root-over-installed
+   "pacman" "--remove"
+   (when helm-current-prefix-arg "--recursive")
+   (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
 
 (defun helm-system-packages-pacman-find-files (_candidate)
   "List candidate files for display in `helm-system-packages-find-files'.
@@ -291,62 +347,6 @@ If REVERSE is non-nil, list reverse dependencies instead."
    (concat "\\[PACMAN\\].*"
            (regexp-opt (helm-marked-candidates))))
   (log-view-mode))
-
-(defcustom helm-system-packages-pacman-synchronize-threshold 86400
-  "Auto-synchronize database on installation if older than this many seconds.
-If nil, no automatic action is taken."
-  :group 'helm-system-packages
-  :type 'integer)
-
-(defun helm-system-packages-pacman-outdated-database-p ()
-  "Return non-nil when database is older than `helm-system-packages-pacman-synchronize-threshold'."
-  (when helm-system-packages-pacman-synchronize-threshold
-    (let ((db-path (with-temp-buffer
-                     (call-process "pacman" nil t nil "--verbose")
-                     (goto-char (point-min))
-                     (keep-lines "^DB Path")
-                     (search-forward ":" nil t)
-                     (buffer-substring-no-properties (1+ (point)) (line-end-position)))))
-      ;; Check the date of the youngest database.
-      (time-less-p (car (nreverse
-                         (sort (mapcar
-                                (lambda (file) (nth 5 (file-attributes file)))
-                                (file-expand-wildcards (expand-file-name "sync/*.db" db-path)))
-                               'time-less-p)))
-                   (time-subtract (current-time) (seconds-to-time helm-system-packages-pacman-synchronize-threshold))))))
-
-(defcustom helm-system-packages-pacman-auto-clean-cache nil
-  "Clean cache before installing.
-The point of keeping previous version in cache is that you can revert back if
-something fails.
-By always cleaning before installing, the previous version in kept in cache.
-This is only healthy if you test every version you install.
-Installing two upgrades (or the same version) will effectively leave you with no
-tested package to fall back on."
-  :group 'helm-system-packages
-  :type 'boolean)
-
-(defun helm-system-packages-pacman-install (_)
-  "Install marked candidates."
-  (when helm-system-packages-pacman-auto-clean-cache
-    (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
-      (eshell)
-      (unless (eshell-interactive-process)
-        (goto-char (point-max))
-        (insert "sudo pacman --sync --clean "
-                (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
-                "&& "))))
-  (helm-system-packages-run-as-root "pacman" "--sync"
-                                    (when (helm-system-packages-pacman-outdated-database-p) "--refresh")
-                                    (unless helm-current-prefix-arg "--needed")
-                                    (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
-
-(defun helm-system-packages-pacman-uninstall (_)
-  "Uninstall marked candidates."
-  (helm-system-packages-run-as-root-over-installed
-   "pacman" "--remove"
-   (when helm-current-prefix-arg "--recursive")
-   (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
 
 (defcustom helm-system-packages-pacman-actions
   '(("Show package(s)" . helm-system-packages-pacman-info)

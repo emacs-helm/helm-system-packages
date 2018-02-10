@@ -176,11 +176,6 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
         helm-system-packages--descriptions
       helm-system-packages--names)))
 
-(defcustom helm-system-packages-xbps-confirm-p t
-  "Prompt for confirmation before proceeding with transaction."
-  :group 'helm-system-packages
-  :type 'boolean)
-
 (defcustom helm-system-packages-xbps-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
 If nil, no automatic action is taken."
@@ -197,17 +192,6 @@ If nil, no automatic action is taken."
                               (file-expand-wildcards (expand-file-name "/var/db/xbps/*/*-repodata")))
                              'time-less-p)))
                  (time-subtract (current-time) (seconds-to-time helm-system-packages-xbps-synchronize-threshold)))))
-
-(defcustom helm-system-packages-xbps-auto-clean-cache nil
-  "Clean cache before installing.
-The point of keeping previous version in cache is that you can revert back if
-something fails.
-By always cleaning before installing, the previous version in kept in cache.
-This is only healthy if you test every version you install.
-Installing two upgrades (or the same version) will effectively leave you with no
-tested package to fall back on."
-  :group 'helm-system-packages
-  :type 'boolean)
 
 (defun helm-system-packages-xbps-info (_candidate)
   "Print information about the selected packages.
@@ -239,6 +223,22 @@ Otherwise display in `helm-system-packages-buffer'."
                          pkg-list "\n")
               "\n"))))
     (helm-system-packages-categorize (helm-marked-candidates)))))
+
+(defcustom helm-system-packages-xbps-auto-clean-cache nil
+  "Clean cache before installing.
+The point of keeping previous version in cache is that you can revert back if
+something fails.
+By always cleaning before installing, the previous version in kept in cache.
+This is only healthy if you test every version you install.
+Installing two upgrades (or the same version) will effectively leave you with no
+tested package to fall back on."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defcustom helm-system-packages-xbps-confirm-p t
+  "Prompt for confirmation before proceeding with transaction."
+  :group 'helm-system-packages
+  :type 'boolean)
 
 (defun helm-system-packages-xbps-install (_)
   "Install marked candidates."
