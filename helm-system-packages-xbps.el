@@ -205,22 +205,21 @@ Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-show-information
    (helm-system-packages-mapalist
     '((uninstalled
-       (lambda (&rest pkg-list)
+       (lambda (packages)
          (concat
           (mapconcat (lambda (pkg)
                        (format ": %s\n%s" pkg
                                ;; It seems that xbps-query cannot work out multiple packages at once.
-                               (helm-system-packages-call '("xbps-query" "-R") pkg)))
-                     pkg-list "\n")
+                               (helm-system-packages-call "xbps-query" nil "-R" pkg)))
+                     packages "\n")
           ;; We append a new line to ensure different categories are well separated.
           "\n")))
-      (all (lambda (&rest pkg-list)
+      (all (lambda (packages)
              (concat
               (mapconcat (lambda (pkg)
                            (format ": %s\n%s" pkg
-                                   ;; It seems that xbps-query cannot work out multiple packages at once.
-                                   (helm-system-packages-call '("xbps-query") pkg)))
-                         pkg-list "\n")
+                                   (helm-system-packages-call "xbps-query" nil pkg)))
+                         packages "\n")
               "\n"))))
     (helm-system-packages-categorize (helm-marked-candidates)))))
 
@@ -266,7 +265,7 @@ tested package to fall back on."
   "Browse homepage URLs of marked candidates."
   (helm-system-packages-browse-url
    (mapcar (lambda (pkg)
-             (helm-system-packages-call '("xbps-query" "-R" "--prop" "homepage") pkg))
+             (helm-system-packages-call "xbps-query" nil "-R" "--prop" "homepage" pkg))
            (helm-marked-candidates))))
 
 (defun helm-system-packages-xbps-find-files (_)
@@ -278,7 +277,7 @@ tested package to fall back on."
                       ;; Remove " -> /link/indirection" from output.
                       (replace-regexp-in-string
                        " -> .*" ""
-                       (helm-system-packages-call '("xbps-query" "-R" "--files") pkg))
+                       (helm-system-packages-call "xbps-query" nil "-R" "--files" pkg))
                       "\n" t))
          (push file (gethash pkg file-hash)))))))
 
@@ -297,7 +296,7 @@ If REVERSE is non-nil, list reverse dependencies instead."
                               ;; Remove version numbers.
                               (replace-regexp-in-string
                                "[-<>][^-<>]+$" ""
-                               (helm-system-packages-call (list "xbps-query" "-R" arg) pkg)))
+                               (helm-system-packages-call "xbps-query" nil "-R" arg pkg)))
                             (helm-marked-candidates))
                     "\n"))))))
 

@@ -239,9 +239,9 @@ To explicitly keep an element, use the `identity' function."
     (dolist (e alist)
       (let* ((fun (or (car (alist-get (car e) fun-alist))
                       fun-all))
-             (res (and fun (apply fun (cdr e)))))
+             (res (and fun (funcall fun (cdr e)))))
         (when res
-          (push (list (car e) res) result))))
+          (push (cons (car e) res) result))))
     (nreverse result)))
 
 (defun helm-system-packages-categorize (packages)
@@ -298,7 +298,7 @@ PACKAGE-INFO...
       (view-mode 0)
       (erase-buffer)
       (insert "\n\n")
-      (mapc 'insert (mapcar 'cadr desc-alist))
+      (mapc 'insert (mapcar 'cdr desc-alist))
       (goto-char (point-min))
       (while (re-search-forward "\n\n.*: " nil t)
         (replace-match "\n* "))
@@ -310,15 +310,13 @@ PACKAGE-INFO...
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
-;; TODO: If we do not make 'args' a &rest, then `apply' can be removed in the caller.
-(defun helm-system-packages-call (commandline &rest args)
-  "COMMANDLINE to run over ARGS.
-Return the result as a string.
-COMMANDLINE is a list where the `car' is the command and the
-`cdr' are the options."
+(defun helm-system-packages-call (command &optional args &rest options)
+  "COMMAND to run with OPTIONS over the ARGS list.
+OPTIONS are insert before ARGS.
+Return the result as a string."
   (with-temp-buffer
     ;; We discard errors.
-    (apply #'call-process (car commandline) nil t nil (append (cdr commandline) args))
+    (apply #'call-process command nil t nil (append options args))
     (buffer-string)))
 
 (defun helm-system-packages-run (command &rest args)
@@ -458,7 +456,7 @@ The value is a string buffer, like the cache."
     ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
     (let (desc-res
           (buf (with-temp-buffer
-                 (mapc 'insert (mapcar 'cadr package-alist))
+                 (mapc 'insert (mapcar 'cdr package-alist))
                  (sort-lines nil (point-min) (point-max))
                  (delete-duplicate-lines (point-min) (point-max))
                  (buffer-string))))

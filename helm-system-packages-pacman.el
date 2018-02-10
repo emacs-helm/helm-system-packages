@@ -240,9 +240,9 @@ Otherwise display in `helm-system-packages-buffer'."
                      (replace-regexp-in-string "\n\n\\(.*\\)\n\\(.*\\)" "\n\n\\2\n\\1"
                                                (concat "\n\n" info-string))))
       (all identity))
-    (helm-system-packages-mapalist '((uninstalled (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--sync" "--info" "--info") p)))
+    (helm-system-packages-mapalist '((uninstalled (lambda (packages) (helm-system-packages-call "pacman" packages "--sync" "--info" "--info")))
                                      (groups ignore)
-                                     (all (lambda (&rest p) (apply 'helm-system-packages-call '("pacman" "--query" "--info" "--info") p))))
+                                     (all (lambda (packages) (helm-system-packages-call "pacman" packages "--query" "--info" "--info"))))
                                    (helm-system-packages-categorize (helm-marked-candidates))))))
 
 (defcustom helm-system-packages-pacman-auto-clean-cache nil
@@ -292,16 +292,16 @@ exact same information."
   ;; TODO: Check for errors when file database does not exist.
   (let ((file-hash (make-hash-table :test 'equal)))
     (dolist (file-string
-             (mapcar 'cadr
+             (mapcar 'cdr
                      (helm-system-packages-mapalist
-                      '((uninstalled (lambda (&rest p)
+                      '((uninstalled (lambda (packages)
                                        ;; Prepend the missing leading '/' to pacman's file database queries.'
                                        (replace-regexp-in-string
                                         "\\([^ ]+ \\)" "\\1/"
-                                        (apply 'helm-system-packages-call '("pacman" "--files" "--list") p))))
+                                        (helm-system-packages-call "pacman" packages "--files" "--list"))))
                         (groups ignore)
-                        (all (lambda (&rest p)
-                               (apply 'helm-system-packages-call '("pacman" "--query" "--list") p))))
+                        (all (lambda (packages)
+                               (helm-system-packages-call "pacman" packages "--query" "--list"))))
                       (helm-system-packages-categorize (helm-marked-candidates)))))
       ;; The first word of the line (package name) is the hash table key,
       ;; the rest is pushed to the value (list of files).
@@ -320,14 +320,14 @@ If REVERSE is non-nil, list reverse dependencies instead."
                                             (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
      (helm-system-packages-mapalist
-      `((uninstalled (lambda (&rest p)
-                       (apply 'helm-system-packages-call '("expac" "--sync" "--listdelim" "\n" ,format-string) p)))
+      `((uninstalled (lambda (packages)
+                       (helm-system-packages-call "expac" packages "--sync" "--listdelim" "\n" ,format-string)))
         (groups ,(if reverse 'ignore
-                   (lambda (&rest p)
+                   (lambda (packages)
                      ;; Warning: "--group" seems to be different from "-g".
-                     (apply 'helm-system-packages-call '("expac" "--sync" "-g" "%n") p))))
-        (all (lambda (&rest p)
-               (apply 'helm-system-packages-call '("expac" "--query" "--listdelim" "\n" ,format-string) p))))
+                     (helm-system-packages-call "expac" packages "--sync" "-g" "%n"))))
+        (all (lambda (packages)
+               (helm-system-packages-call "expac" packages "--query" "--listdelim" "\n" ,format-string))))
       (helm-system-packages-categorize (helm-marked-candidates))))))
 
 (defun helm-system-packages-pacman-history (_candidate)
