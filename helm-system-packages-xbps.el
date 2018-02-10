@@ -206,21 +206,16 @@ Otherwise display in `helm-system-packages-buffer'."
    (helm-system-packages-mapalist
     '((uninstalled
        (lambda (packages)
-         (concat
-          (mapconcat (lambda (pkg)
-                       (format ": %s\n%s" pkg
-                               ;; It seems that xbps-query cannot work out multiple packages at once.
-                               (helm-system-packages-call "xbps-query" nil "-R" pkg)))
-                     packages "\n")
-          ;; We append a new line to ensure different categories are well separated.
-          "\n")))
+         ;; It seems that xbps-query cannot work out multiple packages at once.
+         (mapcar (lambda (pkg)
+                   (cons pkg
+                         (helm-system-packages-call "xbps-query" nil "-R" pkg)))
+                 packages)))
       (all (lambda (packages)
-             (concat
-              (mapconcat (lambda (pkg)
-                           (format ": %s\n%s" pkg
-                                   (helm-system-packages-call "xbps-query" nil pkg)))
-                         packages "\n")
-              "\n"))))
+             (mapcar (lambda (pkg)
+                       (cons pkg
+                             (helm-system-packages-call "xbps-query" nil pkg)))
+                     packages))))
     (helm-system-packages-categorize (helm-marked-candidates)))))
 
 (defcustom helm-system-packages-xbps-auto-clean-cache nil

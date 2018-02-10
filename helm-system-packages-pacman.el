@@ -73,7 +73,7 @@
           ;; Check first since it is also an "uninstalled" package.
           (push (propertize p 'face 'helm-system-packages-pacman-virtual) res))
          ((and (not face) helm-system-packages--show-uninstalled-p)
-               (push p res))
+          (push p res))
          ;; For filtering, we consider local packages and non-local packages
          ;; separately, thus we need to treat local packages first.
          ;; TODO: Add support for multiple faces.
@@ -226,20 +226,17 @@ Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-show-information
    (helm-system-packages-mapalist
     '((uninstalled (lambda (info-string)
-                     ;; Normalize `pacman -Sii' output.", e.g.
-                     ;;
-                     ;;   Repository      : community
-                     ;;   Name            : FOO
-                     ;;   ...
-                     ;;
-                     ;; to
-                     ;;
-                     ;;   Name            : FOO
-                     ;;   Repository      : community
-                     ;;   ...
-                     (replace-regexp-in-string "\n\n\\(.*\\)\n\\(.*\\)" "\n\n\\2\n\\1"
-                                               (concat "\n\n" info-string))))
-      (all identity))
+                     ;; The package name is on the second line for `pacman -Sii'.
+                     (mapcar (lambda (desc)
+                               (string-match "\\(.*\\)\n.*: \\(.*\\)" desc)
+                               (cons (match-string 2 desc) (concat (match-string 1 desc) (substring desc (match-end 2)))))
+                             (split-string info-string "\n\n" t))))
+      (all (lambda (info-string)
+             ;; The package name is on the first line.
+             (mapcar (lambda (desc)
+                       (string-match ".*: \\(.*\\)" desc)
+                       (cons (match-string 1 desc) (substring desc (match-end 2))))
+                     (split-string info-string "\n\n" t)))))
     (helm-system-packages-mapalist '((uninstalled (lambda (packages) (helm-system-packages-call "pacman" packages "--sync" "--info" "--info")))
                                      (groups ignore)
                                      (all (lambda (packages) (helm-system-packages-call "pacman" packages "--query" "--info" "--info"))))

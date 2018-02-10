@@ -283,11 +283,7 @@ such as the package description."
   "Show package information contained in DESC-ALIST.
 DESC-ALIST's keys are ignored, the values are in the form
 
-.*: PACKAGE-NAME
-PACKAGE-INFO...
-
-.*: OTHER-PACKAGE-NAME
-..."
+    ((package-name . package-desc)...)"
   (cond
    ((not desc-alist)
     (message "No information for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
@@ -297,16 +293,12 @@ PACKAGE-INFO...
    (t (switch-to-buffer helm-system-packages-buffer)
       (view-mode 0)
       (erase-buffer)
-      (insert "\n\n")
-      (mapc 'insert (mapcar 'cdr desc-alist))
-      (goto-char (point-min))
-      (while (re-search-forward "\n\n.*: " nil t)
-        (replace-match "\n* "))
+      (dolist (desc (sort
+                     (apply 'append (mapcar 'cdr desc-alist))
+                     (lambda (a b) (string< (car a) (car b)))))
+        (insert "* " (car desc) "\n" (cdr desc) "\n"))
       (goto-char (point-min))
       (org-mode)
-      (org-sort-entries nil ?a)
-      (goto-char (point-min))
-      (delete-blank-lines)
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
