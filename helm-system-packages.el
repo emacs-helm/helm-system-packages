@@ -265,7 +265,7 @@ If not found, category is `uninstalled'."
   "Toggle description column."
   (interactive)
   (with-helm-alive-p
-  (setq helm-system-packages-show-descriptions-p (not helm-system-packages-show-descriptions-p))
+    (setq helm-system-packages-show-descriptions-p (not helm-system-packages-show-descriptions-p))
     (helm-force-update)))
 (put 'helm-system-packages-toggle-descriptions 'helm-only t)
 
@@ -494,8 +494,10 @@ The value is a string buffer, like the cache."
 (defun helm-system-packages ()
   "Helm user interface for system packages."
   (interactive)
-  ;; "portage" does not have an executable of the same name, hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
-  (let ((managers (seq-filter (lambda (p) (executable-find (car p))) '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")))))
+  ;; Some package managgers do not have an executable bearing the same name,
+  ;; hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
+  (let ((managers (seq-filter (lambda (p) (executable-find (car p)))
+                              '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")))))
     (if (not managers)
         (message "No supported package manager was found")
       (let ((manager (car (last (car managers)))))
