@@ -114,14 +114,14 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     (setq explicit (helm-system-packages-portage-list-explicit)))
   (seq-difference
    (split-string (with-temp-buffer
-                   (call-process "qlist" nil t nil "-I")
+                   (process-file "qlist" nil t nil "-I")
                    (buffer-string)))
    explicit))
 
 (defun helm-system-packages-portage-cache-names ()
   "Cache all package names."
   (with-temp-buffer
-    (call-process "eix" nil t nil "--only-names")
+    (process-file "eix" nil t nil "--only-names")
     (buffer-string)))
 
 (defcustom helm-system-packages-portage-column-width 36
@@ -137,7 +137,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     ;; re-use its code.
     ;; TODO: Can eix pad in the format string just like `expac' does?
     ;; TODO: Or output straight to Elisp?
-    (call-process "env" nil '(t nil) nil "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never" "eix" "--format" "<category>/<name> - <description>\n")
+    (process-file "env" nil '(t nil) nil "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never" "eix" "--format" "<category>/<name> - <description>\n")
     (goto-char (point-min))
     (while (search-forward " " nil t)
       (delete-char 1)
@@ -232,7 +232,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     (helm-init-candidates-in-buffer
         'global
       (with-temp-buffer
-        (call-process "eix" nil t nil "--print-all-useflags")
+        (process-file "eix" nil t nil "--print-all-useflags")
         (buffer-string)))))
 
 (defcustom helm-system-packages-portage-use-actions
@@ -240,7 +240,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
      (lambda (elm)
        (switch-to-buffer helm-system-packages-buffer)
        (erase-buffer)
-       (apply #'call-process "euse" nil t nil `("--info" ,elm))
+       (apply #'process-file "euse" nil t nil `("--info" ,elm))
        (font-lock-add-keywords nil `((,elm . font-lock-variable-name-face)))
        (font-lock-mode 1)))
     ("Enable" .
@@ -269,7 +269,7 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 (defun helm-system-packages-portage-use-transformer (use-flags)
   "Highlight enabled USE flags."
   (let ((local-uses (split-string (with-temp-buffer
-                                    (call-process "portageq" nil t nil "envvar" "USE")
+                                    (process-file "portageq" nil t nil "envvar" "USE")
                                     (buffer-string)))))
     (mapcar (lambda (use-flag)
               (propertize use-flag 'face

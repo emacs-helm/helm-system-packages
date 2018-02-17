@@ -316,7 +316,7 @@ Return the result as a string."
   (let ((arg-list (append args (helm-marked-candidates))))
     (with-temp-buffer
       ;; We discard errors.
-      (apply #'call-process command nil t nil arg-list)
+      (apply #'process-file command nil t nil arg-list)
       (buffer-string))))
 (make-obsolete 'helm-system-packages-run 'helm-system-packages-call "1.9.0")
 

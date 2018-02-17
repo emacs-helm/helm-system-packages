@@ -90,26 +90,26 @@
 (defun helm-system-packages-pacman-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--explicit" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--explicit" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-dependencies ()
   "List packages installed as a required dependency."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--deps" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--deps" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-orphans ()
   "List orphan packages (unrequired dependencies)."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--deps" "--unrequired" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--deps" "--unrequired" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-locals ()
   "List explicitly installed local packages.
 Local packages can also be orphans, explicit or dependencies."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--query" "--foreign" "--quiet")
+                  (process-file "pacman" nil t nil "--query" "--foreign" "--quiet")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-list-groups ()
