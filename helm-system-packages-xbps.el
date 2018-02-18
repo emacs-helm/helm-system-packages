@@ -79,7 +79,7 @@
 (defun helm-system-packages-xbps-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
-                  (call-process "xbps-query" nil t nil "--list-manual-pkgs")
+                  (process-file "xbps-query" nil t nil "--list-manual-pkgs")
                   (goto-char (point-min))
                   (while (re-search-forward "-[^-]+$" nil t)
                     (replace-match ""))
@@ -93,7 +93,7 @@ NON-DEPENDENCIES are package lists which are to be excluded."
    (split-string (with-temp-buffer
                    ;; --property automatic-install is always true... Is it a bug?
                    ;; Thus we need to subtract all other installed packages categories.,
-                   (call-process "xbps-query" nil t nil "--search" "" "--prop" "automatic-install")
+                   (process-file "xbps-query" nil t nil "--search" "" "--prop" "automatic-install")
                    (goto-char (point-min))
                    (while (re-search-forward "-[^-]+$" nil t)
                      (replace-match ""))
@@ -102,7 +102,7 @@ NON-DEPENDENCIES are package lists which are to be excluded."
 (defun helm-system-packages-xbps-list-orphans ()
   "List orphan packages (unrequired dependencies)."
   (split-string (with-temp-buffer
-                  (call-process "xbps-query" nil t nil "--list-orphans")
+                  (process-file "xbps-query" nil t nil "--list-orphans")
                   (goto-char (point-min))
                   (while (re-search-forward "-[^-]+$" nil t)
                     (replace-match ""))
@@ -112,21 +112,20 @@ NON-DEPENDENCIES are package lists which are to be excluded."
   "List pinned installed packages.
 That is, packages that won't be updated automatically."
   (split-string (with-temp-buffer
-                  (call-process "xbps-query" nil t nil "--list-hold-pkgs")
+                  (process-file "xbps-query" nil t nil "--list-hold-pkgs")
                   (goto-char (point-min))
                   (while (re-search-forward "-[^-]+$" nil t)
                     (replace-match ""))
                   (buffer-string))))
 
 (defun helm-system-packages-xbps-cache ()
-  "Cache all package names with descriptions.
-Return (NAMES . DESCRIPTIONS), a cons of two strings."
+  "Cache all package names with descriptions."
   ;; We build both caches at the same time.  We could also build just-in-time, but
   ;; benchmarks show that it only saves less than 20% when building one cache.
   (let (names descriptions)
     (setq descriptions
           (with-temp-buffer
-            (call-process "xbps-query" nil t nil "-R" "--search" "")
+            (process-file "xbps-query" nil t nil "-R" "--search" "")
             (goto-char (point-min))
             (while (not (eobp))
               (delete-char 4)
@@ -143,19 +142,16 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
           (replace-regexp-in-string " .*" "" descriptions))
-    (cons names descriptions)))
+    (helm-system-packages--cache-set names descriptions "xbps")))
 
 (defun helm-system-packages-xbps-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages--source-name "xbps source")
   (let* ((explicit (helm-system-packages-xbps-list-explicit))
          (orphans (helm-system-packages-xbps-list-orphans))
          (pinned (helm-system-packages-xbps-list-pinned))
          (dependencies (helm-system-packages-xbps-list-dependencies explicit orphans pinned)))
-    (let ((res (helm-system-packages-xbps-cache)))
-      (setq helm-system-packages--names (car res)
-            helm-system-packages--descriptions (cdr res)))
+    (helm-system-packages-xbps-cache)
     (setq helm-system-packages--display-lists nil)
     (dolist (p explicit)
       (push (cons p '(helm-system-packages-explicit)) helm-system-packages--display-lists))
@@ -165,16 +161,6 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
       (push (cons p '(helm-system-packages-orphans)) helm-system-packages--display-lists))
     (dolist (p pinned)
       (push (cons p '(helm-system-packages-pinned)) helm-system-packages--display-lists))))
-
-(defun helm-system-packages-xbps-init ()
-  "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages--names helm-system-packages--descriptions)
-    (helm-system-packages-xbps-refresh))
-  (helm-init-candidates-in-buffer
-      'global
-    (if helm-system-packages-show-descriptions-p
-        helm-system-packages--descriptions
-      helm-system-packages--names)))
 
 (defcustom helm-system-packages-xbps-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
@@ -280,10 +266,10 @@ tested package to fall back on."
   "List candidate dependencies for `helm-system-packages-show-packages'.
 If REVERSE is non-nil, list reverse dependencies instead."
   (let ((arg (if reverse "-X" "-x"))
-        (helm-system-packages--source-name (concat
-                                            (if reverse "Reverse dependencies" "Dependencies")
-                                            " of "
-                                            (mapconcat 'identity (helm-marked-candidates) " "))))
+        (title (concat
+                (if reverse "Reverse dependencies" "Dependencies")
+                " of "
+                (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
      `((uninstalled
         ,(mapconcat 'identity
@@ -293,7 +279,8 @@ If REVERSE is non-nil, list reverse dependencies instead."
                                "[-<>][^-<>]+$" ""
                                (helm-system-packages-call "xbps-query" nil "-R" arg pkg)))
                             (helm-marked-candidates))
-                    "\n"))))))
+                    "\n"))))
+    title))
 
 (defcustom helm-system-packages-xbps-actions
   '(("Show package(s)" . helm-system-packages-xbps-info)
@@ -331,15 +318,16 @@ If REVERSE is non-nil, list reverse dependencies instead."
 
 (defun helm-system-packages-xbps-build-source ()
   "Build Helm source for xbps."
-  (helm-build-in-buffer-source helm-system-packages--source-name
-    :init 'helm-system-packages-xbps-init
-    :candidate-transformer 'helm-system-packages-xbps-transformer
-    :candidate-number-limit helm-system-packages-candidate-limit
-    :display-to-real 'helm-system-packages-extract-name
-    :keymap helm-system-packages-xbps-map
-    :help-message 'helm-system-packages-xbps-help-message
-    :persistent-help "Show package description"
-    :action helm-system-packages-xbps-actions))
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+    (helm-build-in-buffer-source title
+      :init 'helm-system-packages-init
+      :candidate-transformer 'helm-system-packages-xbps-transformer
+      :candidate-number-limit helm-system-packages-candidate-limit
+      :display-to-real 'helm-system-packages-extract-name
+      :keymap helm-system-packages-xbps-map
+      :help-message 'helm-system-packages-xbps-help-message
+      :persistent-help "Show package description"
+      :action helm-system-packages-xbps-actions)))
 
 (defun helm-system-packages-xbps ()
   "Preconfigured `helm' for xbps."

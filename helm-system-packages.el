@@ -69,21 +69,18 @@
 (defvar helm-system-packages--show-groups-p t)
 (defvar helm-system-packages--show-pinned-p t)
 
-(defvar helm-system-packages--source-name "package source")
+(defvar helm-system-packages--cache nil
+  "Cache of all package names and descriptions.
+It's an alist indexed by hostnames.
+The values are in the form
 
-(defvar helm-system-packages--names nil
-  "Cache of all packages.")
+  (:names STRING-BUFFER :descriptions STRING-BUFFER :title STRING)
 
-(defvar helm-system-packages--descriptions nil
-  "Cache of all package names with descriptions.")
+Optional 'title' is usually the package manager.")
 
-(defvar helm-system-packages--descriptions-global nil
-  "All descriptions.
-Used to restore complete description list when browsing dependencies.")
-
-(defvar helm-system-packages--names-global nil
-  "All names.
-Used to restore complete name list when browsing dependencies.")
+(defvar helm-system-packages--cache-current nil
+  "Current host to use from cache.
+If nil, use host linked with `default-directory'.")
 
 (defvar helm-system-packages--virtual-list nil
   "List of virtual packages.
@@ -223,6 +220,42 @@ the window."
   :group 'helm-system-packages
   :type 'boolean)
 
+(defun helm-system-packages--cache-get ()
+  "Get current cache entry.
+See `helm-system-packages--cache-current'."
+  (let ((host (or helm-system-packages--cache-current
+                  (and (tramp-tramp-file-p default-directory)
+                       (tramp-file-name-host (car (tramp-list-connections))))
+                  "")))
+    (alist-get host helm-system-packages--cache)))
+
+(defun helm-system-packages--cache-set (names descriptions &optional title)
+  "Set current cache entry.
+NAMES and DESCRIPTIONS are string buffers
+TITLE is a string, usually the name of the package manager."
+  (let ((host (or (and (tramp-tramp-file-p default-directory)
+                       (tramp-file-name-host (car (tramp-list-connections))))
+                  ""))
+        (val (list :names names :descriptions descriptions :title title)))
+    (if (assoc host helm-system-packages--cache)
+        (setcdr (assoc host helm-system-packages--cache) val)
+      (push (cons host val) helm-system-packages--cache))))
+
+(defun helm-system-packages-init ()
+  "Cache package lists and create Helm buffer."
+  (let ((val (helm-system-packages--cache-get)))
+    (unless val
+      (helm-system-packages-refresh)
+      (setq val (helm-system-packages--cache-get)))
+    ;; TODO: We should only create the buffer if it does not already exist.
+    ;; On the other hand, we need to be able to override the package list.
+    ;; (unless (helm-candidate-buffer) ...
+    (helm-init-candidates-in-buffer
+        'global
+      (if helm-system-packages-show-descriptions-p
+          (plist-get val :descriptions)
+        (plist-get val :names)))))
+
 (defun helm-system-packages-mapalist (fun-alist alist)
   "Apply each function of FUN-ALIST to the list with the same key in ALIST.
 Return the alist of the results.
@@ -308,7 +341,7 @@ OPTIONS are insert before ARGS.
 Return the result as a string."
   (with-temp-buffer
     ;; We discard errors.
-    (apply #'call-process command nil t nil (append options args))
+    (apply #'process-file command nil t nil (append options args))
     (buffer-string)))
 
 (defun helm-system-packages-run (command &rest args)
@@ -427,42 +460,37 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
    (seq-filter (lambda (p) (assoc p helm-system-packages--display-lists))
                (helm-marked-candidates))))
 
-(defun helm-system-packages-show-packages (package-alist)
+(defun helm-system-packages-show-packages (package-alist &optional title)
   "Run a Helm session over the packages in PACKAGE-ALIST.
 The key of the alist is ignored and the package lists are considered as one
 single list.  This may change in the future.
-The value is a string buffer, like the cache."
-  (setq helm-system-packages--descriptions
-        (or helm-system-packages--descriptions-global
-            helm-system-packages--descriptions))
-  (setq helm-system-packages--descriptions-global
-        helm-system-packages--descriptions)
-  (setq helm-system-packages--names
-        (or helm-system-packages--names-global
-            helm-system-packages--names))
-  (setq helm-system-packages--names-global
-        helm-system-packages--names)
+The value is a string buffer, like the cache.
+TITLE is the name of the Helm session."
   (if (not package-alist)
       ;; TODO: Do not quit Helm session.
       (message "No dependency list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
     ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
     (let (desc-res
+          (descriptions (plist-get  (helm-system-packages--cache-get) :descriptions))
           (buf (with-temp-buffer
                  (mapc 'insert (mapcar 'cdr package-alist))
                  (sort-lines nil (point-min) (point-max))
                  (delete-duplicate-lines (point-min) (point-max))
                  (buffer-string))))
       (dolist (name (split-string buf "\n" t))
-        (if (string-match (concat "^" name "  .*$") helm-system-packages--descriptions)
-            (setq desc-res (concat desc-res (match-string 0 helm-system-packages--descriptions) "\n"))
+        (if (string-match (concat "^" name "  .*$") descriptions)
+            (setq desc-res (concat desc-res (match-string 0 descriptions) "\n"))
           (push name helm-system-packages--virtual-list)
           (setq desc-res (concat desc-res
                                  name
                                  (make-string (- helm-system-packages-column-width (length name)) ? )
                                  "  <virtual package>"
                                  "\n"))))
-      (let ((helm-system-packages--descriptions desc-res)
-            (helm-system-packages--names buf))
+      (let ((ass (assq 'dependencies helm-system-packages--cache))
+            (val (list :names buf :descriptions desc-res :title title)))
+        (if ass
+            (setcdr ass val)
+          (push val helm-system-packages--cache))
         (helm-system-packages)))))
 
 (defun helm-system-packages-browse-url (urls)
@@ -473,9 +501,12 @@ The value is a string buffer, like the cache."
 
 (defun helm-system-packages-missing-dependencies-p (&rest deps)
   "Return non-nil if some DEPS are missing."
-  (let ((missing-deps (delq nil (mapcar
-                                 (lambda (exe) (if (not (executable-find exe)) exe))
-                                 deps))))
+  (let ((missing-deps
+         (seq-remove (lambda (p)
+                       (if (tramp-tramp-file-p default-directory)
+                           (tramp-find-executable (car (tramp-list-connections)) p nil)
+                         (executable-find p)))
+                     deps)))
     (when missing-deps
       (message "Dependencies are missing (%s), please install them"
                (mapconcat 'identity missing-deps ", ")))))
@@ -486,7 +517,10 @@ The value is a string buffer, like the cache."
   (interactive)
   ;; Some package managgers do not have an executable bearing the same name,
   ;; hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
-  (let ((managers (seq-filter (lambda (p) (executable-find (car p)))
+  (let ((managers (seq-filter (lambda (p)
+                                (if (tramp-tramp-file-p default-directory)
+                                    (tramp-find-executable (car (tramp-list-connections)) (car p) nil)
+                                  (executable-find (car p))))
                               '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")))))
     (if (not managers)
         (message "No supported package manager was found")

@@ -117,13 +117,12 @@ Local packages can also be orphans, explicit or dependencies."
 Groups can be (un)installed.  Dependency queries list the
 packages belonging to the group."
   (split-string (with-temp-buffer
-                  (call-process "pacman" nil t nil "--sync" "--groups")
+                  (process-file "pacman" nil t nil "--sync" "--groups")
                   (buffer-string))))
 
 (defun helm-system-packages-pacman-cache (local-packages groups)
   "Cache all package names with descriptions.
-LOCAL-PACKAGES and GROUPS are lists of strings.
-Return (NAMES . DESCRIPTIONS), a cons of two strings."
+LOCAL-PACKAGES and GROUPS are lists of strings."
   ;; We build both caches at the same time.  We could also build just-in-time, but
   ;; benchmarks show that it only saves less than 20% when building one cache.
   (let (names descriptions)
@@ -131,8 +130,8 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
           (with-temp-buffer
             ;; TODO: Possible optimization: Output directly in Elisp?
             (let ((format-string (format "%%-%dn  %%d" helm-system-packages-column-width)))
-              (call-process "expac" nil '(t nil) nil "--sync" format-string)
-              (apply 'call-process "expac" nil '(t nil) nil "--query" format-string local-packages))
+              (process-file "expac" nil '(t nil) nil "--sync" format-string)
+              (apply 'process-file "expac" nil '(t nil) nil "--query" format-string local-packages))
             (dolist (g groups)
               (insert (concat g
                               (make-string (- helm-system-packages-column-width (length g)) ? )
@@ -142,7 +141,7 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
           (replace-regexp-in-string " .*" "" descriptions))
-    (cons names descriptions)))
+    (helm-system-packages--cache-set names descriptions "pacman")))
 
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap.
@@ -153,7 +152,6 @@ If nil, then use `helm-system-package-column-width'."
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages--source-name "pacman source")
   (setq helm-system-packages-column-width
         (or helm-system-packages-pacman-column-width
             helm-system-packages-column-width))
@@ -162,9 +160,7 @@ If nil, then use `helm-system-package-column-width'."
         (orphans (helm-system-packages-pacman-list-orphans))
         (locals (helm-system-packages-pacman-list-locals))
         (groups (helm-system-packages-pacman-list-groups)))
-    (let ((res (helm-system-packages-pacman-cache locals groups)))
-      (setq helm-system-packages--names (car res)
-            helm-system-packages--descriptions (cdr res)))
+    (helm-system-packages-pacman-cache locals groups)
     (setq helm-system-packages--display-lists nil)
     (dolist (p explicit)
       (push (cons p '(helm-system-packages-explicit)) helm-system-packages--display-lists))
@@ -178,19 +174,6 @@ If nil, then use `helm-system-package-column-width'."
     (dolist (p groups)
       (push (cons p '(helm-system-pacman-groups)) helm-system-packages--display-lists))))
 
-(defun helm-system-packages-pacman-init ()
-  "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages--names helm-system-packages--descriptions)
-    (helm-system-packages-pacman-refresh))
-  ;; TODO: We should only create the buffer if it does not already exist.
-  ;; On the other hand, we need to be able to override the package list.
-  ;; (unless (helm-candidate-buffer) ...
-  (helm-init-candidates-in-buffer
-      'global
-    (if helm-system-packages-show-descriptions-p
-        helm-system-packages--descriptions
-      helm-system-packages--names)))
-
 (defcustom helm-system-packages-pacman-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
 If nil, no automatic action is taken."
@@ -201,7 +184,7 @@ If nil, no automatic action is taken."
   "Return non-nil when database is older than `helm-system-packages-pacman-synchronize-threshold'."
   (when helm-system-packages-pacman-synchronize-threshold
     (let ((db-path (with-temp-buffer
-                     (call-process "pacman" nil t nil "--verbose")
+                     (process-file "pacman" nil t nil "--verbose")
                      (goto-char (point-min))
                      (keep-lines "^DB Path")
                      (search-forward ":" nil t)
@@ -311,10 +294,10 @@ exact same information."
   "List candidate dependencies for `helm-system-packages-show-packages'.
 If REVERSE is non-nil, list reverse dependencies instead."
   (let ((format-string (if reverse "%N" (concat "%E" (and helm-current-prefix-arg "%o"))))
-        (helm-system-packages--source-name (concat
-                                            (if reverse "Reverse dependencies" "Dependencies")
-                                            " of "
-                                            (mapconcat 'identity (helm-marked-candidates) " "))))
+        (title (concat
+                (if reverse "Reverse dependencies" "Dependencies")
+                " of "
+                (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
      (helm-system-packages-mapalist
       `((uninstalled (lambda (packages)
@@ -325,7 +308,8 @@ If REVERSE is non-nil, list reverse dependencies instead."
                      (helm-system-packages-call "expac" packages "--sync" "-g" "%n"))))
         (all (lambda (packages)
                (helm-system-packages-call "expac" packages "--query" "--listdelim" "\n" ,format-string))))
-      (helm-system-packages-categorize (helm-marked-candidates))))))
+      (helm-system-packages-categorize (helm-marked-candidates)))
+     title)))
 
 (defun helm-system-packages-pacman-history (_candidate)
   "Filter pacman logs by candidates."
@@ -335,7 +319,7 @@ If REVERSE is non-nil, list reverse dependencies instead."
   (save-excursion (insert-file-contents-literally
                    ;; Find log file location from `pacman' output.
                    (with-temp-buffer
-                     (call-process "pacman" nil t nil "--verbose")
+                     (process-file "pacman" nil t nil "--verbose")
                      (goto-char (point-min))
                      (keep-lines "^Log File")
                      (search-forward ":" nil t)
@@ -370,15 +354,16 @@ If REVERSE is non-nil, list reverse dependencies instead."
 
 (defun helm-system-packages-pacman-build-source ()
   "Build Helm source for pacman."
-  (helm-build-in-buffer-source helm-system-packages--source-name
-    :init 'helm-system-packages-pacman-init
-    :candidate-transformer 'helm-system-packages-pacman-transformer
-    :candidate-number-limit helm-system-packages-candidate-limit
-    :display-to-real 'helm-system-packages-extract-name
-    :keymap helm-system-packages-pacman-map
-    :help-message 'helm-system-packages-pacman-help-message
-    :persistent-help "Show package description"
-    :action helm-system-packages-pacman-actions))
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+    (helm-build-in-buffer-source title
+      :init 'helm-system-packages-init
+      :candidate-transformer 'helm-system-packages-pacman-transformer
+      :candidate-number-limit helm-system-packages-candidate-limit
+      :display-to-real 'helm-system-packages-extract-name
+      :keymap helm-system-packages-pacman-map
+      :help-message 'helm-system-packages-pacman-help-message
+      :persistent-help "Show package description"
+      :action helm-system-packages-pacman-actions)))
 
 (defun helm-system-packages-pacman ()
   "Preconfigured `helm' for pacman."
