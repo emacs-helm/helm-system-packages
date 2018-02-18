@@ -42,7 +42,7 @@
 ;; expressions and parsing are crucial to guarantee a swift startup.
 ;;
 ;; The Helm transformer filters and fontify the candidates.
-;; `helm-system-packages-refresh' fills `helm-system-packages--display-lists'
+;; `helm-system-packages-refresh' fills "display-lists"
 ;; with the categories each package belongs to.
 ;; Catogories really are just faces, such as `helm-system-packages-explicit'.
 ;; No category means the package is not installed.
@@ -69,12 +69,17 @@
 (defvar helm-system-packages--show-groups-p t)
 (defvar helm-system-packages--show-pinned-p t)
 
+;; TODO: Possible optimization: turn into hash table, notably the display list.
 (defvar helm-system-packages--cache nil
   "Cache of all package names and descriptions.
 It's an alist indexed by hostnames.
 The values are in the form
 
-  (:names STRING-BUFFER :descriptions STRING-BUFFER :title STRING)
+  (:names STRING-BUFFER :descriptions STRING-BUFFER :display LIST :title STRING)
+
+'display' is a list of
+
+  (package . (faces...))
 
 Optional 'title' is usually the package manager.")
 
@@ -178,11 +183,6 @@ It is called:
 - on each session start;
 - whenever a shell command completes.")
 
-;; TODO: Possible optimization: turn into hash table.
-;; TODO: This is an implementation detail: move to every package interface that needs it?
-(defvar helm-system-packages--display-lists nil
-  "List of (package . (faces...)).")
-
 (defgroup helm-system-packages nil
   "Predefined configurations for `helm-system-packages'."
   :group 'helm)
@@ -229,14 +229,14 @@ See `helm-system-packages--cache-current'."
                   "")))
     (alist-get host helm-system-packages--cache)))
 
-(defun helm-system-packages--cache-set (names descriptions &optional title)
+(defun helm-system-packages--cache-set (names descriptions display-list &optional title)
   "Set current cache entry.
 NAMES and DESCRIPTIONS are string buffers
 TITLE is a string, usually the name of the package manager."
   (let ((host (or (and (tramp-tramp-file-p default-directory)
                        (tramp-file-name-host (car (tramp-list-connections))))
                   ""))
-        (val (list :names names :descriptions descriptions :title title)))
+        (val (list :names names :descriptions descriptions :display display-list :title title)))
     (if (assoc host helm-system-packages--cache)
         (setcdr (assoc host helm-system-packages--cache) val)
       (push (cons host val) helm-system-packages--cache))))
@@ -281,12 +281,12 @@ To explicitly keep an element, use the `identity' function."
   "Return an alist of PACKAGES indexed by category.
 PACKAGES must be a list.
 Order is presever within categories.
-Categories are infered from `helm-system-packages--display-lists': it's the last
-word of the first associated symbol.
+Categories are infered from the display list: it's the last word of the first
+associated symbol.
 If not found, category is `uninstalled'."
   (let ((result '()))
     (dolist (p packages result)
-      (let* ((e (assoc p helm-system-packages--display-lists))
+      (let* ((e (assoc p (plist-get (helm-system-packages--cache-get) :display)))
              (category (or (and e (intern (replace-regexp-in-string ".*\\W\\(\\w+\\)$" "\\1" (symbol-name (cadr e)))))
                            'uninstalled))
              (cell (assoc category result)))
@@ -430,7 +430,10 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
   (if (not packages)
       (message "No suitable package selected")
     (let ((arg-list (append args packages))
-          (eshell-buffer-name helm-system-packages-eshell-buffer))
+          (eshell-buffer-name (concat helm-system-packages-eshell-buffer
+                                      (when (tramp-tramp-file-p default-directory)
+                                        (concat "@"
+                                                (tramp-file-name-host (car (tramp-list-connections))))))))
       ;; Refresh package list after command has completed.
       (eshell)
       (if (eshell-interactive-process)
@@ -457,7 +460,7 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
   (helm-system-packages-call-as-root
    command
    args
-   (seq-filter (lambda (p) (assoc p helm-system-packages--display-lists))
+   (seq-filter (lambda (p) (assoc p (plist-get (helm-system-packages--cache-get) :display)))
                (helm-marked-candidates))))
 
 (defun helm-system-packages-show-packages (package-alist &optional title)

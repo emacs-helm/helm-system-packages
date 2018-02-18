@@ -66,7 +66,8 @@
   ;; TODO: Possible optimization: Get rid of `reverse'.
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
-      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p)
+                              (plist-get (helm-system-packages--cache-get) :display)))))
         (cond
          ((and (not face) (member (helm-system-packages-extract-name p) helm-system-packages--virtual-list))
           ;; When displaying dependencies, package may be virtual.
@@ -120,7 +121,8 @@ packages belonging to the group."
                   (process-file "pacman" nil t nil "--sync" "--groups")
                   (buffer-string))))
 
-(defun helm-system-packages-pacman-cache (local-packages groups)
+;; TODO: Merge this function into -refresh.
+(defun helm-system-packages-pacman-cache (display-list local-packages groups)
   "Cache all package names with descriptions.
 LOCAL-PACKAGES and GROUPS are lists of strings."
   ;; We build both caches at the same time.  We could also build just-in-time, but
@@ -141,7 +143,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
           (replace-regexp-in-string " .*" "" descriptions))
-    (helm-system-packages--cache-set names descriptions "pacman")))
+    (helm-system-packages--cache-set names descriptions display-list "pacman")))
 
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap.
@@ -159,20 +161,20 @@ If nil, then use `helm-system-package-column-width'."
         (dependencies (helm-system-packages-pacman-list-dependencies))
         (orphans (helm-system-packages-pacman-list-orphans))
         (locals (helm-system-packages-pacman-list-locals))
-        (groups (helm-system-packages-pacman-list-groups)))
-    (helm-system-packages-pacman-cache locals groups)
-    (setq helm-system-packages--display-lists nil)
+        (groups (helm-system-packages-pacman-list-groups))
+        display-list)
     (dolist (p explicit)
-      (push (cons p '(helm-system-packages-explicit)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-explicit)) display-list))
     (dolist (p dependencies)
-      (push (cons p '(helm-system-packages-dependencies)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-dependencies)) display-list))
     (dolist (p orphans)
-      (push (cons p '(helm-system-packages-orphans)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-orphans)) display-list))
     (dolist (p locals)
       ;; Local packages are necessarily either explicitly installed or a required dependency or an orphan.
-      (push 'helm-system-packages-locals (cdr (assoc p helm-system-packages--display-lists))))
+      (push 'helm-system-packages-locals (cdr (assoc p display-list))))
     (dolist (p groups)
-      (push (cons p '(helm-system-pacman-groups)) helm-system-packages--display-lists))))
+      (push (cons p '(helm-system-pacman-groups)) display-list))
+    (helm-system-packages-pacman-cache display-list locals groups)))
 
 (defcustom helm-system-packages-pacman-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
@@ -244,7 +246,7 @@ tested package to fall back on."
 (defun helm-system-packages-pacman-install (_)
   "Install marked candidates."
   (when helm-system-packages-pacman-auto-clean-cache
-    (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
+    (let ((eshell-buffer-name helm-system-packages-eshell-buffer)) ; TODO: Use same as in main.
       (eshell)
       (unless (eshell-interactive-process)
         (goto-char (point-max))

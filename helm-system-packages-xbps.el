@@ -65,7 +65,7 @@
 (defun helm-system-packages-xbps-transformer (packages)
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
-      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p) (plist-get (helm-system-packages--cache-get) :display)))))
         (cond
          ((and (not face) helm-system-packages--show-uninstalled-p)
           (push p res))
@@ -118,7 +118,7 @@ That is, packages that won't be updated automatically."
                     (replace-match ""))
                   (buffer-string))))
 
-(defun helm-system-packages-xbps-cache ()
+(defun helm-system-packages-xbps-cache (display-list)
   "Cache all package names with descriptions."
   ;; We build both caches at the same time.  We could also build just-in-time, but
   ;; benchmarks show that it only saves less than 20% when building one cache.
@@ -142,7 +142,7 @@ That is, packages that won't be updated automatically."
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
           (replace-regexp-in-string " .*" "" descriptions))
-    (helm-system-packages--cache-set names descriptions "xbps")))
+    (helm-system-packages--cache-set names descriptions display-list "xbps")))
 
 (defun helm-system-packages-xbps-refresh ()
   "Refresh the package list."
@@ -150,17 +150,17 @@ That is, packages that won't be updated automatically."
   (let* ((explicit (helm-system-packages-xbps-list-explicit))
          (orphans (helm-system-packages-xbps-list-orphans))
          (pinned (helm-system-packages-xbps-list-pinned))
-         (dependencies (helm-system-packages-xbps-list-dependencies explicit orphans pinned)))
-    (helm-system-packages-xbps-cache)
-    (setq helm-system-packages--display-lists nil)
+         (dependencies (helm-system-packages-xbps-list-dependencies explicit orphans pinned))
+         display-list)
     (dolist (p explicit)
-      (push (cons p '(helm-system-packages-explicit)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-explicit)) display-list))
     (dolist (p dependencies)
-      (push (cons p '(helm-system-packages-dependencies)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-dependencies)) display-list))
     (dolist (p orphans)
-      (push (cons p '(helm-system-packages-orphans)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-orphans)) display-list))
     (dolist (p pinned)
-      (push (cons p '(helm-system-packages-pinned)) helm-system-packages--display-lists))))
+      (push (cons p '(helm-system-packages-pinned)) display-list))
+    (helm-system-packages-xbps-cache display-list)))
 
 (defcustom helm-system-packages-xbps-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
@@ -223,7 +223,7 @@ tested package to fall back on."
 (defun helm-system-packages-xbps-install (_)
   "Install marked candidates."
   (when helm-system-packages-xbps-auto-clean-cache
-    (let ((eshell-buffer-name helm-system-packages-eshell-buffer))
+    (let ((eshell-buffer-name helm-system-packages-eshell-buffer)) ; TODO: Use same as in main.
       (eshell)
       (unless (eshell-interactive-process)
         (goto-char (point-max))
