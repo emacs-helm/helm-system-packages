@@ -280,10 +280,10 @@ exact same information."
                                        ;; Prepend the missing leading '/' to pacman's file database queries.'
                                        (replace-regexp-in-string
                                         "\\([^ ]+ \\)" "\\1/"
-                                        (helm-system-packages-call "pacman" packages "--files" "--list"))))
+                                        (helm-system-packages-call "pacman" packages "--files" "--list" "--color" "never"))))
                         (groups ignore)
                         (all (lambda (packages)
-                               (helm-system-packages-call "pacman" packages "--query" "--list"))))
+                               (helm-system-packages-call "pacman" packages "--query" "--list" "--color" "never"))))
                       (helm-system-packages-categorize (helm-marked-candidates)))))
       ;; The first word of the line (package name) is the hash table key,
       ;; the rest is pushed to the value (list of files).
