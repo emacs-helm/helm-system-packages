@@ -479,6 +479,8 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
    (seq-filter (lambda (p) (assoc p (plist-get (helm-system-packages--cache-get) :display)))
                (helm-marked-candidates))))
 
+;; TODO: When all entries are filtered out by the transformer, it seems that
+;; bindings don't work (e.g. M-N to re-enable uninstalled packages).  Helm bug?
 (defun helm-system-packages-show-packages (package-alist &optional title)
   "Run a Helm session over the packages in PACKAGE-ALIST.
 The key of the alist is ignored and the package lists are considered as one
@@ -505,11 +507,12 @@ TITLE is the name of the Helm session."
                                  (make-string (- helm-system-packages-column-width (length name)) ? )
                                  "  <virtual package>"
                                  "\n"))))
-      (let ((ass (assq 'dependencies helm-system-packages--cache))
+      (let ((helm-system-packages--cache-current 'dependencies)
+            (ass (assq 'dependencies helm-system-packages--cache))
             (val (list :names buf :descriptions desc-res :title title)))
         (if ass
             (setcdr ass val)
-          (push val helm-system-packages--cache))
+          (push (cons 'dependencies val) helm-system-packages--cache))
         (helm-system-packages)))))
 
 (defun helm-system-packages-browse-url (urls)

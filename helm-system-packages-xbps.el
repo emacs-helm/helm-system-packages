@@ -271,16 +271,16 @@ If REVERSE is non-nil, list reverse dependencies instead."
                 " of "
                 (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
-     `((uninstalled
-        ,(mapconcat 'identity
-                    (mapcar (lambda (pkg)
-                              ;; Remove version numbers.
-                              (replace-regexp-in-string
-                               "[-<>][^-<>]+$" ""
-                               (helm-system-packages-call "xbps-query" nil "-R" arg pkg)))
-                            (helm-marked-candidates))
-                    "\n"))))
-    title))
+     `((uninstalled .
+                    ,(mapconcat 'identity
+                                (mapcar (lambda (pkg)
+                                          ;; Remove version numbers.
+                                          (replace-regexp-in-string
+                                           "[-<>][^-<>]+$" ""
+                                           (helm-system-packages-call "xbps-query" nil "-R" arg pkg)))
+                                        (helm-marked-candidates))
+                                "\n")))
+     title)))
 
 (defcustom helm-system-packages-xbps-actions
   '(("Show package(s)" . helm-system-packages-xbps-info)
