@@ -3,7 +3,7 @@
 * Introduction
 
 Helm System Packages is an Emacs-based interface to the package manager of your
-operating system.
+operating system /and/ remote systems as well.
 
 Emacs' knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version targeted at
 non-Emacs users.  Run the script and everything should be self-explanatory.  If
@@ -11,13 +11,14 @@ not then it's bug, please report it.
 
 Start ~helm-system-packages~ to list all available packages (with installed
 packages as well as dependencies displayed in their own respective face).
-Fuzzy-search, mark and execute the desired action over any set of packages:
+Fuzzy-search, mark and execute the desired action over any selections of
+packages:
 
 - Install.
 - Uninstall.
 - Display packages details (in Org Mode!) or insert details at point.
 - Find files owned by packages.
-- And much more.
+- And much more, including performing all the above over the network!
 
 Helm System Packages provides a uniform interface over the following package
 managers:
@@ -38,6 +39,10 @@ There is only one entry point: ~helm-system-packages~.
 Use the persistent action to view the details of the marked packages.
 
 Most actions can be called with a prefix argument to insert the result at point.
+
+If started from a remote TRAMP buffer (e.g. dired, Eshell or just any remote
+file), ~helm-system-packages~ automatically switches to the packages of the
+remote system.  The remove package manager can be different from the local one.
 
 ** Maintenance & other operations
 
