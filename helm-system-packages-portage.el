@@ -78,7 +78,8 @@
 (defun helm-system-packages-portage-transformer (packages)
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
-      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p)
+                              (plist-get (helm-system-packages--cache-get) :display)))))
         (cond
          ((not face) (when helm-system-packages-portage--show-uninstalled-p (push p res)))
          ((or
@@ -149,29 +150,20 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
     ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also see helm-system-packages-portage-cache-names.
     (buffer-string)))
 
-;; TODO: Move this to common source?
-(defun helm-system-packages-portage-init ()
-  "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages-portage--names helm-system-packages-portage--descriptions)
-    (helm-system-packages-portage-refresh))
-  (helm-init-candidates-in-buffer
-      'global
-    (if helm-system-packages-show-descriptions-p
-        helm-system-packages-portage--descriptions
-      helm-system-packages-portage--names)))
-
 (defun helm-system-packages-portage-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages-portage--descriptions (helm-system-packages-portage-cache-descriptions)
-        helm-system-packages-portage--names (helm-system-packages-portage-cache-names))
   (let* ((explicit (helm-system-packages-portage-list-explicit))
-         (dependencies (helm-system-packages-portage-list-dependencies explicit)))
-    (setq helm-system-packages--display-lists nil)
+         (dependencies (helm-system-packages-portage-list-dependencies explicit))
+         display-list)
     (dolist (p explicit)
-      (push (cons p '(helm-system-packages-portage-explicit)) helm-system-packages--display-lists))
+      (push (cons p '(helm-system-packages-portage-explicit)) display-list))
     (dolist (p dependencies)
-      (push (cons p '(helm-system-packages-portage-dependencies)) helm-system-packages--display-lists))))
+      (push (cons p '(helm-system-packages-portage-dependencies)) display-list))
+    (helm-system-packages--cache-set
+     (helm-system-packages-portage-cache-names)
+     (helm-system-packages-portage-cache-descriptions)
+     display-list "portage")))
 
 (defcustom helm-system-packages-portage-actions
   '(("Show package(s)" .
@@ -182,13 +174,13 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
        (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (when helm-current-prefix-arg "--oneshot"))))
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
-       (helm-system-packages-run-as-root "emerge" "--ask" "--verbose" (if helm-current-prefix-arg "--depclean" "--unmerge"))))
+       (helm-system-packages-run-as-root-over-installed "emerge" "--ask" "--verbose" (if helm-current-prefix-arg "--depclean" "--unmerge"))))
     ("Browse homepage URL" .
      (lambda (_)
        (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t))))
     ("Find files" .
      (lambda (_)
-       (helm-system-packages-files "equery" "--no-color" "files")))
+       (helm-system-packages-print "equery" "--no-color" "files")))
     ("Show dependencies" .
      (lambda (_)
        (helm-system-packages-print "equery" "--no-color" "depgraph")))
@@ -203,10 +195,10 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
        (helm-system-packages-print "genlop" "-qe")))
     ("Show extra info" .
      (lambda (_)
-       (helm-system-packages-print elm "genlop -qi")))
+       (helm-system-packages-print "genlop -qi")))
     ("Show USE flags" .
      (lambda (_)
-       (helm-system-packages-print elm "equery" "--no-color" "uses")
+       (helm-system-packages-print "equery" "--no-color" "uses")
        ;; TODO: Test font-lock.
        (unless helm-current-prefix-arg
          (font-lock-add-keywords nil '(("^\+.*" . font-lock-variable-name-face)))
@@ -215,16 +207,18 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defvar helm-system-packages-portage-source
-  (helm-build-in-buffer-source "Portage source"
-    :init 'helm-system-packages-portage-init
-    :candidate-transformer 'helm-system-packages-portage-transformer
-    :candidate-number-limit helm-system-packages-candidate-limit
-    :display-to-real 'helm-system-packages-extract-name
-    :keymap helm-system-packages-portage-map
-    :help-message 'helm-system-packages-portage-help-message
-    :persistent-help "Show package description"
-    :action helm-system-packages-portage-actions))
+(defun helm-system-packages-portage-build-source ()
+  "Build Helm source for portage."
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+    (helm-build-in-buffer-source title
+      :init 'helm-system-packages-init
+      :candidate-transformer 'helm-system-packages-portage-transformer
+      :candidate-number-limit helm-system-packages-candidate-limit
+      :display-to-real 'helm-system-packages-extract-name
+      :keymap helm-system-packages-portage-map
+      :help-message 'helm-system-packages-portage-help-message
+      :persistent-help "Show package description"
+      :action helm-system-packages-portage-actions)))
 
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."
@@ -280,8 +274,8 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 (defun helm-system-packages-portage ()
   "Preconfigured `helm' for Portage."
   (unless (helm-system-packages-missing-dependencies-p "eix" "qlist" "euse" "portageq" "genlop")
-    (helm :sources '(helm-system-packages-portage-source
-                     helm-system-packages-portage-use-source)
+    (helm :sources (list (helm-system-packages-portage-build-source)
+                         'helm-system-packages-portage-use-source)
           :buffer "*helm portage*"
           :truncate-lines t
           :input (when helm-system-packages-use-symbol-at-point-p
