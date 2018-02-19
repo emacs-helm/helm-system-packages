@@ -58,7 +58,9 @@
 
 (require 'seq)
 
-(defvar helm-system-packages-eshell-buffer "*helm-system-packages-eshell*")
+(defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
+(defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
+(make-obsolete-variable 'helm-system-packages-eshell-buffer 'helm-system-packages-shell-buffer-name "1.9.0")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
 (defvar helm-system-packages--show-uninstalled-p t)
@@ -422,18 +424,29 @@ In case of a hash table, one Helm source per package will be created."
               :buffer "*helm system package files*")))))
 (make-obsolete 'helm-system-packages-files 'helm-system-packages-find-files "1.9.0")
 
+(defun helm-system-packages-shell-name ()
+  "Return the name of the shell buffer associated with `default-directory'.
+The basename is defined by `helm-system-packages-shell-buffer-name'."
+  (let ((vec (tramp-dissect-file-name default-directory)))
+    (concat "*"
+            helm-system-packages-shell-buffer-name
+            (when (or (tramp-file-name-user vec) (tramp-file-name-host vec))
+              (concat " "
+                      (tramp-file-name-user vec)
+                      (and (tramp-file-name-host vec)
+                           "@")
+                      (tramp-file-name-host vec)))
+            "*")))
+
 (defun helm-system-packages-call-as-root (command args packages)
   "Call COMMAND ARGS PACKAGES as root.
 ARGS and PACKAGES must be lists.
-COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
+COMMAND will be run in the Eshell buffer named by `helm-system-packages-shell-name'."
   (require 'esh-mode)
   (if (not packages)
       (message "No suitable package selected")
     (let ((arg-list (append args packages))
-          (eshell-buffer-name (concat helm-system-packages-eshell-buffer
-                                      (when (tramp-tramp-file-p default-directory)
-                                        (concat "@"
-                                                (tramp-file-name-host (car (tramp-list-connections))))))))
+          (eshell-buffer-name (helm-system-packages-shell-name)))
       ;; Refresh package list after command has completed.
       (eshell)
       (if (eshell-interactive-process)

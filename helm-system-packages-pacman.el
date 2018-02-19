@@ -246,7 +246,7 @@ tested package to fall back on."
 (defun helm-system-packages-pacman-install (_)
   "Install marked candidates."
   (when helm-system-packages-pacman-auto-clean-cache
-    (let ((eshell-buffer-name helm-system-packages-eshell-buffer)) ; TODO: Use same as in main.
+    (let ((eshell-buffer-name (helm-system-packages-shell-name)))
       (eshell)
       (unless (eshell-interactive-process)
         (goto-char (point-max))
