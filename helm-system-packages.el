@@ -227,16 +227,16 @@ the window."
 See `helm-system-packages--cache-current'."
   (let ((host (or helm-system-packages--cache-current
                   (and (tramp-tramp-file-p default-directory)
-                       (tramp-file-name-host (car (tramp-list-connections))))
+                       (tramp-file-name-host (tramp-dissect-file-name default-directory)))
                   "")))
-    (alist-get host helm-system-packages--cache)))
+    (cdr (assoc host helm-system-packages--cache))))
 
 (defun helm-system-packages--cache-set (names descriptions display-list &optional title)
   "Set current cache entry.
 NAMES and DESCRIPTIONS are string buffers
 TITLE is a string, usually the name of the package manager."
   (let ((host (or (and (tramp-tramp-file-p default-directory)
-                       (tramp-file-name-host (car (tramp-list-connections))))
+                       (tramp-file-name-host (tramp-dissect-file-name default-directory)))
                   ""))
         (val (list :names names :descriptions descriptions :display display-list :title title)))
     (if (assoc host helm-system-packages--cache)
@@ -487,7 +487,7 @@ TITLE is the name of the Helm session."
       (message "No dependency list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
     ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
     (let (desc-res
-          (descriptions (plist-get  (helm-system-packages--cache-get) :descriptions))
+          (descriptions (plist-get (helm-system-packages--cache-get) :descriptions))
           (buf (with-temp-buffer
                  (mapc 'insert (mapcar 'cdr package-alist))
                  (sort-lines nil (point-min) (point-max))
@@ -520,7 +520,7 @@ TITLE is the name of the Helm session."
   (let ((missing-deps
          (seq-remove (lambda (p)
                        (if (tramp-tramp-file-p default-directory)
-                           (tramp-find-executable (car (tramp-list-connections)) p nil)
+                           (tramp-find-executable (tramp-dissect-file-name default-directory) p nil)
                          (executable-find p)))
                      deps)))
     (when missing-deps
@@ -535,7 +535,7 @@ TITLE is the name of the Helm session."
   ;; hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
   (let ((managers (seq-filter (lambda (p)
                                 (if (tramp-tramp-file-p default-directory)
-                                    (tramp-find-executable (car (tramp-list-connections)) (car p) nil)
+                                    (tramp-find-executable (tramp-dissect-file-name default-directory) (car p) nil)
                                   (executable-find (car p))))
                               '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")))))
     (if (not managers)
