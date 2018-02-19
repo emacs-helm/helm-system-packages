@@ -446,16 +446,17 @@ In case of a hash table, one Helm source per package will be created."
 (defun helm-system-packages-shell-name ()
   "Return the name of the shell buffer associated with `default-directory'.
 The basename is defined by `helm-system-packages-shell-buffer-name'."
-  (let ((vec (tramp-dissect-file-name default-directory)))
-    (concat "*"
-            helm-system-packages-shell-buffer-name
-            (when (or (tramp-file-name-user vec) (tramp-file-name-host vec))
-              (concat " "
-                      (tramp-file-name-user vec)
-                      (and (tramp-file-name-host vec)
-                           "@")
-                      (tramp-file-name-host vec)))
-            "*")))
+  (concat "*"
+          helm-system-packages-shell-buffer-name
+          (when (tramp-tramp-file-p default-directory)
+            (let ((vec (tramp-dissect-file-name default-directory)))
+              (when (or (tramp-file-name-user vec) (tramp-file-name-host vec))
+                (concat " "
+                        (tramp-file-name-user vec)
+                        (and (tramp-file-name-host vec)
+                             "@")
+                        (tramp-file-name-host vec)))))
+          "*"))
 
 (defun helm-system-packages-call-as-root (command args packages)
   "Call COMMAND ARGS PACKAGES as root.
