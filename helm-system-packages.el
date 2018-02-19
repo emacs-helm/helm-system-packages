@@ -379,6 +379,21 @@ Otherwise display in `helm-system-packages-buffer'."
         (view-mode 1)))))
 (make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
 
+(defun helm-system-packages-prefix-remote (file)
+  "Prefix FILE with path to remote connection.
+If local, return FILE unmodified."
+  (if (tramp-tramp-file-p default-directory)
+      (let ((v (tramp-dissect-file-name default-directory)))
+        (tramp-make-tramp-file-name
+         (tramp-file-name-method v)
+         (tramp-file-name-user v)
+         (tramp-file-name-domain v)
+         (tramp-file-name-host v)
+         (tramp-file-name-port v)
+         file
+         (tramp-file-name-hop v)))
+    file))
+
 (defun helm-system-packages-build-file-source (package files)
   "Build Helm file source for PACKAGE with FILES candidates.
 PACKAGES is a string and FILES is a list of strings."
@@ -387,7 +402,8 @@ PACKAGES is a string and FILES is a list of strings."
     :candidates files
     :candidate-transformer (lambda (files)
                              (let ((helm-ff-transformer-show-only-basename nil))
-                               (mapcar 'helm-ff-filter-candidate-one-by-one files)))
+                               (mapcar 'helm-ff-filter-candidate-one-by-one
+                                       (mapcar 'helm-system-packages-prefix-remote files))))
     :candidate-number-limit 'helm-ff-candidate-number-limit
     :persistent-action-if 'helm-find-files-persistent-action-if
     :keymap 'helm-find-files-map
