@@ -108,7 +108,7 @@ Requirements:
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
       (let ((face (cdr (assoc (helm-system-packages-extract-name p)
-                              helm-system-packages--display-lists))))
+                              (plist-get (helm-system-packages--cache-get) :display)))))
         (cond
          ((not face) (when helm-system-packages-dpkg--show-uninstalled-p
                        (push p res)))
@@ -192,94 +192,74 @@ Requirements:
     ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also see helm-system-packages-dpkg-buffer-all.
     (buffer-string)))
 
-(defun helm-system-packages-dpkg-init ()
-  "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages-dpkg--names helm-system-packages-dpkg--descriptions)
-    (helm-system-packages-dpkg-refresh))
-  (helm-init-candidates-in-buffer
-      'global
-    (if helm-system-packages-show-descriptions-p
-        helm-system-packages-dpkg--descriptions
-      helm-system-packages-dpkg--names)))
-
 (defun helm-system-packages-dpkg-refresh ()
   "Refresh the package list."
   (interactive)
-  (setq helm-system-packages-dpkg--descriptions (helm-system-packages-dpkg-cache-descriptions)
-        helm-system-packages-dpkg--names (helm-system-packages-dpkg-cache-names))
   (let ((explicit (helm-system-packages-dpkg-list-explicit))
         (dependencies (helm-system-packages-dpkg-list-dependencies))
-        (residuals (helm-system-packages-dpkg-list-residuals)))
-    (setq helm-system-packages--display-lists nil)
+        (residuals (helm-system-packages-dpkg-list-residuals))
+        display-list)
     (dolist (p explicit)
       (push (cons p '(helm-system-packages-dpkg-explicit))
-            helm-system-packages--display-lists))
+            display-list))
     (dolist (p dependencies)
       (push (cons p '(helm-system-packages-dpkg-dependencies))
-            helm-system-packages--display-lists))
+            display-list))
     (dolist (p residuals)
       (push (cons p '(helm-system-packages-dpkg-residuals))
-            helm-system-packages--display-lists))))
+            display-list))
+    (helm-system-packages--cache-set
+     (helm-system-packages-dpkg-cache-names)
+     (helm-system-packages-dpkg-cache-descriptions)
+     display-list "dpkg")))
 
-(defun helm-system-packages-dpkg-print-url (_)
+(defun helm-system-packages-dpkg-info (_candidate)
+  "Print information about the selected packages.
+
+With prefix argument, insert the output at point.
+Otherwise display in `helm-system-packages-buffer'."
+  (helm-system-packages-show-information
+   ;; TODO: Optimize by calling the command only once and parsing output.
+   '((uninstalled ,(mapcar (lambda (pkg)
+                             (cons pkg
+                                   (helm-system-packages-call "apt-cache" nil "show" pkg)))
+                           (helm-marked-candidates))))))
+
+(defun helm-system-packages-dpkg-browse-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (let ((res (helm-system-packages-run "apt-cache" "show"))
+  (let ((res (helm-system-packages-call "apt-cache" nil "show" (helm-marked-candidates)))
         urls)
     (dolist (url (split-string res "\n" t))
       (when (string-match "^Homepage: \\(.*\\)" url)
         (push (match-string 1 url) urls)))
     (helm-system-packages-browse-url urls)))
 
-(defvar helm-system-packages-dpkg--source-name "dpkg source")
+(defun helm-system-packages-dpkg-find-files (_)
+  "Find files for marked candidates."
+  (helm-system-packages-find-files
+   (let ((file-hash (make-hash-table :test 'equal)))
+     (dolist (pkg (helm-marked-candidates) file-hash)
+       ;; TODO: Optimize by calling the command only once and parsing output.
+       (dolist (file (split-string
+                      (helm-system-packages-call "dpkg" nil "--listfiles" pkg)
+                      "\n" t))
+         (push file (gethash pkg file-hash)))))))
 
-(defvar helm-system-packages-dpkg--descriptions-global nil
-  "All descriptions.
-Used to restore complete description list when browsing dependencies.")
-(defvar helm-system-packages-dpkg--names-global nil
-  "All names.
-Used to restore complete name list when browsing dependencies.")
-
-(defun helm-system-packages-dpkg-deps (_candidate &optional reverse)
-  "Run a Helm session over the packages returned by COMMAND run over `helm-marked-candidates'.
-With prefix argument, insert the output at point.
-
-If REVERSE is non-nil, show reverse dependencies instead."
-  (setq helm-system-packages-dpkg--descriptions
-        (or helm-system-packages-dpkg--descriptions-global
-            helm-system-packages-dpkg--descriptions))
-  (setq helm-system-packages-dpkg--descriptions-global
-        helm-system-packages-dpkg--descriptions)
-  (setq helm-system-packages-dpkg--names
-        (or helm-system-packages-dpkg--names-global
-            helm-system-packages-dpkg--names))
-  (setq helm-system-packages-dpkg--names-global
-        helm-system-packages-dpkg--names)
-  (let ((res (apply #'helm-system-packages-run "apt-cache"
-                    (if reverse "rdepends" "depends")))
-        desc-res)
-    (if (string= res "")
-        (message "No dependencies")
-      (setq res (with-temp-buffer
-                  (insert res)
-                  (sort-lines nil (point-min) (point-max))
-                  (delete-duplicate-lines (point-min) (point-max))
-                  (buffer-string)))
-      (dolist (name (split-string res "\n" t))
-        (when (string-match (concat "^" name "  .*$")
-                            helm-system-packages-dpkg--descriptions)
-          (setq desc-res
-                (concat desc-res
-                        (match-string 0 helm-system-packages-dpkg--descriptions) "\n"))))
-      (let ((helm-system-packages-dpkg--descriptions desc-res)
-            (helm-system-packages-dpkg--names res)
-            (helm-system-packages-dpkg--source-name
-             (concat (if reverse "Reverse deps" "Deps")
-                     " of "
-                     (mapconcat 'identity (helm-marked-candidates) " "))))
-        (helm-system-packages-dpkg)))))
+(defun helm-system-packages-dpkg-show-dependencies (_candidate &optional reverse)
+  "List candidate dependencies for `helm-system-packages-show-packages'.
+If REVERSE is non-nil, list reverse dependencies instead."
+  (let ((arg (if reverse "rdepends" "depends"))
+        (title (concat
+                (if reverse "Reverse dependencies" "Dependencies")
+                " of "
+                (mapconcat 'identity (helm-marked-candidates) " "))))
+    (helm-system-packages-show-packages
+     `((uninstalled . ,(helm-system-packages-call
+                        "apt-cache" nil arg (helm-marked-candidates))))
+     title)))
 
 (defun helm-system-packages-make-apt-get-command ( &rest args)
   (let ((comm (append '("apt-get" "--quiet") args)))
@@ -288,9 +268,7 @@ If REVERSE is non-nil, show reverse dependencies instead."
       (push "DEBIAN_FRONTEND=noninteractive" comm))))
 
 (defcustom helm-system-packages-dpkg-actions
-  '(("Show package(s)" .
-     (lambda (_)
-       (helm-system-packages-print "apt-cache" "show")))
+  '(("Show package(s)" . helm-system-packages-dpkg-info)
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
        (apply 'helm-system-packages-run-as-root
@@ -298,13 +276,15 @@ If REVERSE is non-nil, show reverse dependencies instead."
                                                          (when helm-current-prefix-arg "--reinstall")))))
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
-       (apply 'helm-system-packages-run-as-root
+       (apply 'helm-system-packages-run-as-root-over-installed
               (helm-system-packages-make-apt-get-command "remove"
                                                          (when helm-current-prefix-arg "--auto-remove")))))
-    ("Browse homepage URL" . helm-system-packages-dpkg-print-url)
-    ("Find files" .
+    ("Browse homepage URL" . helm-system-packages-dpkg-browse-url)
+    ("Find files" . helm-system-packages-dpkg-find-files)
+    ("Show dependencies" . helm-system-packages-dpkg-show-dependencies)
+    ("Show reverse dependencies" .
      (lambda (_)
-       (helm-system-packages-files "dpkg" "--listfiles")))
+       (helm-system-packages-dpkg-show-dependencies _ 'reverse)))
     ("Show dependencies" .
      (lambda (_)
        (helm-system-packages-print "apt-cache" "depends")))
@@ -313,7 +293,7 @@ If REVERSE is non-nil, show reverse dependencies instead."
        (helm-system-packages-print "apt-cache" "rdepends")))
     ("Uninstall/Purge (`C-u' to include dependencies)" .
      (lambda (_)
-       (apply 'helm-system-packages-run-as-root
+       (apply 'helm-system-packages-run-as-root-over-installed
               (helm-system-packages-make-apt-get-command "purge"
                                                          (when helm-current-prefix-arg "--auto-remove"))))))
   "Actions for Helm dpkg."
@@ -321,15 +301,17 @@ If REVERSE is non-nil, show reverse dependencies instead."
   :type '(alist :key-type string :value-type function))
 
 (defun helm-system-packages-dpkg-build-source ()
-  (helm-build-in-buffer-source helm-system-packages-dpkg--source-name
-    :init 'helm-system-packages-dpkg-init
-    :candidate-transformer 'helm-system-packages-dpkg-transformer
-    :candidate-number-limit helm-system-packages-candidate-limit
-    :display-to-real 'helm-system-packages-extract-name
-    :keymap helm-system-packages-dpkg-map
-    :help-message 'helm-system-packages-dpkg-help-message
-    :persistent-help "Show package description"
-    :action helm-system-packages-dpkg-actions))
+  "Build Helm source for dpkg"
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+    (helm-build-in-buffer-source title
+      :init 'helm-system-packages-init
+      :candidate-transformer 'helm-system-packages-dpkg-transformer
+      :candidate-number-limit helm-system-packages-candidate-limit
+      :display-to-real 'helm-system-packages-extract-name
+      :keymap helm-system-packages-dpkg-map
+      :help-message 'helm-system-packages-dpkg-help-message
+      :persistent-help "Show package description"
+      :action helm-system-packages-dpkg-actions)))
 
 (defun helm-system-packages-dpkg ()
   "Preconfigured `helm' for dpkg."
