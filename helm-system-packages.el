@@ -57,6 +57,7 @@
 ;;   over the aforementioned category alists.
 
 (require 'seq)
+(require 'tramp)
 
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
@@ -70,6 +71,8 @@
 (defvar helm-system-packages--show-locals-p t)
 (defvar helm-system-packages--show-groups-p t)
 (defvar helm-system-packages--show-pinned-p t)
+
+;; TODO: Replace `mapcar' by `mapcan' when possible.
 
 ;; TODO: Possible optimization: turn into hash table, notably the display list.
 (defvar helm-system-packages--cache nil

@@ -147,7 +147,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
 
 (defcustom helm-system-packages-pacman-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap.
-If nil, then use `helm-system-package-column-width'."
+If nil, then use `helm-system-packages-column-width'."
   :group 'helm-system-packages
   :type 'integer)
 
