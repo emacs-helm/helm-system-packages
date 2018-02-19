@@ -222,9 +222,9 @@ Otherwise display in `helm-system-packages-buffer'."
                        (string-match ".*: \\(.*\\)" desc)
                        (cons (match-string 1 desc) (substring desc (match-end 2))))
                      (split-string info-string "\n\n" t)))))
-    (helm-system-packages-mapalist '((uninstalled (lambda (packages) (helm-system-packages-call "pacman" packages "--sync" "--info" "--info")))
+    (helm-system-packages-mapalist '((uninstalled (lambda (packages) (helm-system-packages-call "pacman" packages "--sync" "--info" "--info" "--color" "never")))
                                      (groups ignore)
-                                     (all (lambda (packages) (helm-system-packages-call "pacman" packages "--query" "--info" "--info"))))
+                                     (all (lambda (packages) (helm-system-packages-call "pacman" packages "--query" "--info" "--info" "--color" "never"))))
                                    (helm-system-packages-categorize (helm-marked-candidates))))))
 
 (defcustom helm-system-packages-pacman-auto-clean-cache nil
