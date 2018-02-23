@@ -58,6 +58,7 @@
 
 (require 'seq)
 (require 'tramp)
+(require 'tramp-sh)
 
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
@@ -129,8 +130,10 @@ This is only used for dependency display.")
 (declare-function eshell-send-input "esh-mode.el")
 (defvar eshell-buffer-name)
 (defvar helm-ff-transformer-show-only-basename)
+(declare-function helm-ff--create-tramp-name "helm-files.el")
 (declare-function helm-comp-read "helm-mode.el")
 (declare-function org-sort-entries "org.el")
+(declare-function helm-system-packages-refresh "helm-system-package.el")
 
 (defun helm-system-packages-toggle-explicit ()
   (interactive)

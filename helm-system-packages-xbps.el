@@ -31,6 +31,7 @@
 
 ;; Shut up byte compiler
 (declare-function eshell-interactive-process "esh-cmd.el")
+(defvar eshell-buffer-name)
 
 (defvar helm-system-packages-xbps-help-message
   "* Helm xbps
