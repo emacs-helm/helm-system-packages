@@ -383,15 +383,7 @@ Otherwise display in `helm-system-packages-buffer'."
   "Prefix FILE with path to remote connection.
 If local, return FILE unmodified."
   (if (tramp-tramp-file-p default-directory)
-      (let ((v (tramp-dissect-file-name default-directory)))
-        (tramp-make-tramp-file-name
-         (tramp-file-name-method v)
-         (tramp-file-name-user v)
-         (tramp-file-name-domain v)
-         (tramp-file-name-host v)
-         (tramp-file-name-port v)
-         file
-         (tramp-file-name-hop v)))
+      (helm-ff--create-tramp-name (concat default-directory file))
     file))
 
 (defun helm-system-packages-build-file-source (package files)
