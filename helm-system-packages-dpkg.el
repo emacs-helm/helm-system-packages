@@ -285,12 +285,6 @@ If REVERSE is non-nil, list reverse dependencies instead."
     ("Show reverse dependencies" .
      (lambda (_)
        (helm-system-packages-dpkg-show-dependencies _ 'reverse)))
-    ("Show dependencies" .
-     (lambda (_)
-       (helm-system-packages-print "apt-cache" "depends")))
-    ("Show reverse dependencies" .
-     (lambda (_)
-       (helm-system-packages-print "apt-cache" "rdepends")))
     ("Uninstall/Purge (`C-u' to include dependencies)" .
      (lambda (_)
        (apply 'helm-system-packages-run-as-root-over-installed
