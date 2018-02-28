@@ -215,15 +215,14 @@ Requirements:
 
 (defun helm-system-packages-dpkg-info (_candidate)
   "Print information about the selected packages.
-
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-show-information
    ;; TODO: Optimize by calling the command only once and parsing output.
-   '((uninstalled ,(mapcar (lambda (pkg)
-                             (cons pkg
-                                   (helm-system-packages-call "apt-cache" nil "show" pkg)))
-                           (helm-marked-candidates))))))
+   `((uninstalled . ,(mapcar (lambda (pkg)
+                               (cons pkg
+                                     (helm-system-packages-call "apt-cache" nil "show" pkg)))
+                             (helm-marked-candidates))))))
 
 (defun helm-system-packages-dpkg-browse-url (_)
   "Print homepage URLs of `helm-marked-candidates'.
