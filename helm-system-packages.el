@@ -395,10 +395,10 @@ PACKAGES is a string and FILES is a list of strings."
   (require 'helm-files)
   (helm-build-sync-source (concat package " files")
     :candidates files
-    :candidate-transformer (lambda (files)
+    :candidate-transformer (lambda (file)
                              (let ((helm-ff-transformer-show-only-basename nil))
                                (mapcar 'helm-ff-filter-candidate-one-by-one
-                                       (mapcar 'helm-system-packages-prefix-remote files))))
+                                       (mapcar 'helm-system-packages-prefix-remote file))))
     :candidate-number-limit 'helm-ff-candidate-number-limit
     :persistent-action-if 'helm-find-files-persistent-action-if
     :keymap 'helm-find-files-map
