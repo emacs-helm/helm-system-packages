@@ -229,7 +229,7 @@ Otherwise display in `helm-system-packages-buffer'."
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (let ((res (helm-system-packages-call "apt-cache" nil "show" (helm-marked-candidates)))
+  (let ((res (helm-system-packages-call "apt-cache" (helm-marked-candidates) "show"))
         urls)
     (dolist (url (split-string res "\n" t))
       (when (string-match "^Homepage: \\(.*\\)" url)
@@ -257,7 +257,7 @@ If REVERSE is non-nil, list reverse dependencies instead."
                 (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
      `((uninstalled . ,(helm-system-packages-call
-                        "apt-cache" nil arg (helm-marked-candidates))))
+                        "apt-cache" (helm-marked-candidates) arg)))
      title)))
 
 (defun helm-system-packages-make-apt-get-command ( &rest args)
