@@ -42,7 +42,7 @@ Most actions can be called with a prefix argument to insert the result at point.
 
 If started from a remote TRAMP buffer (e.g. dired, Eshell or just any remote
 file), ~helm-system-packages~ automatically switches to the packages of the
-remote system.  The remove package manager can be different from the local one.
+remote system.  The remote package manager can be different from the local one.
 
 ** Maintenance & other operations
 
