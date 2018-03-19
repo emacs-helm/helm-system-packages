@@ -213,7 +213,7 @@ Requirements:
      (helm-system-packages-dpkg-cache-descriptions)
      display-list "dpkg")))
 
-(defun helm-system-packages-dpkg-info (_candidate)
+(defun helm-system-packages-dpkg-info (candidate)
   "Print information about the selected packages.
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
@@ -222,7 +222,9 @@ Otherwise display in `helm-system-packages-buffer'."
    `((uninstalled . ,(mapcar (lambda (pkg)
                                (cons pkg
                                      (helm-system-packages-call "apt-cache" nil "show" pkg)))
-                             (helm-marked-candidates))))))
+                             (if helm-in-persistent-action
+                                 (list candidate)
+                               (helm-marked-candidates)))))))
 
 (defun helm-system-packages-dpkg-browse-url (_)
   "Print homepage URLs of `helm-marked-candidates'.

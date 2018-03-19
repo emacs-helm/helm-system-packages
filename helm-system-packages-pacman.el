@@ -203,7 +203,7 @@ If nil, no automatic action is taken."
                                'time-less-p)))
                    (time-subtract (current-time) (seconds-to-time helm-system-packages-pacman-synchronize-threshold))))))
 
-(defun helm-system-packages-pacman-info (_candidate)
+(defun helm-system-packages-pacman-info (candidate)
   "Print information about the selected packages.
 
 The local database will be queried if possible, while the sync
@@ -229,7 +229,9 @@ Otherwise display in `helm-system-packages-buffer'."
     (helm-system-packages-mapalist '((uninstalled (lambda (packages) (helm-system-packages-call "pacman" packages "--sync" "--info" "--info" "--color" "never")))
                                      (groups ignore)
                                      (all (lambda (packages) (helm-system-packages-call "pacman" packages "--query" "--info" "--info" "--color" "never"))))
-                                   (helm-system-packages-categorize (helm-marked-candidates))))))
+                                   (helm-system-packages-categorize (if helm-in-persistent-action
+                                                                        (list candidate)
+                                                                      (helm-marked-candidates)))))))
 
 (defcustom helm-system-packages-pacman-auto-clean-cache nil
   "Clean cache before installing.

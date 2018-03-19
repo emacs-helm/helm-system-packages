@@ -180,7 +180,7 @@ If nil, no automatic action is taken."
                              'time-less-p)))
                  (time-subtract (current-time) (seconds-to-time helm-system-packages-xbps-synchronize-threshold)))))
 
-(defun helm-system-packages-xbps-info (_candidate)
+(defun helm-system-packages-xbps-info (candidate)
   "Print information about the selected packages.
 
 The local database will be queried if possible, while the sync
@@ -203,7 +203,9 @@ Otherwise display in `helm-system-packages-buffer'."
                        (cons pkg
                              (helm-system-packages-call "xbps-query" nil pkg)))
                      packages))))
-    (helm-system-packages-categorize (helm-marked-candidates)))))
+    (helm-system-packages-categorize (if helm-in-persistent-action
+                                         (list candidate)
+                                       (helm-marked-candidates))))))
 
 (defcustom helm-system-packages-xbps-auto-clean-cache nil
   "Clean cache before installing.
