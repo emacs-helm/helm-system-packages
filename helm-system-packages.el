@@ -340,6 +340,7 @@ DESC-ALIST's keys are ignored, the values are in the form
         (insert "* " (car desc) "\n" (replace-regexp-in-string "^* " "- " (cdr desc)) "\n"))
       (goto-char (point-min))
       (org-mode)
+      (outline-show-all)
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
