@@ -218,7 +218,9 @@ Otherwise display in `helm-system-packages-buffer'."
                      ;; The package name is on the second line for `pacman -Sii'.
                      (mapcar (lambda (desc)
                                (string-match "\\(.*\\)\n.*: \\(.*\\)" desc)
-                               (cons (match-string 2 desc) (concat (match-string 1 desc) (substring desc (match-end 2)))))
+                               (cons (match-string 2 desc)
+                                     (concat (match-string 1 desc)
+                                             (substring desc (match-end 2)))))
                              (split-string info-string "\n\n" t))))
       (all (lambda (info-string)
              ;; The package name is on the first line.
@@ -226,12 +228,16 @@ Otherwise display in `helm-system-packages-buffer'."
                        (string-match ".*: \\(.*\\)" desc)
                        (cons (match-string 1 desc) (substring desc (match-end 2))))
                      (split-string info-string "\n\n" t)))))
-    (helm-system-packages-mapalist '((uninstalled (lambda (packages) (helm-system-packages-call "pacman" packages "--sync" "--info" "--info" "--color" "never")))
-                                     (groups ignore)
-                                     (all (lambda (packages) (helm-system-packages-call "pacman" packages "--query" "--info" "--info" "--color" "never"))))
-                                   (helm-system-packages-categorize (if helm-in-persistent-action
-                                                                        (list candidate)
-                                                                      (helm-marked-candidates)))))))
+    (helm-system-packages-mapalist
+     '((uninstalled (lambda (packages)
+                      (helm-system-packages-call "pacman" packages "--sync" "--info" "--info" "--color" "never")))
+       (groups ignore)
+       (all (lambda (packages)
+              (helm-system-packages-call "pacman" packages "--query" "--info" "--info" "--color" "never"))))
+     (helm-system-packages-categorize
+      (if helm-in-persistent-action
+          (list candidate)
+        (helm-marked-candidates)))))))
 
 (defcustom helm-system-packages-pacman-auto-clean-cache nil
   "Clean cache before installing.
@@ -260,9 +266,12 @@ tested package to fall back on."
                 (unless helm-system-packages-pacman-confirm-p "--noconfirm ")
                 "&& "))))
   (helm-system-packages-run-as-root "pacman" "--sync"
-                                    (when (helm-system-packages-pacman-outdated-database-p) "--refresh")
-                                    (unless helm-current-prefix-arg "--needed")
-                                    (unless helm-system-packages-pacman-confirm-p "--noconfirm")))
+                                    (when (helm-system-packages-pacman-outdated-database-p)
+                                      "--refresh")
+                                    (unless helm-current-prefix-arg
+                                      "--needed")
+                                    (unless helm-system-packages-pacman-confirm-p
+                                      "--noconfirm")))
 
 (defun helm-system-packages-pacman-uninstall (_)
   "Uninstall marked candidates."
