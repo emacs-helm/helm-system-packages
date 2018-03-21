@@ -313,9 +313,9 @@ If not found, category is `uninstalled'."
 ;; TODO: Possible optimization: turn into macro.
 (defun helm-system-packages-extract-name (package)
   "Extract package name from the candidate.
-This is useful required because the Helm session runs over a buffer source, so
-there is only a REAL value which might contain additional display information
-such as the package description."
+This is useful because the Helm session runs over a buffer
+source, so there is only a REAL value which might contain
+additional display information such as the package description."
   (if helm-system-packages-show-descriptions-p
       (car (split-string package))
     package))
@@ -383,11 +383,27 @@ Otherwise display in `helm-system-packages-buffer'."
         (view-mode 1)))))
 (make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
 
+;; TODO: Turn into a macro.
 (defun helm-system-packages-prefix-remote (file)
   "Prefix FILE with path to remote connection.
 If local, return FILE unmodified."
   (if (tramp-tramp-file-p default-directory)
-      (helm-ff--create-tramp-name (concat default-directory file))
+      (let ((v (tramp-dissect-file-name default-directory)))
+        (if (< emacs-major-version 26)
+            (tramp-make-tramp-file-name
+             (tramp-file-name-method v)
+             (tramp-file-name-user v)
+             (tramp-file-name-host v)
+             file
+             (tramp-file-name-hop v))
+          (tramp-make-tramp-file-name
+           (tramp-file-name-method v)
+           (tramp-file-name-user v)
+           (tramp-file-name-domain v)
+           (tramp-file-name-host v)
+           (tramp-file-name-port v)
+           file
+           (tramp-file-name-hop v))))
     file))
 
 (defun helm-system-packages-build-file-source (package files)
@@ -396,10 +412,7 @@ PACKAGES is a string and FILES is a list of strings."
   (require 'helm-files)
   (helm-build-sync-source (concat package " files")
     :candidates files
-    :candidate-transformer (lambda (file)
-                             (let ((helm-ff-transformer-show-only-basename nil))
-                               (mapcar 'helm-ff-filter-candidate-one-by-one
-                                       (mapcar 'helm-system-packages-prefix-remote file))))
+    :display-to-real 'helm-system-packages-prefix-remote
     :candidate-number-limit 'helm-ff-candidate-number-limit
     :persistent-action-if 'helm-find-files-persistent-action-if
     :keymap 'helm-find-files-map
