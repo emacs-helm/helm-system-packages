@@ -81,7 +81,7 @@
 It's an alist indexed by hostnames.
 The values are in the form
 
-  (:names STRING-BUFFER :descriptions STRING-BUFFER :display LIST :title STRING)
+  (:names STRING-BUFFER :descriptions STRING-BUFFER :display LIST :title STRING ...)
 
 'display' is a list of
 
@@ -241,14 +241,15 @@ See `helm-system-packages--cache-current'."
                   "")))
     (cdr (assoc host helm-system-packages--cache))))
 
-(defun helm-system-packages--cache-set (names descriptions display-list &optional title)
+(defun helm-system-packages--cache-set (names descriptions display-list &optional title &rest extra)
   "Set current cache entry.
 NAMES and DESCRIPTIONS are string buffers
-TITLE is a string, usually the name of the package manager."
+TITLE is a string, usually the name of the package manager.
+EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
   (let ((host (or (and (tramp-tramp-file-p default-directory)
                        (tramp-file-name-host (tramp-dissect-file-name default-directory)))
                   ""))
-        (val (list :names names :descriptions descriptions :display display-list :title title)))
+        (val (append  (list :names names :descriptions descriptions :display display-list :title title) extra)))
     (if (assoc host helm-system-packages--cache)
         (setcdr (assoc host helm-system-packages--cache) val)
       (push (cons host val) helm-system-packages--cache))))
@@ -430,7 +431,7 @@ FILES are either
 - or a single list of files.
 
 In case of a hash table, one Helm source per package will be created."
-  (if (not files)
+  (if (= (hash-table-count files) 0)
       (message "No file list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
     (require 'helm-files)
     (if (hash-table-p files)
@@ -573,7 +574,7 @@ TITLE is the name of the Helm session."
                                 (if (tramp-tramp-file-p default-directory)
                                     (tramp-find-executable (tramp-dissect-file-name default-directory) (car p) nil)
                                   (executable-find (car p))))
-                              '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")))))
+                              '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps") ("guix")))))
     (if (not managers)
         (message "No supported package manager was found")
       (let ((manager (car (last (car managers)))))

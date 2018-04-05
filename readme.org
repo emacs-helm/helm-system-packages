@@ -24,6 +24,7 @@ Helm System Packages provides a uniform interface over the following package
 managers:
 
 - =dpkg= (apt & friends)
+- =guix=
 - =pacman=
 - =portage= (emerge & friends)
 - =xbps=
@@ -102,6 +103,7 @@ Each module is rather straightforward, it only needs to define the following:
 The =helm-system-packages.el= file provides some helper functions for Helm actions.
 
 ** Roadmap
+*** TODO Strengthen the interface with structures
 *** TODO Factor all "info" actions?
 We can add Org subsections for files, dependencies, etc.
 Those sections should be folded by default.
@@ -112,7 +114,6 @@ We probably still need specific "info" actions to insert at point.
 *** Add option to display multiline candidates for long descriptions.
 *** With filtering, the displayed condidates won't include those above the candidate limit
 Can we include as many filtered candidates as possible?
-*** Add guix support
 *** Add homebrew support
 
 * References
