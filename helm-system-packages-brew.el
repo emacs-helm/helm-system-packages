@@ -1,4 +1,4 @@
-;;; helm-system-packages-brew.el --- Helm UI for Mac OS ' homebrew. -*- lexical-binding: t -*-
+;;; helm-system-packages-brew.el --- Helm UI for macOS homebrew. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;;               2017 ~ 2018 Pierre Neidhardt <ambrevar@gmail.com>
@@ -23,7 +23,7 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;; Helm UI for Mac OS' homebrew.
+;; Helm UI for macOS homebrew.
 
 ;; TODO
 ;; (1) Implement `show-dependencies' function
@@ -118,7 +118,7 @@ Otherwise display in `helm-system-packages-buffer'."
 	 str
 	 pkg
 	 (i 0))
-    (dolist (pkg (helm-marked-candidates) nil)
+    (dolist (pkg (helm-marked-candidates))
       (setq pkg-desc-alist (aref descriptions i))
       (setq str (concat "* Description: " (alist-get 'desc pkg-desc-alist) "\n"
 	      "* Version: "(alist-get 'stable (alist-get 'versions pkg-desc-alist)) "\n"
@@ -132,14 +132,14 @@ Otherwise display in `helm-system-packages-buffer'."
 	      "\n\n"
 	      "* Caveats: " (alist-get 'caveats pkg-desc-alist) "\n"))
      (add-to-list 'desc-list `(uninstalled (,pkg . ,str)))
-     (setq i (+ i 1)))
+     (setq i (1+ i)))
     (helm-system-packages-show-information desc-list)))
 
 (defun helm-system-package-brew-browse-url (_candidate)
    (let* ((descriptions (json-read-from-string (with-temp-buffer
 						(apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates)) 
 						(buffer-string)))))
-    (helm-system-packages-browse-url (mapcar (lambda(pkg)
+    (helm-system-packages-browse-url (mapcar (lambda (pkg)
 					       (alist-get 'homepage pkg))
 					     descriptions))))
 
@@ -148,8 +148,6 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defun helm-system-package-brew-unlink-app (_candidate)
   (helm-system-packages-brew-run  "brew" "unlink"))
-
-
 
 (defun helm-system-packages-brew-run (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
@@ -182,8 +180,7 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
     ("Uninstall (`C-u' to uninstall all versions)" .
      (lambda (_)
        (helm-system-packages-brew-run "brew" "uninstall"
-                                         (when helm-current-prefix-arg "--force"))))
-    
+                                         (when helm-current-prefix-arg "--force"))))    
     ("Browse homepage URL" . helm-system-package-brew-browse-url)
     ("Link application" . helm-system-package-brew-link-app)
     ("Unlink application" . helm-system-package-brew-unlink-app))
