@@ -125,6 +125,10 @@ This is only used for dependency display.")
   "Face for virtual packages."
   :group 'helm-system-packages)
 
+(defface helm-system-packages-residuals '((t (:slant italic)))
+  "Face for packages with left-over configuration files."
+  :group 'helm-system-packages)
+
 ;; Shut up byte compiler
 (declare-function eshell-interactive-process "esh-cmd.el")
 (declare-function eshell-send-input "esh-mode.el")

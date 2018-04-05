@@ -50,12 +50,6 @@ Requirements:
 \\[helm-system-packages-dpkg-toggle-residuals]\t\tToggle display of package with residual configuration files.
 \\[helm-system-packages-toggle-descriptions]\t\tToggle display of package descriptions.")
 
-(defvar helm-system-packages-dpkg--names nil
-  "Cache of all package names.")
-
-(defvar helm-system-packages-dpkg--descriptions nil
-  "Cache of all package names with descriptions.")
-
 (defvar helm-system-packages-dpkg-map
   ;; M-U is reserved for `helm-unmark-all'.
   (let ((map (make-sparse-keymap)))
@@ -114,27 +108,12 @@ Requirements:
                        (push p res)))
          ((or
            (and helm-system-packages-dpkg--show-explicit-p
-                (memq 'helm-system-packages-dpkg-explicit face))
+                (memq 'helm-system-packages-explicit face))
            (and helm-system-packages-dpkg--show-dependencies-p
-                (memq 'helm-system-packages-dpkg-dependencies face))
+                (memq 'helm-system-packages-dependencies face))
            (and helm-system-packages-dpkg--show-residuals-p
-                (memq 'helm-system-packages-dpkg-residuals face)))
+                (memq 'helm-system-packages-residuals face)))
           (push (propertize p 'face (car face)) res)))))))
-
-(defface helm-system-packages-dpkg-explicit
-  '((t (:inherit font-lock-warning-face)))
-  "Face for explicitly installed packages."
-  :group 'helm-system-packages)
-
-(defface helm-system-packages-dpkg-dependencies
-  '((t (:inherit font-lock-comment-face :slant italic)))
-  "Face for packages installed as dependencies."
-  :group 'helm-system-packages)
-
-(defface helm-system-packages-dpkg-residuals
-  '((t (:inherit font-lock-string-face :slant italic)))
-  "Face for packages with left-over configuration files."
-  :group 'helm-system-packages)
 
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
