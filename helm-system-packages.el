@@ -138,6 +138,7 @@ This is only used for dependency display.")
 (declare-function helm-comp-read "helm-mode.el")
 (declare-function org-sort-entries "org.el")
 (declare-function helm-system-packages-refresh "helm-system-package.el")
+(declare-function outline-show-all "outline.el")
 
 (defun helm-system-packages-toggle-explicit ()
   (interactive)
