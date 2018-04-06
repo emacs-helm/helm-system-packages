@@ -389,27 +389,29 @@ Otherwise display in `helm-system-packages-buffer'."
         (view-mode 1)))))
 (make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
 
-;; TODO: Turn into a macro.
-(defun helm-system-packages-prefix-remote (file)
+(defmacro helm-system-packages-make-tramp-file-name (file)
   "Prefix FILE with path to remote connection.
 If local, return FILE unmodified."
+  `(let ((v (tramp-dissect-file-name default-directory)))
+     ,(if (< emacs-major-version 26)
+          `(tramp-make-tramp-file-name
+            (tramp-file-name-method v)
+            (tramp-file-name-user v)
+            (tramp-file-name-host v)
+            ,file
+            (tramp-file-name-hop v))
+        `(tramp-make-tramp-file-name
+          (tramp-file-name-method v)
+          (tramp-file-name-user v)
+          (tramp-file-name-domain v)
+          (tramp-file-name-host v)
+          (tramp-file-name-port v)
+          ,file
+          (tramp-file-name-hop v)))))
+
+(defun helm-system-packages-prefix-remote (file)
   (if (tramp-tramp-file-p default-directory)
-      (let ((v (tramp-dissect-file-name default-directory)))
-        (if (< emacs-major-version 26)
-            (tramp-make-tramp-file-name
-             (tramp-file-name-method v)
-             (tramp-file-name-user v)
-             (tramp-file-name-host v)
-             file
-             (tramp-file-name-hop v))
-          (tramp-make-tramp-file-name
-           (tramp-file-name-method v)
-           (tramp-file-name-user v)
-           (tramp-file-name-domain v)
-           (tramp-file-name-host v)
-           (tramp-file-name-port v)
-           file
-           (tramp-file-name-hop v))))
+      (helm-system-packages-make-tramp-file-name file)
     file))
 
 (defun helm-system-packages-build-file-source (package files)
