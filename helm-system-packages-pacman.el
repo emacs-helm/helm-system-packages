@@ -5,7 +5,7 @@
 
 ;; Author: Pierre Neidhardt <ambrevar@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.8.0
+;; Version: 1.9.0
 ;; Package-Requires: ((emacs "24.4") (helm "2.8.6"))
 ;; Keywords: helm, packages
 
