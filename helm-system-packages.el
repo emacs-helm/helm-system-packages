@@ -572,12 +572,17 @@ TITLE is the name of the Helm session."
   "Helm user interface for system packages."
   (interactive)
   ;; Some package managgers do not have an executable bearing the same name,
-  ;; hence the optional pair (PACKAGE-MANAGER EXECUTABLE).
+  ;; hence the optional pair (EXECUTABLE PACKAGE-MANAGER).
   (let ((managers (seq-filter (lambda (p)
                                 (if (tramp-tramp-file-p default-directory)
                                     (tramp-find-executable (tramp-dissect-file-name default-directory) (car p) nil)
                                   (executable-find (car p))))
-                              '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps") ("guix")))))
+                              '(("emerge" "portage") ("dpkg") ("pacman") ("xbps-query" "xbps")
+                                ;; Keep "guix" last because it can be installed
+                                ;; beside other package managers and we want to
+                                ;; give priority to the original package
+                                ;; manager.
+                                ("guix")))))
     (if (not managers)
         (message "No supported package manager was found")
       (let ((manager (car (last (car managers)))))

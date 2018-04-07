@@ -286,6 +286,10 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defun helm-system-packages-guix ()
   "Preconfigured `helm' for guix."
+  ;; Guix can be installed beside another package manager.  Let's make this
+  ;; command directly accessible then so that both the original package manager
+  ;; and Guix can be called.
+  (interactive)
   (unless (helm-system-packages-missing-dependencies-p "guix" "recsel")
     (helm :sources (helm-system-packages-guix-build-source)
           :buffer "*helm guix*"
