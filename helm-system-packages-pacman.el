@@ -25,6 +25,8 @@
 ;;; Commentary:
 ;; Helm UI for Arch Linux' pacman.
 
+;; TODO: Fix missing newline when printing virtual packages.
+
 ;;; Code:
 (require 'helm)
 (require 'helm-system-packages)
