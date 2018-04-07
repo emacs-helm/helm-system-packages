@@ -584,7 +584,9 @@ TITLE is the name of the Helm session."
                                 ;; manager.
                                 ("guix")))))
     (if (not managers)
-        (message "No supported package manager was found")
+        (message (if (eq system-type 'darwin)
+		     "No supported package manager was found. Check your `exec-path'."
+		   "No supported package manager was found."))
       (let ((manager (car (last (car managers)))))
         (require (intern (concat "helm-system-packages-" manager)))
         (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
