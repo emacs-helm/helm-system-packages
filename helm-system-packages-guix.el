@@ -260,13 +260,34 @@ Otherwise display in `helm-system-packages-buffer'."
                           (helm-system-packages-guix-cache-file-get))))))
      title)))
 
+(defun helm-system-packages-guix-show-reverse-dependencies (_candidate)
+  "List candidate reverse dependencies for `helm-system-packages-show-packages'. "
+  (let ((title (concat
+                "Reverse dependencies of "
+                (mapconcat 'identity (helm-marked-candidates) " "))))
+    (helm-system-packages-show-packages
+     `((uninstalled . ,(with-temp-buffer
+                         (insert
+                          (replace-regexp-in-string
+                           " " "\n"
+                           (replace-regexp-in-string
+                            "@[^ ]+" ""
+                            (replace-regexp-in-string
+                             ".*: " ""
+                             (helm-system-packages-call
+                              "guix" (helm-marked-candidates) "refresh" "--list-dependent")))))
+                         (sort-lines nil (point-min) (point-max))
+                         (buffer-string))))
+     title)))
+
 (defcustom helm-system-packages-guix-actions
   '(("Show package(s)" . helm-system-packages-guix-info)
     ("Install" . helm-system-packages-guix-install)
     ("Uninstall" . helm-system-packages-guix-uninstall)
     ("Browse homepage URL" . helm-system-packages-guix-browse-url)
     ("Find files" . helm-system-packages-guix-find-files)
-    ("Show dependencies" . helm-system-packages-guix-show-dependencies))
+    ("Show dependencies" . helm-system-packages-guix-show-dependencies)
+    ("Show reverse dependencies" . helm-system-packages-guix-show-reverse-dependencies))
   "Actions for Helm guix."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
