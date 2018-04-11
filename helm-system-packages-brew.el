@@ -57,15 +57,10 @@ If nil, then use `helm-system-package-column-width'."
   :type 'integer)
 
 (defun helm-system-packages-brew-cache ()
-  "Cache all package names with descriptions.
-LOCAL-PACKAGES and GROUPS are lists of strings.
-Return (NAMES . DESCRIPTIONS), a cons of two strings."
-  ;; We build both caches at the same time.  We could also build just-in-time, but
-  ;; benchmarks show that it only saves less than 20% when building one cache.
+  "Cache all package names with descriptions."
   (let (names descriptions)
     (setq descriptions
           (with-temp-buffer
-            ;; TODO: Possible optimization: Output directly in Elisp?
             (let ((format-string (format "%%-%dn  %%d" helm-system-packages-column-width)))
               (call-process "brew" nil '(t nil) nil "desc" "-s" "" )
 	      (buffer-string))))
@@ -78,20 +73,7 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
 					   (format-string (format "%%-%ds  %%s" helm-system-packages-column-width)))
 				    (format format-string name desc)))
 				  (split-string descriptions"\n") "\n" ))
-  (cons names descriptions)))
-
-(defun helm-system-packages-brew-init ()
-  "Cache package lists and create Helm buffer."
-  (unless (and helm-system-packages--names helm-system-packages--descriptions)
-    (helm-system-packages-brew-refresh))
-  ;; TODO: We should only create the buffer if it does not already exist.
-  ;; On the other hand, we need to be able to override the package list.
-  ;; (unless (helm-candidate-buffer) ...
-  (helm-init-candidates-in-buffer
-      'global
-    (if helm-system-packages-show-descriptions-p
-        helm-system-packages--descriptions
-      helm-system-packages--names)))
+    (helm-system-packages--cache-set names descriptions nil "brew")))
 
 (defun helm-system-packages-brew-refresh ()
   "Refresh the package list."
@@ -107,7 +89,6 @@ Return (NAMES . DESCRIPTIONS), a cons of two strings."
 
 (defun helm-system-packages-brew-info (_candidate)
   "Print information about the selected packages.
-
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (let* ((descriptions (json-read-from-string (with-temp-buffer
@@ -151,8 +132,8 @@ Otherwise display in `helm-system-packages-buffer'."
 
 (defun helm-system-packages-brew-run (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
-
-COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
+COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'.
+COMMAND is run without sudo as macOS brew does not require sudo rights."
   (require 'esh-mode)
   (let ((arg-list (append args (helm-marked-candidates)))
         (eshell-buffer-name helm-system-packages-eshell-buffer))
@@ -190,13 +171,14 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'."
 
 (defun helm-system-packages-brew-build-source ()
   "Build Helm source for brew."
-  (helm-build-in-buffer-source helm-system-packages--source-name
-    :init 'helm-system-packages-brew-init
-    :candidate-transformer 'helm-system-packages-brew-transformer
-    :candidate-number-limit helm-system-packages-candidate-limit
-    :display-to-real 'helm-system-packages-extract-name
-    :persistent-help "Show package description"
-    :action helm-system-packages-brew-actions))
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+    (helm-build-in-buffer-source title
+      :init 'helm-system-packages-init
+      :candidate-transformer 'helm-system-packages-brew-transformer
+      :candidate-number-limit helm-system-packages-candidate-limit
+      :display-to-real 'helm-system-packages-extract-name
+      :persistent-help "Show package description"
+      :action helm-system-packages-brew-actions)))
 
 (defun helm-system-packages-brew ()
   "Preconfigured `helm' for brew."
