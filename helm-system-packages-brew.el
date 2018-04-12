@@ -5,8 +5,8 @@
 
 ;; Author: Arnaud Hoffmann <tuedachu@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.8.0
-;; Package-Requires: ((emacs "24.4") (helm "2.8.6"))
+;; Version: 1.9.0
+;; Package-Requires: ((emacs "25.1") (helm "2.8.6"))
 ;; Keywords: helm, packages
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -25,11 +25,11 @@
 ;;; Commentary:
 ;; Helm UI for macOS homebrew.
 
-;; TODO
-;; (1) Implement `show-dependencies' function
-;; (2) Show packages explicitly installed (function `helm-system-packages-brew-list-explicit' already exists)
-;; (3) Implement `find-files'
-;; (4) Keymap
+;; TODO: Add TRAMP support.
+;; TODO: Implement `show-dependencies' function.
+;; TODO: Show explicitly installed packages (function `helm-system-packages-brew-list-explicit' already exists).
+;; TODO: Implement `find-files'.
+;; TODO: Keymap.
 
 ;;; Code:
 (require 'helm)
@@ -42,7 +42,7 @@
       (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
         (cond
          ((and (not face) helm-system-packages--show-uninstalled-p)
-               (push p res)))))))
+          (push p res)))))))
 
 (defun helm-system-packages-brew-list-explicit ()
   "List explicitly installed packages."
@@ -52,7 +52,7 @@
 
 (defcustom helm-system-packages-brew-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap.
-If nil, then use `helm-system-package-column-width'."
+If nil, then use `helm-system-packages-column-width'."
   :group 'helm-system-packages
   :type 'integer)
 
@@ -63,16 +63,18 @@ If nil, then use `helm-system-package-column-width'."
           (with-temp-buffer
             (let ((format-string (format "%%-%dn  %%d" helm-system-packages-column-width)))
               (call-process "brew" nil '(t nil) nil "desc" "-s" "" )
-	      (buffer-string))))
+              (buffer-string))))
     (setq names
-	  (replace-regexp-in-string ":.*" "" descriptions))      
-    (setq descriptions (mapconcat (lambda (package-from-list)
-				    (let* ((pkg (split-string package-from-list ": "))
-					   (name (car pkg))
-					   (desc (car (cdr pkg)))
-					   (format-string (format "%%-%ds  %%s" helm-system-packages-column-width)))
-				    (format format-string name desc)))
-				  (split-string descriptions"\n") "\n" ))
+          (replace-regexp-in-string ":.*" "" descriptions))
+    (setq descriptions
+          (mapconcat
+           (lambda (package-from-list)
+             (let* ((pkg (split-string package-from-list ": "))
+                    (name (car pkg))
+                    (desc (car (cdr pkg)))
+                    (format-string (format "%%-%ds  %%s" helm-system-packages-column-width)))
+               (format format-string name desc)))
+           (split-string descriptions "\n") "\n"))
     (helm-system-packages--cache-set names descriptions nil "brew")))
 
 (defun helm-system-packages-brew-refresh ()
@@ -82,52 +84,56 @@ If nil, then use `helm-system-package-column-width'."
   (setq helm-system-packages-column-width
         (or helm-system-packages-brew-column-width
             helm-system-packages-column-width))
-    (let ((res (helm-system-packages-brew-cache)))
-      (setq helm-system-packages--names (car res)
-            helm-system-packages--descriptions (cdr res)))
-    (setq helm-system-packages--display-lists nil))
+  (let ((res (helm-system-packages-brew-cache)))
+    (setq helm-system-packages--names (car res)
+          helm-system-packages--descriptions (cdr res)))
+  (setq helm-system-packages--display-lists nil))
 
 (defun helm-system-packages-brew-info (_candidate)
   "Print information about the selected packages.
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (let* ((descriptions (json-read-from-string (with-temp-buffer
-						(apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates)) 
-						(buffer-string))))
-	 desc-list
-	 pkg-desc-alist
-	 str
-	 pkg
-	 (i 0))
+  (let* ((descriptions
+          (json-read-from-string
+           (with-temp-buffer
+             (apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates))
+             (buffer-string))))
+         desc-list
+         pkg-desc-alist
+         str
+         pkg
+         (i 0))
     (dolist (pkg (helm-marked-candidates))
       (setq pkg-desc-alist (aref descriptions i))
-      (setq str (concat "* Description: " (alist-get 'desc pkg-desc-alist) "\n"
-	      "* Version: "(alist-get 'stable (alist-get 'versions pkg-desc-alist)) "\n"
-	      "* URL: "(alist-get 'homepage pkg-desc-alist) "\n"  "\n"
-	      "* Dependencies:\n" "   " (mapconcat 'identity (alist-get 'dependencies pkg-desc-alist) "\n   ") "\n\n"
-	      "* Optional dependencies:\n" "   "(mapconcat 'identity (alist-get 'optional_dependencies pkg-desc-alist) "\n   ") "\n\n"
-	      "* Options:\n" (mapconcat (lambda (pkg-option)
-					(concat (alist-get 'option pkg-option)  "\n"
-						"    " (alist-get 'description pkg-option)  "\n"))
-				      (alist-get 'options pkg-desc-alist) "\n")
-	      "\n\n"
-	      "* Caveats: " (alist-get 'caveats pkg-desc-alist) "\n"))
-     (add-to-list 'desc-list `(uninstalled (,pkg . ,str)))
-     (setq i (1+ i)))
+      (setq str
+            (concat
+             "* Description: " (alist-get 'desc pkg-desc-alist) "\n"
+             "* Version: " (alist-get 'stable (alist-get 'versions pkg-desc-alist)) "\n"
+             "* URL: " (alist-get 'homepage pkg-desc-alist) "\n" "\n"
+             "* Dependencies:\n" "   " (mapconcat 'identity (alist-get 'dependencies pkg-desc-alist) "\n   ") "\n\n"
+             "* Optional dependencies:\n" "   " (mapconcat 'identity (alist-get 'optional_dependencies pkg-desc-alist) "\n   ") "\n\n"
+             "* Options:\n" (mapconcat (lambda (pkg-option)
+                                         (concat (alist-get 'option pkg-option) "\n"
+                                                 "    " (alist-get 'description pkg-option) "\n"))
+                                       (alist-get 'options pkg-desc-alist) "\n")
+             "\n\n"
+             "* Caveats: " (alist-get 'caveats pkg-desc-alist) "\n"))
+      (add-to-list 'desc-list `(uninstalled (,pkg . ,str)))
+      (setq i (1+ i)))
     (helm-system-packages-show-information desc-list)))
 
-(defun helm-system-package-brew-browse-url (_candidate)
-   (let* ((descriptions (json-read-from-string (with-temp-buffer
-						(apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates)) 
-						(buffer-string)))))
+(defun helm-system-packages-brew-browse-url (_candidate)
+  (let* ((descriptions (json-read-from-string (with-temp-buffer
+                                                (apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates))
+                                                (buffer-string)))))
     (helm-system-packages-browse-url (mapcar (lambda (pkg)
-					       (alist-get 'homepage pkg))
-					     descriptions))))
+                                               (alist-get 'homepage pkg))
+                                             descriptions))))
 
-(defun helm-system-package-brew-link-app (_candidate)
+(defun helm-system-packages-brew-link-app (_candidate)
   (helm-system-packages-brew-run  "brew" "link"))
 
-(defun helm-system-package-brew-unlink-app (_candidate)
+(defun helm-system-packages-brew-unlink-app (_candidate)
   (helm-system-packages-brew-run  "brew" "unlink"))
 
 (defun helm-system-packages-brew-run (command &rest args)
@@ -136,7 +142,7 @@ COMMAND will be run in an Eshell buffer `helm-system-packages-eshell-buffer'.
 COMMAND is run without sudo as macOS brew does not require sudo rights."
   (require 'esh-mode)
   (let ((arg-list (append args (helm-marked-candidates)))
-        (eshell-buffer-name helm-system-packages-eshell-buffer))
+        (eshell-buffer-name helm-system-packages-shell-buffer-name))
     ;; Refresh package list after command has completed.
     (push command arg-list)
     (eshell)
@@ -156,15 +162,15 @@ COMMAND is run without sudo as macOS brew does not require sudo rights."
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
        (if helm-current-prefix-arg
-	   (helm-system-packages-brew-run  "brew" "reinstall")
-	 (helm-system-packages-brew-run "brew" "install"))))
+           (helm-system-packages-brew-run  "brew" "reinstall")
+         (helm-system-packages-brew-run "brew" "install"))))
     ("Uninstall (`C-u' to uninstall all versions)" .
      (lambda (_)
        (helm-system-packages-brew-run "brew" "uninstall"
-                                         (when helm-current-prefix-arg "--force"))))    
-    ("Browse homepage URL" . helm-system-package-brew-browse-url)
-    ("Link application" . helm-system-package-brew-link-app)
-    ("Unlink application" . helm-system-package-brew-unlink-app))
+                                      (when helm-current-prefix-arg "--force"))))
+    ("Browse homepage URL" . helm-system-packages-brew-browse-url)
+    ("Link application" . helm-system-packages-brew-link-app)
+    ("Unlink application" . helm-system-packages-brew-unlink-app))
   "Actions for Helm brew."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
@@ -182,11 +188,11 @@ COMMAND is run without sudo as macOS brew does not require sudo rights."
 
 (defun helm-system-packages-brew ()
   "Preconfigured `helm' for brew."
-    (helm :sources (helm-system-packages-brew-build-source)
-          :buffer "*helm brew*"
-          :truncate-lines t
-          :input (when helm-system-packages-use-symbol-at-point-p
-                   (substring-no-properties (or (thing-at-point 'symbol) "")))))
+  (helm :sources (helm-system-packages-brew-build-source)
+        :buffer "*helm brew*"
+        :truncate-lines t
+        :input (when helm-system-packages-use-symbol-at-point-p
+                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
 
 (provide 'helm-system-packages-brew)
 
