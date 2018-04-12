@@ -61,9 +61,8 @@ If nil, then use `helm-system-packages-column-width'."
   (let (names descriptions)
     (setq descriptions
           (with-temp-buffer
-            (let ((format-string (format "%%-%dn  %%d" helm-system-packages-column-width)))
-              (call-process "brew" nil '(t nil) nil "desc" "-s" "" )
-              (buffer-string))))
+            (call-process "brew" nil '(t nil) nil "desc" "-s" "")
+            (buffer-string)))
     (setq names
           (replace-regexp-in-string ":.*" "" descriptions))
     (setq descriptions
@@ -101,7 +100,6 @@ Otherwise display in `helm-system-packages-buffer'."
          desc-list
          pkg-desc-alist
          str
-         pkg
          (i 0))
     (dolist (pkg (helm-marked-candidates))
       (setq pkg-desc-alist (aref descriptions i))
@@ -118,17 +116,20 @@ Otherwise display in `helm-system-packages-buffer'."
                                        (alist-get 'options pkg-desc-alist) "\n")
              "\n\n"
              "* Caveats: " (alist-get 'caveats pkg-desc-alist) "\n"))
-      (add-to-list 'desc-list `(uninstalled (,pkg . ,str)))
+      (push `(uninstalled (,pkg . ,str)) 'desc-list)
       (setq i (1+ i)))
     (helm-system-packages-show-information desc-list)))
 
 (defun helm-system-packages-brew-browse-url (_candidate)
-  (let* ((descriptions (json-read-from-string (with-temp-buffer
-                                                (apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates))
-                                                (buffer-string)))))
-    (helm-system-packages-browse-url (mapcar (lambda (pkg)
-                                               (alist-get 'homepage pkg))
-                                             descriptions))))
+  (let ((descriptions
+         (json-read-from-string
+          (with-temp-buffer
+            (apply 'call-process "brew" nil t nil "info" "--json=v1" (helm-marked-candidates))
+            (buffer-string)))))
+    (helm-system-packages-browse-url
+     (mapcar (lambda (pkg)
+               (alist-get 'homepage pkg))
+             descriptions))))
 
 (defun helm-system-packages-brew-link-app (_candidate)
   (helm-system-packages-brew-run  "brew" "link"))
