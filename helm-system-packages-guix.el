@@ -119,7 +119,7 @@ cache filename is returned with the host name appended to it."
          (cache-file-name (helm-system-packages-guix-cache-file-get)))
     (when (or (not (file-exists-p cache-file-name))
               refresh-cache)
-      (process-file "guix" nil `(:file ,cache-file-name) nil "package" "--search=."))
+      (process-file "guix" nil `((:file ,cache-file-name) nil) nil "package" "--search=."))
     (setq descriptions
           (with-temp-buffer
             (process-file "recsel" (helm-system-packages-guix-cache-file-get) t nil "-R" "name,synopsis")
