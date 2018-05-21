@@ -33,7 +33,6 @@
 ;; TODO: Add support for multiple outputs (install, uninstall, listing...).
 ;; TODO: Add support for multiple versions.
 ;; TODO: Use guix.el instead of parsing guix commandline output.
-;; TODO: Refresh the cache automatically when a `guix pull' has happened.
 
 (defvar helm-system-packages-guix-help-message
   "* Helm guix
@@ -99,6 +98,10 @@ Requirements:
   (expand-file-name "helm-system-packages-guix" user-emacs-directory)
   "Filename of the cache storing all Guix package descriptions.")
 
+(defvar helm-system-packages-guix-path
+  (expand-file-name "latest" "~/.config/guix")
+  "Path to the latest guix checkout.")
+
 (defun helm-system-packages-guix-cache-file-get ()
   "Return Guix local cache.
 If `default-directory' is a remote file (over TRAMP), a different
@@ -109,16 +112,20 @@ cache filename is returned with the host name appended to it."
                          (tramp-dissect-file-name default-directory))))
           ".cache"))
 
-;; Guix is extremely slow so we cache all entries once on drive.
-(defun helm-system-packages-guix-cache (display-list &optional refresh-cache)
-  "Cache all package names with descriptions."
+(defun helm-system-packages-guix-cache (display-list)
+  "Cache all package names with descriptions.
+
+Guix is extremely slow to list everything, thus the cache is
+persisted on drive.  It's only updated whenever
+`helm-system-packages-guix-path' is newer than the cache file."
   ;; We build both caches at the same time.  We could also build just-in-time, but
   ;; benchmarks show that it only saves less than 20% when building one cache.
   (let* (names
          descriptions
          (cache-file-name (helm-system-packages-guix-cache-file-get)))
     (when (or (not (file-exists-p cache-file-name))
-              refresh-cache)
+              (time-less-p (file-attribute-modification-time (file-attributes cache-file-name))
+                           (file-attribute-modification-time (file-attributes helm-system-packages-guix-path))))
       (process-file "guix" nil `((:file ,cache-file-name) nil) nil "package" "--search=."))
     (setq descriptions
           (with-temp-buffer
@@ -140,15 +147,14 @@ cache filename is returned with the host name appended to it."
           (replace-regexp-in-string " .*" "" descriptions))
     (helm-system-packages--cache-set names descriptions display-list "guix")))
 
-(defun helm-system-packages-guix-refresh (&optional refresh-cache)
-  "Refresh the list of installed packages.
-With prefix argument or when `refresh-cache' is non-nil, refresh the cache."
-  (interactive "P")
+(defun helm-system-packages-guix-refresh ()
+  "Refresh the list of installed packages."
+  (interactive)
   (let* ((explicit (helm-system-packages-guix-list-explicit))
          display-list)
     (dolist (p explicit)
       (push (cons p '(helm-system-packages-explicit)) display-list))
-    (helm-system-packages-guix-cache display-list refresh-cache)))
+    (helm-system-packages-guix-cache display-list)))
 
 (defun helm-system-packages-guix-info (candidate)
   "Print information about the selected packages.
