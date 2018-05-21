@@ -246,8 +246,6 @@ Otherwise display in `helm-system-packages-buffer'."
          (when h
            (setf (gethash pkg file-hash) (directory-files-recursively (car h) "."))))))))
 
-;; TODO: -show-dependencies does not work with package names with 2 fields for
-;; version numbers, e.g. ncurses-6.0-20170930.
 (defun helm-system-packages-guix-show-dependencies (_candidate)
   "List candidate dependencies for `helm-system-packages-show-packages'. "
   (let ((title (concat
@@ -255,7 +253,7 @@ Otherwise display in `helm-system-packages-buffer'."
                 (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
      `((uninstalled . ,(replace-regexp-in-string
-                        "-[^-]+\n" "\n"
+                        "@[^@]+\n" "\n"
                         (replace-regexp-in-string
                          " " "\n"
                          (helm-system-packages-call
