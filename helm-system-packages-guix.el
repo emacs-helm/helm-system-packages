@@ -29,6 +29,11 @@
 (require 'helm)
 (require 'helm-system-packages)
 
+;; Shut up byte compiler
+(defvar eshell-buffer-name)
+(declare-function eshell-interactive-process "esh-cmd.el")
+(declare-function eshell-send-input "esh-mode.el")
+
 ;; TODO: Add support for superseded and obsolete packages.
 ;; TODO: Add support for multiple outputs (install, uninstall, listing...).
 ;; TODO: Add support for multiple versions.

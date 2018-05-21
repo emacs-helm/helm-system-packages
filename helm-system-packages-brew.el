@@ -36,6 +36,11 @@
 (require 'json)
 (require 'helm-system-packages)
 
+;; Shut up byte compiler
+(defvar eshell-buffer-name)
+(declare-function eshell-interactive-process "esh-cmd.el")
+(declare-function eshell-send-input "esh-mode.el")
+
 (defun helm-system-packages-brew-transformer (packages)
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
