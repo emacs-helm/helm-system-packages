@@ -116,10 +116,6 @@ We probably still need specific "info" actions to insert at point.
 *** Add option to display multiline candidates for long descriptions.
 *** With filtering, the displayed condidates won't include those above the candidate limit
 Can we include as many filtered candidates as possible?
-*** Logging
-Add for pacman.
-*** Add xbps (Void Linux) support
-*** Add guix support
 
 * References
 - https://wiki.voidlinux.eu/Rosetta_stone
