@@ -5,7 +5,7 @@
 
 ;; Author: Pierre Neidhardt <ambrevar@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.9.0
+;; Version: 1.10.0
 ;; Package-Requires: ((emacs "25") (helm "2.8.6"))
 ;; Keywords: helm, guix, packages
 
@@ -104,7 +104,7 @@ Requirements:
   "Filename of the cache storing all Guix package descriptions.")
 
 (defvar helm-system-packages-guix-path
-  (expand-file-name "latest" "~/.config/guix")
+  (expand-file-name "current" "~/.config/guix")
   "Path to the latest guix checkout.")
 
 (defun helm-system-packages-guix-cache-file-get ()
