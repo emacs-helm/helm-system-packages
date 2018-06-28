@@ -30,12 +30,9 @@
 (require 'helm)
 (require 'helm-system-packages)
 
-;; Shut up byte compiler
-(declare-function eshell-interactive-process "esh-cmd.el")
-(defvar eshell-buffer-name)
-
 (defvar helm-system-packages-portage-help-message
   "* Helm Portage
+
 ** Commands
 \\<helm-system-packages-portage-map>
 \\[helm-system-packages-portage-toggle-explicit]\t\tToggle display of explicitly installed packages.
