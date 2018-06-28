@@ -44,34 +44,13 @@
 (defvar helm-system-packages-portage--show-explicit-p t)
 (defvar helm-system-packages-portage--show-dependencies-p t)
 
-(defun helm-system-packages-portage-toggle-explicit ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-portage--show-explicit-p (not helm-system-packages-portage--show-explicit-p))
-    (helm-update)))
-(put 'helm-system-packages-portage-toggle-explicit 'helm-only t)
-
-(defun helm-system-packages-portage-toggle-uninstalled ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-portage--show-uninstalled-p (not helm-system-packages-portage--show-uninstalled-p))
-    (helm-update)))
-(put 'helm-system-packages-portage-toggle-uninstalled 'helm-only t)
-
-(defun helm-system-packages-portage-toggle-dependencies ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-portage--show-dependencies-p (not helm-system-packages-portage--show-dependencies-p))
-    (helm-update)))
-(put 'helm-system-packages-portage-toggle-dependencies 'helm-only t)
-
 (defvar helm-system-packages-portage-map
   ;; M-U is reserved for `helm-unmark-all'.
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
-    (define-key map (kbd "M-I")   'helm-system-packages-portage-toggle-explicit)
-    (define-key map (kbd "M-N")   'helm-system-packages-portage-toggle-uninstalled)
-    (define-key map (kbd "M-D")   'helm-system-packages-portage-toggle-dependencies)
+    (define-key map (kbd "M-I")   'helm-system-packages-toggle-explicit)
+    (define-key map (kbd "M-N")   'helm-system-packages-toggle-uninstalled)
+    (define-key map (kbd "M-D")   'helm-system-packages-toggle-dependencies)
     (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))
 
@@ -108,12 +87,25 @@ The caller can pass the list of EXPLICIT packages to avoid re-computing it."
 (defun helm-system-packages-portage-cache (display-list)
   "Cache all package names with descriptions."
   (let* ((raw (with-temp-buffer
-                (process-file "env" nil '(t nil) nil "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never" "eix" "--format" "<category>/<name>\t<description>\n")
+                ;; TODO: Can eix pad in the format string just like `expac' does?
+                ;; TODO: Or output straight to Elisp?
+                (process-file "env" nil '(t nil) nil
+                              "EIX_LIMIT=0" "OVERLAYS_LIST=none" "PRINT_COUNT_ALWAYS=never"
+                              "eix" "--format" "<category>/<name>\t<description>\n")
                 (sort-lines nil (point-min) (point-max))
                 (buffer-string)))
-         (paired (mapcar (lambda (x) (let ((l (split-string x "\t"))) (cons (car l) (cadr l)))) (split-string raw "\n")))
+         (paired (mapcar (lambda (x) (let ((l (split-string x "\t"))) (cons (car l) (cadr l))))
+                         (split-string raw "\n")))
          (names (mapcar 'car paired))
-         (descriptions (mapcar (lambda (x) (concat (car x) (make-string (max (- helm-system-packages-column-width (length (car x))) 0) ? ) (cdr x))) paired)))
+         (descriptions (mapcar (lambda (x)
+                                 (concat (car x)
+                                         (make-string
+                                          (max (- helm-system-packages-column-width
+                                                  (length (car x)))
+                                               0)
+                                          ? )
+                                         (cdr x)))
+                               paired)))
     (helm-system-packages--cache-set names descriptions display-list "portage")))
 
 (defcustom helm-system-packages-portage-column-width 40
@@ -238,7 +230,8 @@ If nil, then use `helm-system-packages-column-width'."
 (defun helm-system-packages-portage ()
   "Preconfigured `helm' for Portage."
   (unless (helm-system-packages-missing-dependencies-p "eix" "qlist" "euse" "portageq" "genlop")
-    (helm :sources (list (helm-system-packages-portage-build-source) helm-system-packages-portage-use-source)
+    (helm :sources (list (helm-system-packages-portage-build-source)
+                         helm-system-packages-portage-use-source)
           :buffer "*helm portage*"
           :truncate-lines t
           :input (when helm-system-packages-use-symbol-at-point-p
