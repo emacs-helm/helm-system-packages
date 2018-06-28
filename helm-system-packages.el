@@ -373,7 +373,7 @@ Return the result as a string."
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (let ((res (helm-system-packages-call command args)))
+  (let ((res (apply 'helm-system-packages-run (cons command args))))
     (if (string= res "")
         (message "No result")
       (unless helm-current-prefix-arg
