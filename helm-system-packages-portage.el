@@ -193,7 +193,7 @@ If nil, then use `helm-system-packages-column-width'."
       (helm-init-candidates-in-buffer
           'global
         (mapcar (lambda (use-flag) (propertize use-flag 'face (when (member use-flag local-uses) 'helm-system-packages-explicit)))
-                (string-split (with-temp-buffer
+                (split-string (with-temp-buffer
                                 (process-file "eix" nil t nil "--print-all-useflags")
                                 (buffer-string))))))))
 
