@@ -1,9 +1,9 @@
 ;;; helm-system-packages-guix.el --- Helm UI for Guix. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;;               2017 ~ 2018 Pierre Neidhardt <ambrevar@gmail.com>
+;;               2017 ~ 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 
-;; Author: Pierre Neidhardt <ambrevar@gmail.com>
+;; Author: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
 ;; Version: 1.10.0
 ;; Package-Requires: ((emacs "25") (helm "2.8.6"))

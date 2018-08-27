@@ -1,7 +1,7 @@
 ;;; helm-system-packages-brew.el --- Helm UI for macOS homebrew. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;;               2017 ~ 2018 Pierre Neidhardt <ambrevar@gmail.com>
+;;               2017 ~ 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 
 ;; Author: Arnaud Hoffmann <tuedachu@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
