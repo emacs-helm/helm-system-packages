@@ -131,6 +131,7 @@ persisted on drive.  It's only updated whenever
     (when (or (not (file-exists-p cache-file-name))
               (time-less-p (file-attribute-modification-time (file-attributes cache-file-name))
                            (file-attribute-modification-time (file-attributes helm-system-packages-guix-path))))
+      (message "Building package cache...")
       (process-file "guix" nil `((:file ,cache-file-name) nil) nil "package" "--search=."))
     (setq descriptions
           (with-temp-buffer
