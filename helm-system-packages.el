@@ -5,7 +5,7 @@
 
 ;; Author: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.10.0
+;; Version: 1.10.1
 ;; Package-Requires: ((emacs "24.4") (helm "2.8.6") (seq "1.8"))
 ;; Keywords: helm, packages
 
@@ -585,8 +585,8 @@ TITLE is the name of the Helm session."
                                 ("guix")))))
     (if (not managers)
         (message (if (eq system-type 'darwin)
-		     "No supported package manager was found. Check your `exec-path'."
-		   "No supported package manager was found."))
+                     "No supported package manager was found. Check your `exec-path'."
+                   "No supported package manager was found."))
       (let ((manager (car (last (car managers)))))
         (require (intern (concat "helm-system-packages-" manager)))
         (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
