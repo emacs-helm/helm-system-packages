@@ -29,6 +29,7 @@ managers:
 - =pacman=
 - =portage= (emerge & friends)
 - =xbps=
+- =dnf=
 - And (hopefully) more to come!  Contributions are welcome.
 
 Some package managers come with their specific actions and even specific
