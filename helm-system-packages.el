@@ -244,8 +244,14 @@ See `helm-system-packages--cache-current'."
 
 (defun helm-system-packages--cache-set (names descriptions display-list &optional title &rest extra)
   "Set current cache entry.
-NAMES and DESCRIPTIONS are string buffers
+NAMES and DESCRIPTIONS are strings.
 TITLE is a string, usually the name of the package manager.
+
+DISPLAY-LIST is a list of (PACKAGE . '(FACES...)).
+It associates packages with the list of faces used for display.  A face
+corresponds to a category.  A package can belong to multiple
+categories (e.g. both \"orphan\" and \"installed\").
+
 EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
   (let ((host (or (and (tramp-tramp-file-p default-directory)
                        (tramp-file-name-host (tramp-dissect-file-name default-directory)))
