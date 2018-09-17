@@ -32,7 +32,6 @@
 ;; TODO: Keymap.
 
 ;;; Code:
-(require 'helm)
 (require 'json)
 (require 'helm-system-packages)
 

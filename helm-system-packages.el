@@ -59,6 +59,7 @@
 (require 'seq)
 (require 'tramp)
 (require 'tramp-sh)
+(require 'helm)
 
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
