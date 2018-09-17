@@ -26,7 +26,6 @@
 ;; Helm UI for dpkg.
 
 ;;; Code:
-(require 'helm)
 (require 'helm-system-packages)
 
 

@@ -27,7 +27,6 @@
 ;; Helm UI for Portage.
 
 ;;; Code:
-(require 'helm)
 (require 'helm-system-packages)
 
 (defvar helm-system-packages-portage-help-message

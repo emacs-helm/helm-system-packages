@@ -26,7 +26,6 @@
 ;; Helm UI for Void Linux' xbps.
 
 ;;; Code:
-(require 'helm)
 (require 'helm-system-packages)
 
 ;; Shut up byte compiler
