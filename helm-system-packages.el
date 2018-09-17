@@ -60,6 +60,7 @@
 (require 'tramp)
 (require 'tramp-sh)
 (require 'helm)
+(require 'cl-lib)
 
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
@@ -276,6 +277,22 @@ EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
       (if helm-system-packages-show-descriptions-p
           (plist-get val :descriptions)
         (plist-get val :names)))))
+
+(defun helm-system-packages--make-init (manager)
+  "Cache package lists and create Helm buffer."
+  (lambda ()
+    (let ((val (helm-system-packages--cache-get)))
+      (unless val
+        (funcall (helm-system-packages-manager-refresh-function manager))
+        (setq val (helm-system-packages--cache-get)))
+      ;; TODO: We should only create the buffer if it does not already exist.
+      ;; On the other hand, we need to be able to override the package list.
+      ;; (unless (helm-candidate-buffer) ...
+      (helm-init-candidates-in-buffer
+          'global
+        (if helm-system-packages-show-descriptions-p
+            (plist-get val :descriptions)
+          (plist-get val :names))))))
 
 (defun helm-system-packages-mapalist (fun-alist alist)
   "Apply each function of FUN-ALIST to the list with the same key in ALIST.
@@ -574,6 +591,39 @@ TITLE is the name of the Helm session."
       (message "Dependencies are missing (%s), please install them"
                (mapconcat 'identity missing-deps ", ")))))
 
+(cl-defstruct (helm-system-packages-manager
+               (:constructor nil)
+               (:copier nil)
+               (:constructor helm-system-packages-manager-create))
+  "Package manager interface.
+
+DEPENDENCIES is a list of strings of external executables
+required by the package manager.
+
+HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
+`helm-build-in-buffer-source'."
+  name
+  refresh-function
+  dependencies
+  ;; Helm source parameters follow:
+  help-message
+  keymap
+  transformer
+  actions)
+
+(defun helm-system-packages-build-source (manager)
+  "Build Helm source for MANAGER."
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+    (helm-build-in-buffer-source title
+      :init (helm-system-packages--make-init manager)
+      :candidate-transformer (helm-system-packages-manager-transformer manager)
+      :candidate-number-limit helm-system-packages-candidate-limit
+      :display-to-real 'helm-system-packages-extract-name
+      :keymap (helm-system-packages-manager-keymap manager)
+      :help-message (helm-system-packages-manager-help-message manager)
+      :persistent-help "Show package description"
+      :action (helm-system-packages-manager-actions manager))))
+
 ;;;###autoload
 (defun helm-system-packages ()
   "Helm user interface for system packages."
@@ -596,8 +646,21 @@ TITLE is the name of the Helm session."
                    "No supported package manager was found."))
       (let ((manager (car (last (car managers)))))
         (require (intern (concat "helm-system-packages-" manager)))
-        (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
-        (funcall (intern (concat "helm-system-packages-" manager)))))))
+        (if (boundp (intern (concat "helm-system-packages-" manager)))
+            ;; New abstraction.
+            (let ((current-manager
+                   (symbol-value (intern (concat "helm-system-packages-" manager)))))
+              (unless (apply 'helm-system-packages-missing-dependencies-p
+                             (helm-system-packages-manager-dependencies current-manager))
+                (helm :sources (helm-system-packages-build-source current-manager)
+                      :buffer (format "*helm %s*" (helm-system-packages-manager-name
+                                                   current-manager))
+                      :truncate-lines t
+                      :input (when helm-system-packages-use-symbol-at-point-p
+                               (substring-no-properties (or (thing-at-point 'symbol) ""))))))
+          ;; Old abstraction.
+          (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
+          (funcall (intern (concat "helm-system-packages-" manager))))))))
 
 (provide 'helm-system-packages)
 

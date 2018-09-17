@@ -301,31 +301,15 @@ Otherwise display in `helm-system-packages-buffer'."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-guix-build-source ()
-  "Build Helm source for guix"
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
-    (helm-build-in-buffer-source title
-      :init 'helm-system-packages-init
-      :candidate-transformer 'helm-system-packages-guix-transformer
-      :candidate-number-limit helm-system-packages-candidate-limit
-      :display-to-real 'helm-system-packages-extract-name
-      :keymap helm-system-packages-guix-map
-      :help-message 'helm-system-packages-guix-help-message
-      :persistent-help "Show package description"
-      :action helm-system-packages-guix-actions)))
-
-(defun helm-system-packages-guix ()
-  "Preconfigured `helm' for guix."
-  ;; Guix can be installed beside another package manager.  Let's make this
-  ;; command directly accessible then so that both the original package manager
-  ;; and Guix can be called.
-  (interactive)
-  (unless (helm-system-packages-missing-dependencies-p "guix" "recsel")
-    (helm :sources (helm-system-packages-guix-build-source)
-          :buffer "*helm guix*"
-          :truncate-lines t
-          :input (when helm-system-packages-use-symbol-at-point-p
-                   (substring-no-properties (or (thing-at-point 'symbol) ""))))))
+(defvar helm-system-packages-guix
+  (helm-system-packages-manager-create
+   :name "guix"
+   :refresh-function #'helm-system-packages-guix-refresh
+   :dependencies '("guix" "recsel")
+   :help-message 'helm-system-packages-guix-help-message
+   :keymap helm-system-packages-guix-map
+   :transformer #'helm-system-packages-guix-transformer
+   :actions helm-system-packages-guix-actions))
 
 (provide 'helm-system-packages-guix)
 
