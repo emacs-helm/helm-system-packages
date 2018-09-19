@@ -27,6 +27,49 @@
 ;;; Code:
 (require 'helm-system-packages)
 
+(defcustom helm-system-packages-dnf-actions
+  '(("Show package(s)" . helm-system-packages-dnf-info))
+  "Actions for Helm guix."
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
+
+(defun helm-system-packages-dnf--package-attributes-to-org-description-list ()
+  "Convert \"Key   : value\" to \"- Key :: value\".
+This is org format for description list items."
+  (goto-char (point-min))
+  (while (re-search-forward "^\\(\\<[^ ]*\\) +: \\(.*\\)$" nil t)
+    (let ((key (match-string-no-properties 1))
+          (value (match-string-no-properties 2)))
+      (replace-match (format "- %s :: %s" key value) nil t))))
+
+(defun helm-system-packages-dnf--info (packages)
+  "Return a list of (NAME . DESC) describing PACKAGES."
+  (save-match-data
+    (with-temp-buffer
+      (apply #'process-file "dnf" nil t nil "info" packages)
+      (goto-char (point-min))
+      (helm-system-packages-dnf--merge-descriptions)
+      (helm-system-packages-dnf--package-attributes-to-org-description-list)
+      (goto-char (point-min))
+      (cl-loop
+       while (re-search-forward "^- Name :: \\(.*\\)$" nil t)
+       collect (cons (match-string-no-properties 1)
+                     (buffer-substring-no-properties
+                      (match-beginning 0)
+                      (save-match-data
+                        (re-search-forward "^$")
+                        (match-beginning 0))))))))
+
+(defun helm-system-packages-dnf-info (candidate)
+  "Print information about helm CANDIDATE.
+With prefix argument, insert the output at point.
+Otherwise display in `helm-system-packages-buffer'."
+  (helm-system-packages-show-information
+   `((uninstalled . ,(helm-system-packages-dnf--info
+                      (if helm-in-persistent-action
+                          (list candidate)
+                        (helm-marked-candidates)))))))
+
 (defun helm-system-packages-dnf--delete-non-package-lines ()
   "Remove every line of current package that is not a package."
   ;; delete summary line:
@@ -85,7 +128,8 @@ Only package names remain."
   (helm-system-packages-manager-create
    :name "dnf"
    :refresh-function #'helm-system-packages-dnf-refresh
-   :dependencies '("dnf")))
+   :dependencies '("dnf")
+   :actions helm-system-packages-dnf-actions))
 
 (provide 'helm-system-packages-dnf)
 
