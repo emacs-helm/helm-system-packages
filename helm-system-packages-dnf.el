@@ -1,4 +1,4 @@
-;;; helm-system-packages-dnf.el --- Helm UI for RPM-based distros using dnf. -*- lexical-binding: t -*-
+;;; helm-system-packages-dnf.el --- Helm UI for RPM-based distros using DNF. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2018 Damien Cassou <damien@cassou.me>
 
@@ -22,14 +22,21 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;; Helm UI for RPM-based distributions using dnf.
+;; Helm UI for RPM-based distributions using DNF.
 
 ;;; Code:
 (require 'helm-system-packages)
 
+(require 'seq)
+
 (defcustom helm-system-packages-dnf-actions
-  '(("Show package(s)" . helm-system-packages-dnf-info))
-  "Actions for Helm guix."
+  (list
+   (cons "Show package(s)" #'helm-system-packages-dnf-info)
+   (cons "Install"  #'helm-system-packages-dnf-install)
+   (cons "Uninstall" #'helm-system-packages-dnf-uninstall)
+   (cons "Browse homepage URL" #'helm-system-packages-dnf-browse-url)
+   (cons "Find files" #'helm-system-packages-dnf-find-files))
+  "Actions for Helm DNF."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
@@ -69,6 +76,46 @@ Otherwise display in `helm-system-packages-buffer'."
                       (if helm-in-persistent-action
                           (list candidate)
                         (helm-marked-candidates)))))))
+
+(defun helm-system-packages-dnf-install (_)
+  "Install marked candidates."
+  (helm-system-packages-run-as-root "dnf" "install"))
+
+(defun helm-system-packages-dnf-uninstall (_)
+  "Uninstall marked candidates."
+  (helm-system-packages-run-as-root "dnf" "remove"))
+
+(defun helm-system-packages-dnf-browse-url (_)
+  "Print homepage URLs of `helm-marked-candidates'.
+With prefix argument, insert the output at point.
+Otherwise display in `helm-system-packages-buffer'."
+  (helm-system-packages-browse-url
+   (save-match-data
+     (with-temp-buffer
+       (apply #'process-file "dnf" nil t nil "info" (helm-marked-candidates))
+       (goto-char (point-min))
+       (cl-loop
+        while (re-search-forward "^URL *: \\(.*\\)$" nil t)
+        collect (match-string-no-properties 1) into urls
+        finally return (seq-uniq urls #'string=))))))
+
+(defun helm-system-packages-dnf--list-files (package)
+  "Return a list of all files installed by PACKAGE."
+  (message "Collecting files of %s" package)
+  (save-match-data
+    (with-temp-buffer
+      (process-file "dnf" nil t nil "repoquery" "-l" package)
+      (goto-char (point-min))
+      (cl-loop
+       while (re-search-forward "^\\(/.*\\)$" nil t)
+       collect (match-string-no-properties 1)))))
+
+(defun helm-system-packages-dnf-find-files (_)
+  "Find files for marked candidates."
+  (let* ((package-files (make-hash-table :test #'equal)))
+    (dolist (package (helm-marked-candidates))
+      (puthash package (helm-system-packages-dnf--list-files package) package-files))
+    (helm-system-packages-find-files package-files)))
 
 (defun helm-system-packages-dnf--delete-non-package-lines ()
   "Remove every line of current package that is not a package."
