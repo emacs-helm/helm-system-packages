@@ -7,7 +7,7 @@ operating system /and/ remote systems as well.
 
 Emacs' knowledge is not required: see the [[stand-alone][stand-alone]] folder for a version targeted at
 non-Emacs users.  Run the script and everything should be self-explanatory.  If
-not then it's bug, please report it.
+not then it's a bug, please report it.
 
 Start ~helm-system-packages~ to list all available packages (with installed
 packages as well as dependencies displayed in their own respective face).
@@ -24,12 +24,12 @@ Helm System Packages provides a uniform interface over the following package
 managers:
 
 - =brew= (macOS)
+- =dnf=
 - =dpkg= (apt & friends)
 - =guix=
 - =pacman=
 - =portage= (emerge & friends)
 - =xbps=
-- =dnf=
 - And (hopefully) more to come!  Contributions are welcome.
 
 Some package managers come with their specific actions and even specific
@@ -96,6 +96,9 @@ Helm sessions can also be resumed.
   [[./screencasts/helm-system-packages-deps.gif]]
 
 * Development
+
+*WARNING:* The programming interface is still under development and is prone to
+change.
 
 Each module is rather straightforward, it only needs to define the following:
 
