@@ -201,9 +201,9 @@ COMMAND will be run in the Eshell buffer named by `helm-system-packages-shell-na
       (if (eshell-interactive-process)
           (message "A process is already running")
         (push command arg-list)
-        (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
+        (add-hook 'eshell-post-command-hook 'helm-system-packages-guix-refresh nil t)
         (add-hook 'eshell-post-command-hook
-                  (lambda () (remove-hook 'eshell-post-command-hook 'helm-system-packages-refresh t))
+                  (lambda () (remove-hook 'eshell-post-command-hook 'helm-system-packages-guix-refresh t))
                   t t)
         (goto-char (point-max))
         (insert (mapconcat 'identity arg-list " "))
