@@ -380,7 +380,7 @@ OPTIONS are insert before ARGS.
 Return the result as a string."
   (with-temp-buffer
     ;; We discard errors.
-    (apply #'process-file command nil t nil (append options args))
+    (apply #'process-file command nil '(t nil) nil (append options args))
     (buffer-string)))
 
 (defun helm-system-packages-run (command &rest args)
@@ -388,7 +388,7 @@ Return the result as a string."
   (let ((arg-list (append args (helm-marked-candidates))))
     (with-temp-buffer
       ;; We discard errors.
-      (apply #'process-file command nil t nil arg-list)
+      (apply #'process-file command nil '(t nil) nil arg-list)
       (buffer-string))))
 (make-obsolete 'helm-system-packages-run 'helm-system-packages-call "1.9.0")
 
