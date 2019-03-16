@@ -105,32 +105,60 @@ Requirements:
 (defvar helm-system-packages-guix-path
   (expand-file-name "current" "~/.config/guix")
   "Path to the latest guix checkout.")
+(make-obsolete-variable 'helm-system-packages-guix-path nil "1.10.2")
 
-(defun helm-system-packages-guix-cache-file-get ()
-  "Return Guix local cache.
+(defun helm-system-packages-guix--last-pull-commit ()
+  "Return the commit of the last generation of Guix."
+  ;; TODO: Could use json or recutils format, but it seems broken in Guix as of
+  ;; 2019-03-16.
+  (with-temp-buffer
+    (process-file "guix" nil t nil "describe")
+    (goto-char (point-min))
+    (search-forward "commit:")
+    (buffer-substring-no-properties
+     (1+ (point))
+     (progn (forward-word) (point)))))
+
+(defun helm-system-packages-guix-file-get (basename suffix)
+  "Return Guix local file BASENAME, with SUFFIX appended.
 If `default-directory' is a remote file (over TRAMP), a different
 cache filename is returned with the host name appended to it."
-  (concat helm-system-packages-guix-cache-file
+  (concat basename
           (when (tramp-tramp-file-p default-directory)
             (concat "_" (tramp-file-name-host
                          (tramp-dissect-file-name default-directory))))
-          ".cache"))
+          suffix))
+
+(defun helm-system-packages-guix-cache-file-get ()
+  "Return Guix local or remote cache."
+  (helm-system-packages-guix-file-get helm-system-packages-guix-cache-file ".cache"))
+
+(defun helm-system-packages-guix-commit-file-get ()
+  "Return Guix local or remote cache."
+  (helm-system-packages-guix-file-get helm-system-packages-guix-cache-file ".commit"))
 
 (defun helm-system-packages-guix-cache (display-list)
   "Cache all package names with descriptions.
 
 Guix is extremely slow to list everything, thus the cache is
 persisted on drive.  It's only updated whenever
-`helm-system-packages-guix-path' is newer than the cache file."
+`helm-system-packages-guix--last-pull-commit' is different from the cache commit."
   ;; We build both caches at the same time.  We could also build just-in-time, but
   ;; benchmarks show that it only saves less than 20% when building one cache.
   (let* (names
          descriptions
-         (cache-file-name (helm-system-packages-guix-cache-file-get)))
+         (cache-file-name (helm-system-packages-guix-cache-file-get))
+         (commit-file-name (helm-system-packages-guix-commit-file-get))
+         last-commit)
     (when (or (not (file-exists-p cache-file-name))
-              (time-less-p (file-attribute-modification-time (file-attributes cache-file-name))
-                           (file-attribute-modification-time (file-attributes helm-system-packages-guix-path))))
+              (not (file-exists-p commit-file-name))
+              (not (string=
+                    (with-temp-buffer (insert-file-contents-literally commit-file-name) (buffer-string))
+                    (setq last-commit (helm-system-packages-guix--last-pull-commit)))))
       (message "Building package cache...")
+      (setq last-commit (or last-commit (helm-system-packages-guix--last-pull-commit)))
+      (with-temp-file commit-file-name
+        (insert last-commit))
       (process-file "guix" nil `((:file ,cache-file-name) nil) nil "package" "--search=."))
     (setq descriptions
           (with-temp-buffer
