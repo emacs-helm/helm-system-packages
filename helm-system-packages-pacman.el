@@ -40,7 +40,7 @@
 ** Options
 
 - `helm-system-packages-pacman-confirm-p'
-- `helm-system-packages-pacman-sync-threshold'
+- `helm-system-packages-pacman-synchronize-threshold'
 - `helm-system-packages-pacman-auto-clean-cache'
 
 ** Commands
