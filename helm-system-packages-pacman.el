@@ -178,7 +178,7 @@ If nil, then use `helm-system-packages-column-width'."
       ;; Local packages are necessarily either explicitly installed or a required dependency or an orphan.
       (push 'helm-system-packages-locals (cdr (assoc p display-list))))
     (dolist (p groups)
-      (push (cons p '(helm-system-pacman-groups)) display-list))
+      (push (cons p '(helm-system-packages-groups)) display-list))
     (helm-system-packages-pacman-cache display-list locals groups)))
 
 (defcustom helm-system-packages-pacman-synchronize-threshold 86400
