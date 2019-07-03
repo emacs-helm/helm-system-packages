@@ -41,10 +41,10 @@
 ;; How the cache is generated depends on the package manager.  Smart commandline
 ;; expressions and parsing are crucial to guarantee a swift startup.
 ;;
-;; The Helm transformer filters and fontify the candidates.
+;; The Helm transformer filters and fontifies the candidates.
 ;; `helm-system-packages-refresh' fills "display-lists"
 ;; with the categories each package belongs to.
-;; Catogories really are just faces, such as `helm-system-packages-explicit'.
+;; Categories are really just faces, such as `helm-system-packages-explicit'.
 ;; No category means the package is not installed.
 ;;
 ;; Actions each have their own functions.  helm-system-packages.el provides a
