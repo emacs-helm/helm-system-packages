@@ -120,7 +120,7 @@ Otherwise display in `helm-system-packages-buffer'."
                                        (alist-get 'options pkg-desc-alist) "\n")
              "\n\n"
              "* Caveats: " (alist-get 'caveats pkg-desc-alist) "\n"))
-      (push `(uninstalled (,pkg . ,str)) 'desc-list)
+      (push `(uninstalled (,pkg . ,str)) desc-list)
       (setq i (1+ i)))
     (helm-system-packages-show-information desc-list)))
 
