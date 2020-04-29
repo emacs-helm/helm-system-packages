@@ -634,7 +634,7 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
                                 (if (tramp-tramp-file-p default-directory)
                                     (tramp-find-executable (tramp-dissect-file-name default-directory) (car p) nil)
                                   (executable-find (car p))))
-                              '(("emerge" "portage") ("dpkg") ("dnf") ("pacman") ("xbps-query" "xbps") ("brew")
+                              '(("emerge" "portage") ("dnf") ("dpkg") ("pacman") ("xbps-query" "xbps") ("brew")
                                 ;; Keep "guix" last because it can be installed
                                 ;; beside other package managers and we want to
                                 ;; give priority to the original package
