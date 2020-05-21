@@ -122,6 +122,6 @@ We probably still need specific "info" actions to insert at point.
 Can we include as many filtered candidates as possible?
 
 * References
-- https://wiki.voidlinux.eu/Rosetta_stone
+- https://wiki.voidlinux.org/Rosetta_stone
 - https://wiki.archlinux.org/index.php/Pacman/Rosetta
 - https://github.com/jabranham/system-packages
