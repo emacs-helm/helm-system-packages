@@ -1,7 +1,7 @@
 ;;; helm-system-packages-guix.el --- Helm UI for Guix. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;;               2017 ~ 2018 Pierre Neidhardt <mail@ambrevar.xyz>
+;;               2017 ~ 2018, 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 
 ;; Author: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
@@ -36,7 +36,6 @@
 ;; TODO: Add support for superseded and obsolete packages.
 ;; TODO: Add support for multiple outputs (install, uninstall, listing...).
 ;; TODO: Add support for multiple versions.
-;; TODO: Use guix.el instead of parsing guix commandline output.
 
 (defvar helm-system-packages-guix-help-message
   "* Helm guix
@@ -98,6 +97,29 @@ Requirements:
      (sort-lines nil (point-min) (point-max))
      (buffer-string))))
 
+(defun helm-system-packages-guix-el->scheme-syntax (form)
+  ;; Escape symbols are printed as \\NAME while they should be printed as NAME.
+  (replace-regexp-in-string "\\\\" "" (format "%S" form)))
+
+(cl-defun helm-system-packages-guix-eval (form &rest more-forms)
+  "Evaluate forms in Guix REPL.
+Return the REPL output (including the error output) as a string."
+  (let ((temp-file))
+    (unwind-protect
+        (progn
+          (setq temp-file (make-temp-file "helm-system-packages-guix"))
+          (with-temp-buffer
+            (dolist (f (cons form more-forms))
+              (insert (replace-regexp-in-string
+                       ;; Backslashes in Common Lisp are doubled, unlike Guile.
+                       "\\\\" "\\"
+                       (helm-system-packages-guix-el->scheme-syntax f))))
+            (write-region (point-min) (point-max) temp-file))
+          (with-output-to-string
+            (with-current-buffer standard-output
+              (process-file "guix" nil '(t t) nil "repl" temp-file))))
+      (delete-file temp-file))))
+
 (defvar helm-system-packages-guix-cache-file
   (expand-file-name "helm-system-packages-guix" user-emacs-directory)
   "Filename of the cache storing all Guix package descriptions.")
@@ -138,44 +160,56 @@ cache filename is returned with the host name appended to it."
   "Return Guix local or remote cache of commits."
   (helm-system-packages-guix-file-get helm-system-packages-guix-cache-file ".commits"))
 
-(defun helm-system-packages-guix-cache (display-list)
-  "Cache all package names with descriptions.
+(defun helm-system-packages-generate-database ()
+  (helm-system-packages-guix-eval
+   '(use-modules
+     (guix packages)
+     (guix licenses)
+     (guix utils)
+     (guix build utils)                 ; For `string-replace-substring'.
+     (gnu packages))
 
-Guix is extremely slow to list everything, thus the cache is
-persisted on drive.  It's only updated whenever
-`helm-system-packages-guix--last-pull-commits' is different from the cache commit."
+   '(define (ensure-list l)
+     (if (list? l)
+         l
+         (list l)))
+
+   '(format '\#t "(~&")
+   '(fold-packages
+     (lambda (package count)
+       (let ((location (package-location package)))
+         (format '\#t "(~s ~s)~&"
+                 (package-name package)
+                 (package-synopsis package)))
+       (+ 1 count))
+     1)
+   '(format '\#t "~&)~&")))
+
+(defvar helm-system-packages-guix--database nil)
+
+(defun helm-system-packages-guix-cache (display-list)
+  "Cache all package names with descriptions. "
   ;; We build both caches at the same time.  We could also build just-in-time, but
   ;; benchmarks show that it only saves less than 20% when building one cache.
   (let* (names
-         descriptions
-         (cache-file-name (helm-system-packages-guix-cache-file-get))
-         (commit-file-name (helm-system-packages-guix-commit-file-get))
-         last-commits)
-    (when (or (not (file-exists-p cache-file-name))
-              (not (file-exists-p commit-file-name))
-              (not (string=
-                    (with-temp-buffer (insert-file-contents-literally commit-file-name) (buffer-string))
-                    (setq last-commits (helm-system-packages-guix--last-pull-commits)))))
-      (message "Building package cache...")
-      (setq last-commits (or last-commits (helm-system-packages-guix--last-pull-commits)))
-      (with-temp-file commit-file-name
-        (insert last-commits))
-      (process-file "guix" nil `((:file ,cache-file-name) nil) nil "package" "--search=."))
+         descriptions)
+    (unless helm-system-packages-guix--database
+      (message "Building package database...")
+      (setq helm-system-packages-guix--database
+            (cl-sort (read (helm-system-packages-generate-database))
+                     #'string<
+                     :key #'car)))
     (setq descriptions
-          (with-temp-buffer
-            (process-file "recsel" (helm-system-packages-guix-cache-file-get) t nil "-R" "name,synopsis")
-            (goto-char (point-min))
-            (while (search-forward " " nil t)
-              (delete-char -1)
-              (let ((pos (- (point) (line-beginning-position))))
-                (when (< pos helm-system-packages-column-width)
-                  (insert (make-string (- helm-system-packages-column-width pos) ? ))))
-              (forward-line))
-            (sort-lines nil (point-min) (point-max))
-            (goto-char (point-min))
-            (delete-blank-lines)
-            (delete-blank-lines)
-            (buffer-string)))
+          (mapconcat (lambda (name+desc)
+                       (format "%s%s%s"
+                               (car name+desc)
+                               (make-string (max (- helm-system-packages-column-width
+                                                    (length (car name+desc)))
+                                                 1)
+                                            ? )
+                               (cadr name+desc)))
+                     helm-system-packages-guix--database
+                     "\n"))
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
           (replace-regexp-in-string " .*" "" descriptions))
