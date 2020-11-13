@@ -123,42 +123,16 @@ Return the REPL output (including the error output) as a string."
 (defvar helm-system-packages-guix-cache-file
   (expand-file-name "helm-system-packages-guix" user-emacs-directory)
   "Filename of the cache storing all Guix package descriptions.")
+(make-obsolete-variable 'helm-system-packages-guix-cache-file nil "1.10.2")
 
 (defvar helm-system-packages-guix-path
   (expand-file-name "current" "~/.config/guix")
   "Path to the latest guix checkout.")
 (make-obsolete-variable 'helm-system-packages-guix-path nil "1.10.2")
 
-(defun helm-system-packages-guix--last-pull-commits ()
-  "Return the commits of the Guix channels from the last generation."
-  (with-temp-buffer
-    (let ((output (current-buffer)))
-      (with-temp-buffer
-        (process-file "guix" nil '(t nil) nil "describe" "--format=recutils")
-        (call-process-region (point-min) (point-max) "recsel" nil output nil "-R" "url,commit")))
-    (sort-lines nil (point-min) (point-max))
-    (goto-char (point-min))
-    (delete-blank-lines)
-    (delete-blank-lines)
-    (buffer-string)))
-
-(defun helm-system-packages-guix-file-get (basename suffix)
-  "Return Guix local file BASENAME, with SUFFIX appended.
-If `default-directory' is a remote file (over TRAMP), a different
-cache filename is returned with the host name appended to it."
-  (concat basename
-          (when (tramp-tramp-file-p default-directory)
-            (concat "_" (tramp-file-name-host
-                         (tramp-dissect-file-name default-directory))))
-          suffix))
-
-(defun helm-system-packages-guix-cache-file-get ()
+(defun helm-system-packages-guix-cache-file-get () ; TODO: Remove!
   "Return Guix local or remote cache."
   (helm-system-packages-guix-file-get helm-system-packages-guix-cache-file ".cache"))
-
-(defun helm-system-packages-guix-commit-file-get ()
-  "Return Guix local or remote cache of commits."
-  (helm-system-packages-guix-file-get helm-system-packages-guix-cache-file ".commits"))
 
 (defun helm-system-packages-generate-database ()
   (helm-system-packages-guix-eval
