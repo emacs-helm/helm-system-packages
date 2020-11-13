@@ -110,10 +110,7 @@ Return the REPL output (including the error output) as a string."
           (setq temp-file (make-temp-file "helm-system-packages-guix"))
           (with-temp-buffer
             (dolist (f (cons form more-forms))
-              (insert (replace-regexp-in-string
-                       ;; Backslashes in Common Lisp are doubled, unlike Guile.
-                       "\\\\" "\\"
-                       (helm-system-packages-guix-el->scheme-syntax f))))
+              (insert (helm-system-packages-guix-el->scheme-syntax f)))
             (write-region (point-min) (point-max) temp-file))
           (with-output-to-string
             (with-current-buffer standard-output
@@ -163,7 +160,7 @@ Return the REPL output (including the error output) as a string."
                  (or (package-home-page package) "") ; #f must be turned to NIL for Emacs Lisp.
                  (map license-name (ensure-list (package-license package)))
                  (package-synopsis package)
-                 (string-replace-substring (package-description package) "\\n" " ")))
+                 (package-description package)))
        (+ 1 count))
      1)
    '(format '\#t "~&)~&")))
