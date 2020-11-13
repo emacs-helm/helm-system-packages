@@ -130,10 +130,6 @@ Return the REPL output (including the error output) as a string."
   "Path to the latest guix checkout.")
 (make-obsolete-variable 'helm-system-packages-guix-path nil "1.10.2")
 
-(defun helm-system-packages-guix-cache-file-get () ; TODO: Remove!
-  "Return Guix local or remote cache."
-  (helm-system-packages-guix-file-get helm-system-packages-guix-cache-file ".cache"))
-
 (defun helm-system-packages-generate-database ()
   (helm-system-packages-guix-eval
    '(use-modules
@@ -152,9 +148,22 @@ Return the REPL output (including the error output) as a string."
    '(fold-packages
      (lambda (package count)
        (let ((location (package-location package)))
-         (format '\#t "(~s ~s)~&"
+         (format '\#t "(~s (:version ~s :outputs ~s :supported-systems ~s :inputs ~s :propagated-inputs ~s :native-inputs ~s :location ~s :home-page ~s :licenses ~s :synopsis ~s :description ~s))~&"
                  (package-name package)
-                 (package-synopsis package)))
+                 (package-version package)
+                 (package-outputs package)
+                 (package-supported-systems package)
+                 (map car (package-inputs package))
+                 (map car (package-propagated-inputs package))
+                 (map car (package-native-inputs package))
+                 (string-join (list (location-file location)
+                                    (number->string (location-line location))
+                                    (number->string (location-column location)))
+                              ":")
+                 (or (package-home-page package) "") ; #f must be turned to NIL for Emacs Lisp.
+                 (map license-name (ensure-list (package-license package)))
+                 (package-synopsis package)
+                 (string-replace-substring (package-description package) "\\n" " ")))
        (+ 1 count))
      1)
    '(format '\#t "~&)~&")))
@@ -168,20 +177,28 @@ Return the REPL output (including the error output) as a string."
   (let* (names
          descriptions)
     (unless helm-system-packages-guix--database
-      (message "Building package database...")
+      (message "Building package database... %s" (current-time-string))
       (setq helm-system-packages-guix--database
-            (cl-sort (read (helm-system-packages-generate-database))
-                     #'string<
-                     :key #'car)))
+            (let ((db-string (helm-system-packages-generate-database)))
+              (message "BUILDING package database... %s" (current-time-string))
+              ;; TODO: Sort in Guile instead?
+              (let ((alist (read db-string)))
+                (message "Building PACKAGE database... %s" (current-time-string))
+                (cl-sort alist
+                         #'string<
+                         :key #'car))))
+      (message "Done %s" (current-time-string)))
     (setq descriptions
-          (mapconcat (lambda (name+desc)
-                       (format "%s%s%s"
-                               (car name+desc)
-                               (make-string (max (- helm-system-packages-column-width
-                                                    (length (car name+desc)))
-                                                 1)
-                                            ? )
-                               (cadr name+desc)))
+          (mapconcat (lambda (name+props)
+                       (let ((name (car name+props))
+                             (synopsis (plist-get (cadr name+props) :synopsis)))
+                         (format "%s%s%s"
+                                 name
+                                 (make-string (max (- helm-system-packages-column-width
+                                                      (length name))
+                                                   1)
+                                              ? )
+                                 synopsis)))
                      helm-system-packages-guix--database
                      "\n"))
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
@@ -192,6 +209,7 @@ Return the REPL output (including the error output) as a string."
 (defun helm-system-packages-guix-refresh ()
   "Refresh the list of installed packages."
   (interactive)
+  (setq helm-system-packages-guix--database nil)
   (let* ((explicit (helm-system-packages-guix-list-explicit))
          display-list)
     (dolist (p explicit)
@@ -203,26 +221,23 @@ Return the REPL output (including the error output) as a string."
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-show-information
-   `((uninstalled . ,(mapcar (lambda (pkg-desc)
-                               (let (name desc)
-                                 (with-temp-buffer
-                                   (insert pkg-desc)
-                                   (goto-char (point-min))
-                                   (search-forward ":" nil t)
-                                   (setq name (buffer-substring-no-properties (point) (line-end-position)))
-                                   (forward-line)
-                                   (setq desc (buffer-substring-no-properties (point) (point-max)))
-                                   (cons name desc))))
-                             (split-string
-                              (helm-system-packages-call
-                               "recsel" nil "-e"
-                               (mapconcat (lambda (s) (format "name = '%s'" s))
-                                          (if helm-in-persistent-action
-                                              (list candidate)
-                                            (helm-marked-candidates))
-                                          "||")
-                               (helm-system-packages-guix-cache-file-get))
-                              "\n\n"))))))
+   `((uninstalled .
+                  ,(mapcar
+                    (lambda (name)
+                      (let ((props (car (alist-get
+                                         name
+                                         helm-system-packages-guix--database
+                                         nil nil #'string=))))
+                        (cons name
+                              (string-join
+                               (cl-loop for (key property) on props by #'cddr
+                                        collect (format "%s: %s"
+                                                        (substring (prin1-to-string key) 1)
+                                                        property))
+                               "\n"))))
+                    (if helm-in-persistent-action
+                        (list candidate)
+                      (helm-marked-candidates)))))))
 
 (defun helm-system-packages-guix-run (command args packages)
   "Call COMMAND ARGS PACKAGES as current user (sudo is not used).
@@ -264,14 +279,11 @@ COMMAND will be run in the Eshell buffer named by `helm-system-packages-shell-na
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-browse-url
-   (split-string
-    (helm-system-packages-call
-     "recsel" nil "-R" "homepage" "-e"
-     (mapconcat (lambda (s) (format "name = '%s'" s))
-                (helm-marked-candidates)
-                "||")
-     (helm-system-packages-guix-cache-file-get))
-    "\n" t)))
+   (mapcar (lambda (name) (plist-get
+                           (car (alist-get name helm-system-packages-guix--database
+                                           nil nil #'string=))
+                           :home-page))
+           (helm-marked-candidates))))
 
 (defun helm-system-packages-guix-find-files (_)
   "Find files for marked candidates."
@@ -294,16 +306,17 @@ Otherwise display in `helm-system-packages-buffer'."
                 "Dependencies of "
                 (mapconcat 'identity (helm-marked-candidates) " "))))
     (helm-system-packages-show-packages
-     `((uninstalled . ,(replace-regexp-in-string
-                        "@[^@]+\n" "\n"
-                        (replace-regexp-in-string
-                         " " "\n"
-                         (helm-system-packages-call
-                          "recsel" nil "-R" "dependencies" "-e"
-                          (mapconcat (lambda (s) (format "name = '%s'" s))
-                                     (helm-marked-candidates)
-                                     "||")
-                          (helm-system-packages-guix-cache-file-get))))))
+     `((uninstalled . ,(string-join
+                        (mapcan
+                         (lambda (name)
+                           (let ((props (car (alist-get
+                                              name
+                                              helm-system-packages-guix--database
+                                              nil nil #'string=))))
+                             (append (plist-get props :inputs)
+                                     (plist-get props :propagated-inputs))))
+                         (helm-marked-candidates))
+                        "\n")))
      title)))
 
 (defun helm-system-packages-guix-show-reverse-dependencies (_candidate)
