@@ -165,7 +165,35 @@ Return the REPL output (including the error output) as a string."
      1)
    '(format '\#t "~&)~&")))
 
-(defvar helm-system-packages-guix--database nil)
+(defvar helm-system-packages-guix--databases (make-hash-table :test 'equal)
+  "Hash-table databases indexed by host.
+See `helm-system-packages-guix-database-index'.")
+
+(defun helm-system-packages-guix-database-index ()
+  "Return hostname corresponding to `default-directory'"
+  (if (tramp-tramp-file-p default-directory)
+      (tramp-file-name-host
+       (tramp-dissect-file-name default-directory))
+    "localhost"))
+
+(defun helm-system-packages-guix-get-database ()
+  (let* ((index (helm-system-packages-guix-database-index)))
+    (or (gethash index helm-system-packages-guix--databases)
+        (let ((result (gethash index
+                               helm-system-packages-guix--databases
+                               (progn
+                                 (message "Building package database... %s" (current-time-string))
+                                 (let ((db-string (helm-system-packages-generate-database)))
+                                   (message "BUILDING package database... %s" (current-time-string))
+                                   ;; TODO: Sort in Guile instead?
+                                   (let ((alist (read db-string)))
+                                     (message "Building PACKAGE database... %s" (current-time-string))
+                                     (let ((result
+                                            (cl-sort alist #'string< :key #'car)))
+                                       (message "Done %s" (current-time-string))
+                                       result)))))))
+          (puthash index result helm-system-packages-guix--databases)
+          result))))
 
 (defun helm-system-packages-guix-cache (display-list)
   "Cache all package names with descriptions. "
@@ -173,18 +201,6 @@ Return the REPL output (including the error output) as a string."
   ;; benchmarks show that it only saves less than 20% when building one cache.
   (let* (names
          descriptions)
-    (unless helm-system-packages-guix--database
-      (message "Building package database... %s" (current-time-string))
-      (setq helm-system-packages-guix--database
-            (let ((db-string (helm-system-packages-generate-database)))
-              (message "BUILDING package database... %s" (current-time-string))
-              ;; TODO: Sort in Guile instead?
-              (let ((alist (read db-string)))
-                (message "Building PACKAGE database... %s" (current-time-string))
-                (cl-sort alist
-                         #'string<
-                         :key #'car))))
-      (message "Done %s" (current-time-string)))
     (setq descriptions
           (mapconcat (lambda (name+props)
                        (let ((name (car name+props))
@@ -196,7 +212,7 @@ Return the REPL output (including the error output) as a string."
                                                    1)
                                               ? )
                                  synopsis)))
-                     helm-system-packages-guix--database
+                     (helm-system-packages-guix-get-database)
                      "\n"))
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
@@ -206,7 +222,7 @@ Return the REPL output (including the error output) as a string."
 (defun helm-system-packages-guix-refresh ()
   "Refresh the list of installed packages."
   (interactive)
-  (setq helm-system-packages-guix--database nil)
+  (remhash (helm-system-packages-guix-database-index) helm-system-packages-guix--databases)
   (let* ((explicit (helm-system-packages-guix-list-explicit))
          display-list)
     (dolist (p explicit)
@@ -223,7 +239,7 @@ Otherwise display in `helm-system-packages-buffer'."
                     (lambda (name)
                       (let ((props (car (alist-get
                                          name
-                                         helm-system-packages-guix--database
+                                         (helm-system-packages-guix-get-database)
                                          nil nil #'string=))))
                         (cons name
                               (string-join
@@ -277,7 +293,7 @@ With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-browse-url
    (mapcar (lambda (name) (plist-get
-                           (car (alist-get name helm-system-packages-guix--database
+                           (car (alist-get name (helm-system-packages-guix-get-database)
                                            nil nil #'string=))
                            :home-page))
            (helm-marked-candidates))))
@@ -308,7 +324,7 @@ Otherwise display in `helm-system-packages-buffer'."
                          (lambda (name)
                            (let ((props (car (alist-get
                                               name
-                                              helm-system-packages-guix--database
+                                              (helm-system-packages-guix-get-database)
                                               nil nil #'string=))))
                              (append (plist-get props :inputs)
                                      (plist-get props :propagated-inputs))))
