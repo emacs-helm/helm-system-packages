@@ -224,24 +224,31 @@ See `helm-system-packages-guix-database-index'.")
   "Print information about the selected packages.
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (helm-system-packages-show-information
-   `((uninstalled .
-                  ,(mapcar
-                    (lambda (name)
-                      (let ((props (car (alist-get
-                                         name
-                                         (helm-system-packages-guix-get-database)
-                                         nil nil #'string=))))
-                        (cons name
-                              (string-join
-                               (cl-loop for (key property) on props by #'cddr
-                                        collect (format "%s: %s"
-                                                        (substring (prin1-to-string key) 1)
-                                                        property))
-                               "\n"))))
-                    (if helm-in-persistent-action
-                        (list candidate)
-                      (helm-marked-candidates)))))))
+  (cl-flet ((format-property
+             (prop)
+             (cond
+              ((listp prop)
+               (string-join prop " "))
+              (nil "")
+              (t prop))))
+    (helm-system-packages-show-information
+     `((uninstalled .
+                    ,(mapcar
+                      (lambda (name)
+                        (let ((props (car (alist-get
+                                           name
+                                           (helm-system-packages-guix-get-database)
+                                           nil nil #'string=))))
+                          (cons name
+                                (string-join
+                                 (cl-loop for (key property) on props by #'cddr
+                                          collect (format "%s: %s"
+                                                          (substring (prin1-to-string key) 1)
+                                                          (format-property property)))
+                                 "\n"))))
+                      (if helm-in-persistent-action
+                          (list candidate)
+                        (helm-marked-candidates))))))))
 
 (defun helm-system-packages-guix-run (command args packages)
   "Call COMMAND ARGS PACKAGES as current user (sudo is not used).
