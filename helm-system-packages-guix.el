@@ -106,13 +106,14 @@ Requirements:
 Return the REPL output (including the error output) as a string."
   (let ((temp-file))
     (unwind-protect
-        (progn
+        (let ((inhibit-message t))
+          ;; Inhibit file saving message of temp-file since it's an
+          ;; implementation detail.
           (setq temp-file (make-temp-file "helm-system-packages-guix"))
           (with-temp-buffer
             (dolist (f (cons form more-forms))
               (insert (helm-system-packages-guix-el->scheme-syntax f)))
             (write-region (point-min) (point-max) temp-file))
-          (message "Building package database...")
           (with-output-to-string
             (with-current-buffer standard-output
               (process-file "guix" nil '(t t) nil "repl" temp-file))))
@@ -180,11 +181,13 @@ See `helm-system-packages-guix-database-index'.")
 (defun helm-system-packages-guix-get-database ()
   (let* ((index (helm-system-packages-guix-database-index)))
     (or (gethash index helm-system-packages-guix--databases)
-        (let ((result (cl-sort
-                       (read (helm-system-packages-generate-database))
-                       #'string< :key #'car)))
-          (puthash index result helm-system-packages-guix--databases)
-          result))))
+        (progn
+          (message "Building package database...")
+          (let ((result (cl-sort
+                         (read (helm-system-packages-generate-database))
+                         #'string< :key #'car)))
+            (puthash index result helm-system-packages-guix--databases)
+            result)))))
 
 (defun helm-system-packages-guix-cache (display-list)
   "Cache all package names with descriptions. "
