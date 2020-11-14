@@ -5,7 +5,7 @@
 
 ;; Author: Arnaud Hoffmann <tuedachu@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.10.1
+;; Version: 1.10.2
 ;; Package-Requires: ((emacs "25.1") (helm "2.8.6"))
 ;; Keywords: helm, packages
 

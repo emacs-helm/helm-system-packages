@@ -6,7 +6,7 @@
 ;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Maintainer: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.10.1
+;; Version: 1.10.2
 ;; Package-Requires: ((emacs "24.4") (helm "2.8.6"))
 ;; Keywords: helm, packages
 
