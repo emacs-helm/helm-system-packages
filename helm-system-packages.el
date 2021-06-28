@@ -539,20 +539,20 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
 
 ;; TODO: When all entries are filtered out by the transformer, it seems that
 ;; bindings don't work (e.g. M-N to re-enable uninstalled packages).  Helm bug?
-(defun helm-system-packages-show-packages (package-alist &optional title)
+(defun helm-system-packages-show-packages (pkg-alist &optional title)
   "Run a Helm session over the packages in PACKAGE-ALIST.
 The key of the alist is ignored and the package lists are considered as one
 single list.  This may change in the future.
 The value is a string buffer, like the cache.
 TITLE is the name of the Helm session."
-  (if (not package-alist)
+  (if (not pkg-alist)
       ;; TODO: Do not quit Helm session.
       (message "No dependency list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
     ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
     (let (desc-res
           (descriptions (plist-get (helm-system-packages--cache-get) :descriptions))
           (buf (with-temp-buffer
-                 (mapc 'insert (mapcar 'cdr package-alist))
+                 (mapc 'insert (mapcar 'cdr pkg-alist))
                  (sort-lines nil (point-min) (point-max))
                  (delete-duplicate-lines (point-min) (point-max))
                  (buffer-string))))
