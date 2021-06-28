@@ -37,6 +37,9 @@
 ;; TODO: Add support for multiple outputs (install, uninstall, listing...).
 ;; TODO: Add support for multiple versions.
 
+(defvar helm-system-packages-guix-dependencies '("guix")
+  "Dependencies needed by Guix.")
+
 (defvar helm-system-packages-guix-help-message
   "* Helm guix
 
@@ -369,7 +372,7 @@ Otherwise display in `helm-system-packages-buffer'."
   (helm-system-packages-manager-create
    :name "guix"
    :refresh-function #'helm-system-packages-guix-refresh
-   :dependencies '("guix" "recsel")
+   :dependencies helm-system-packages-guix-dependencies
    :help-message 'helm-system-packages-guix-help-message
    :keymap helm-system-packages-guix-map
    :transformer #'helm-system-packages-guix-transformer
