@@ -474,7 +474,7 @@ In case of a hash table, one Helm source per package will be created."
             :buffer "*helm system package files*"))))
 
 (defun helm-system-packages-files (command &rest args)
-  (let ((res (apply #'helm-system-packages-run command args)))
+  (let ((res (apply #'helm-system-packages-call command args)))
     (if (string= res "")
         (message "No result")
       (if helm-current-prefix-arg
