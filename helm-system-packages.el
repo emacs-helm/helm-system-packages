@@ -61,6 +61,7 @@
 (require 'tramp-sh)
 (require 'helm)
 (require 'cl-lib)
+(require 'ansi-color)
 
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
@@ -407,7 +408,8 @@ Otherwise display in `helm-system-packages-buffer'."
         (org-mode)
         ;; This is does not work for pacman which needs a specialized function.
         (setq res (replace-regexp-in-string "\\`.*: " "* " res))
-        (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res)))
+        (setq res (replace-regexp-in-string "\n\n.*: " "\n* " res))
+        (setq res (ansi-color-apply res)))
       (save-excursion (insert res))
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))

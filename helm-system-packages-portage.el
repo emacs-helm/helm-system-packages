@@ -143,10 +143,10 @@ If nil, then use `helm-system-packages-column-width'."
        (helm-system-packages-browse-url (split-string (helm-system-packages-run "eix" "--format" "<homepage>\n") "\n" t))))
     ("Find files" .
      (lambda (_)
-       (helm-system-packages-print "equery" "--no-color" "files")))
+       (helm-system-packages-print "equery" "files")))
     ("Show dependencies" .
      (lambda (_)
-       (helm-system-packages-print "equery" "--no-color" "depgraph")))
+       (helm-system-packages-print "equery" "depgraph")))
     ("Show reverse dependencies" .
      (lambda (_)
        (helm-system-packages-print "equery" "--no-color" "depends")))
