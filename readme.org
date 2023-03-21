@@ -1,5 +1,7 @@
 #+TITLE: Helm System Packages
 
+This package is no more maintained and not fully working.
+
 * Introduction
 
 Helm System Packages is an Emacs-based interface to the package manager of your
