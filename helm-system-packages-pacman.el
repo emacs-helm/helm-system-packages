@@ -188,7 +188,8 @@ If nil, no automatic action is taken."
   :type 'integer)
 
 (defun helm-system-packages-pacman-outdated-database-p ()
-  "Return non-nil when database is older than `helm-system-packages-pacman-synchronize-threshold'."
+  "Return non-nil when database is too old.
+I.e. older than `helm-system-packages-pacman-synchronize-threshold'."
   (when helm-system-packages-pacman-synchronize-threshold
     (let ((db-path (with-temp-buffer
                      (process-file "pacman" nil t nil "--verbose")
