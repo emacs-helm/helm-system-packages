@@ -63,6 +63,8 @@
 (require 'cl-lib)
 (require 'ansi-color)
 
+(declare-function helm-ff--create-tramp-name "helm-files")
+
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
 (make-obsolete-variable 'helm-system-packages-eshell-buffer 'helm-system-packages-shell-buffer-name "1.9.0")
@@ -84,13 +86,16 @@
 It's an alist indexed by hostnames.
 The values are in the form
 
-  (:names STRING-BUFFER :descriptions STRING-BUFFER :display LIST :title STRING ...)
+  (:names STRING-BUFFER
+   :descriptions STRING-BUFFER
+   :display LIST
+   :title STRING ...)
 
-'display' is a list of
+\\='display' is a list of
 
   (package . (faces...))
 
-Optional 'title' is usually the package manager.")
+Optional \\='title' is usually the package manager.")
 
 (defvar helm-system-packages--cache-current nil
   "Current host to use from cache.
@@ -250,7 +255,7 @@ See `helm-system-packages--cache-current'."
 NAMES and DESCRIPTIONS are strings.
 TITLE is a string, usually the name of the package manager.
 
-DISPLAY-LIST is a list of (PACKAGE . '(FACES...)).
+DISPLAY-LIST is a list of (PACKAGE . (FACES...)).
 It associates packages with the list of faces used for display.  A face
 corresponds to a category.  A package can belong to multiple
 categories (e.g. both \"orphan\" and \"installed\").
@@ -415,29 +420,10 @@ Otherwise display in `helm-system-packages-buffer'."
         (view-mode 1)))))
 (make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
 
-(defmacro helm-system-packages-make-tramp-file-name (file)
-  "Prefix FILE with path to remote connection.
-If local, return FILE unmodified."
-  `(let ((v (tramp-dissect-file-name default-directory)))
-     ,(if (< emacs-major-version 26)
-          `(tramp-make-tramp-file-name
-            (tramp-file-name-method v)
-            (tramp-file-name-user v)
-            (tramp-file-name-host v)
-            ,file
-            (tramp-file-name-hop v))
-        `(tramp-make-tramp-file-name
-          (tramp-file-name-method v)
-          (tramp-file-name-user v)
-          (tramp-file-name-domain v)
-          (tramp-file-name-host v)
-          (tramp-file-name-port v)
-          ,file
-          (tramp-file-name-hop v)))))
-
 (defun helm-system-packages-prefix-remote (file)
+  (require 'helm-files)
   (if (tramp-tramp-file-p default-directory)
-      (helm-system-packages-make-tramp-file-name file)
+      (helm-ff--create-tramp-name file)
     file))
 
 (defun helm-system-packages-build-file-source (package files)
@@ -453,11 +439,9 @@ PACKAGES is a string and FILES is a list of strings."
     :action 'helm-find-files-actions))
 
 (defun helm-system-packages-find-files (files)
-  "Run a `helm-find-files' over files in FILES
-FILES are either
-
-- a hash table whose keys are the package names and the values the list of files,
-- or a single list of files.
+  "Run a `helm-find-files' over files in FILES.
+FILES are either a hash table whose keys are the package names and the
+values the list of files, or a single list of files.
 
 In case of a hash table, one Helm source per package will be created."
   (if (= (hash-table-count files) 0)
@@ -504,7 +488,8 @@ The basename is defined by `helm-system-packages-shell-buffer-name'."
 (defun helm-system-packages-call-as-root (command args packages)
   "Call COMMAND ARGS PACKAGES as root.
 ARGS and PACKAGES must be lists.
-COMMAND will be run in the Eshell buffer named by `helm-system-packages-shell-name'."
+COMMAND will be run in the Eshell buffer named by
+`helm-system-packages-shell-name'."
   (require 'esh-mode)
   (if (not packages)
       (message "No suitable package selected")
@@ -682,5 +667,10 @@ prefix arg allow choosing package manager"
       (funcall (intern (concat "helm-system-packages-" manager))))))
 
 (provide 'helm-system-packages)
+
+;; Local Variables:
+;; byte-compile-warnings: (not cl-functions obsolete)
+;; indent-tabs-mode: nil
+;; End:
 
 ;;; helm-system-packages.el ends here
