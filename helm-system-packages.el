@@ -579,7 +579,10 @@ TITLE is the name of the Helm session."
   "Browse homepage URLs of `helm-marked-candidates'."
   (if (not urls)
       (message "No result")
-    (mapc 'browse-url (helm-comp-read "URL: " urls :must-match t :exec-when-only-one t :marked-candidates t))))
+    (mapc 'browse-url (helm-comp-read
+                       "URL: "
+                       (helm-fast-remove-dups urls :test #'equal)
+                       :must-match t :exec-when-only-one t :marked-candidates t))))
 
 (defun helm-system-packages-missing-dependencies-p (&rest deps)
   "Return non-nil if some DEPS are missing."
