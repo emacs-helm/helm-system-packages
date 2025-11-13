@@ -176,10 +176,7 @@ See `helm-system-packages-guix-database-index'.")
 
 (defun helm-system-packages-guix-database-index ()
   "Return hostname corresponding to `default-directory'"
-  (if (tramp-tramp-file-p default-directory)
-      (tramp-file-name-host
-       (tramp-dissect-file-name default-directory))
-    "localhost"))
+  (or (file-remote-p default-directory 'host) "localhost"))
 
 (defun helm-system-packages-guix-get-database ()
   (let* ((index (helm-system-packages-guix-database-index)))
