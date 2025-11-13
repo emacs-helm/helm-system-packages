@@ -571,12 +571,8 @@ TITLE is the name of the Helm session."
 
 (defun helm-system-packages-missing-dependencies-p (&rest deps)
   "Return non-nil if some DEPS are missing."
-  (let ((missing-deps
-         (seq-remove (lambda (p)
-                       (if (tramp-tramp-file-p default-directory)
-                           (tramp-find-executable (tramp-dissect-file-name default-directory) p nil)
-                         (executable-find p)))
-                     deps)))
+  (let ((missing-deps (cl-loop for p in deps
+                               unless (executable-find p t) collect p)))
     (when missing-deps
       (message "Dependencies are missing (%s), please install them"
                (mapconcat 'identity missing-deps ", ")))))
