@@ -57,8 +57,6 @@
 ;;   over the aforementioned category alists.
 
 (require 'seq)
-(require 'tramp)
-(require 'tramp-sh)
 (require 'helm)
 (require 'cl-lib)
 (require 'ansi-color)
