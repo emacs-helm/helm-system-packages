@@ -519,10 +519,10 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
   "COMMAND to run over installed packages among `helm-marked-candidates'.
 COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
   (helm-system-packages-call-as-root
-   command
-   args
-   (seq-filter (lambda (p) (assoc p (plist-get (helm-system-packages--cache-get) :display)))
-               (helm-marked-candidates))))
+   command args
+   (cl-loop for p in (helm-marked-candidates)
+            for alist = (plist-get (helm-system-packages--cache-get) :display)
+            when (assoc p alist) collect p)))
 
 ;; TODO: When all entries are filtered out by the transformer, it seems that
 ;; bindings don't work (e.g. M-N to re-enable uninstalled packages).  Helm bug?
