@@ -63,8 +63,6 @@
 (require 'cl-lib)
 (require 'ansi-color)
 
-(declare-function helm-ff--create-tramp-name "helm-files")
-
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
 (make-obsolete-variable 'helm-system-packages-eshell-buffer 'helm-system-packages-shell-buffer-name "1.9.0")
@@ -142,7 +140,6 @@ This is only used for dependency display.")
 (declare-function eshell-send-input "esh-mode.el")
 (defvar eshell-buffer-name)
 (defvar helm-ff-transformer-show-only-basename)
-(declare-function helm-ff--create-tramp-name "helm-files.el")
 (declare-function helm-comp-read "helm-mode.el")
 (declare-function org-sort-entries "org.el")
 (declare-function helm-system-packages-refresh "helm-system-package.el")
@@ -245,8 +242,7 @@ the window."
   "Get current cache entry.
 See `helm-system-packages--cache-current'."
   (let ((host (or helm-system-packages--cache-current
-                  (and (tramp-tramp-file-p default-directory)
-                       (tramp-file-name-host (tramp-dissect-file-name default-directory)))
+                  (file-remote-p default-directory 'host)
                   "")))
     (cdr (assoc host helm-system-packages--cache))))
 
@@ -261,9 +257,7 @@ corresponds to a category.  A package can belong to multiple
 categories (e.g. both \"orphan\" and \"installed\").
 
 EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
-  (let ((host (or (and (tramp-tramp-file-p default-directory)
-                       (tramp-file-name-host (tramp-dissect-file-name default-directory)))
-                  ""))
+  (let ((host (or (file-remote-p default-directory 'host) ""))
         (val (append  (list :names names :descriptions descriptions :display display-list :title title) extra)))
     (if (assoc host helm-system-packages--cache)
         (setcdr (assoc host helm-system-packages--cache) val)
@@ -421,10 +415,7 @@ Otherwise display in `helm-system-packages-buffer'."
 (make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
 
 (defun helm-system-packages-prefix-remote (file)
-  (require 'helm-files)
-  (if (tramp-tramp-file-p default-directory)
-      (helm-ff--create-tramp-name file)
-    file))
+  (or (file-remote-p file) file))
 
 (defun helm-system-packages-build-file-source (package files)
   "Build Helm file source for PACKAGE with FILES candidates.
@@ -475,14 +466,10 @@ In case of a hash table, one Helm source per package will be created."
 The basename is defined by `helm-system-packages-shell-buffer-name'."
   (concat "*"
           helm-system-packages-shell-buffer-name
-          (when (tramp-tramp-file-p default-directory)
-            (let ((vec (tramp-dissect-file-name default-directory)))
-              (when (or (tramp-file-name-user vec) (tramp-file-name-host vec))
-                (concat " "
-                        (tramp-file-name-user vec)
-                        (and (tramp-file-name-host vec)
-                             "@")
-                        (tramp-file-name-host vec)))))
+          (helm-aif (cl-loop for id in '(user host)
+                             when (file-remote-p default-directory id)
+                             collect it)
+              (concat " " (car it) "@" (cadr it)))
           "*"))
 
 (defun helm-system-packages-call-as-root (command args packages)
