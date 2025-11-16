@@ -174,6 +174,7 @@ If nil, then use `helm-system-packages-column-width'."
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
+  (message "Updating cache...")
   (setq helm-system-packages-column-width
         (or helm-system-packages-pacman-column-width
             helm-system-packages-column-width))
@@ -195,7 +196,8 @@ If nil, then use `helm-system-packages-column-width'."
       (push 'helm-system-packages-locals (cdr (assoc p display-list))))
     (dolist (p groups)
       (push (cons p '(helm-system-packages-groups)) display-list))
-    (helm-system-packages-pacman-cache display-list locals groups)))
+    (helm-system-packages-pacman-cache display-list locals groups)
+    (message "Updating cache done")))
 
 (defcustom helm-system-packages-pacman-synchronize-threshold 86400
   "Auto-synchronize database on installation if older than this many seconds.
