@@ -653,13 +653,13 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
       :persistent-help "Show package description"
       :action (helm-system-packages-manager-actions manager))))
 
-(defun helm-system-packages-1 (symbol)
+(defun helm-system-packages-1 (pkg)
   "Call helm on SYMBOL manager.
 SYMBOL should handle the variable `helm-system-packages-<manager>'.
 SYMBOL contains the needed infos to build helm source see
 `helm-system-packages-manager' defstruct."
   (let ((current-manager
-         (symbol-value symbol)))
+         (symbol-value pkg)))
     (unless (apply 'helm-system-packages-missing-dependencies-p
                    (helm-system-packages-manager-dependencies
                     current-manager))
@@ -671,7 +671,7 @@ SYMBOL contains the needed infos to build helm source see
             :truncate-lines t
             :input (when helm-system-packages-use-symbol-at-point-p
                      (substring-no-properties
-                      (or (thing-at-point 'symbol) "")))))))
+                      (or (thing-at-point 'pkg) "")))))))
 
 (defvar helm-system-packages--last-manager nil)
 ;;;###autoload
@@ -685,19 +685,19 @@ system manager."
                       "guix"
                     (cl-loop for (exe . mng) in helm-system-packages--managers
                              thereis (and (executable-find exe t) mng))))
-         (symbol (and manager
+         (pkg (and manager
                       (intern (concat "helm-system-packages-" manager)))))
     (cl-assert manager nil "No supported package manager was found")
     (when (or arg (and helm-system-packages--last-manager
                        (not (eq helm-system-packages--last-manager
-                                symbol))))
+                                pkg))))
       (setq helm-system-packages--cache nil
             helm-system-packages--virtual-list nil
             helm-system-packages--cache-current nil))
-    (setq helm-system-packages--last-manager symbol)
-    (require symbol)
-    (cl-assert (boundp symbol) nil (format "Undefined variable %s" symbol))
-    (helm-system-packages-1 symbol)))
+    (setq helm-system-packages--last-manager pkg)
+    (require pkg)
+    (cl-assert (boundp pkg) nil (format "Undefined variable %s" pkg))
+    (helm-system-packages-1 pkg)))
 
 (provide 'helm-system-packages)
 
