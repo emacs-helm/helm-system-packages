@@ -673,6 +673,7 @@ SYMBOL contains the needed infos to build helm source see
                      (substring-no-properties
                       (or (thing-at-point 'symbol) "")))))))
 
+(defvar helm-system-packages--last-manager nil)
 ;;;###autoload
 (defun helm-system-packages (&optional arg)
   "Helm user interface for system packages.
@@ -684,12 +685,16 @@ system manager."
                       "guix"
                     (cl-loop for (exe . mng) in helm-system-packages--managers
                              thereis (and (executable-find exe t) mng))))
-         (symbol (intern (concat "helm-system-packages-" manager))))
+         (symbol (and manager
+                      (intern (concat "helm-system-packages-" manager)))))
     (cl-assert manager nil "No supported package manager was found")
-    (when arg
+    (when (or arg (and helm-system-packages--last-manager
+                       (not (eq helm-system-packages--last-manager
+                                symbol))))
       (setq helm-system-packages--cache nil
             helm-system-packages--virtual-list nil
             helm-system-packages--cache-current nil))
+    (setq helm-system-packages--last-manager symbol)
     (require symbol)
     (cl-assert (boundp symbol) nil (format "Undefined variable %s" symbol))
     (helm-system-packages-1 symbol)))
