@@ -322,8 +322,13 @@ associated symbol.
 If not found, category is `uninstalled'."
   (let ((result '()))
     (dolist (p packages result)
-      (let* ((e (assoc p (plist-get (helm-system-packages--cache-get) :display)))
-             (category (or (and e (intern (replace-regexp-in-string ".*\\W\\(\\w+\\)$" "\\1" (symbol-name (cadr e)))))
+      (let* ((e (assoc p (plist-get (helm-system-packages--cache-get)
+                                    :display)))
+             (category (or (helm-aand (cadr e)
+                                      (symbol-name it)
+                                      (replace-regexp-in-string
+                                       ".*\\W\\(\\w+\\)$" "\\1" it)
+                                      (intern it))
                            'uninstalled))
              (cell (assoc category result)))
         (if cell
