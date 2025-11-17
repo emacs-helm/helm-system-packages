@@ -170,19 +170,6 @@ If nil, then use `helm-system-packages-column-width'."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-portage-build-source ()
-  "Build Helm source for portage."
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
-    (helm-build-in-buffer-source title
-      :init 'helm-system-packages-init
-      :candidate-transformer 'helm-system-packages-portage-transformer
-      :candidate-number-limit helm-system-packages-candidate-limit
-      :display-to-real 'helm-system-packages-extract-name
-      :keymap helm-system-packages-portage-map
-      :help-message 'helm-system-packages-portage-help-message
-      :persistent-help "Show package description"
-      :action helm-system-packages-portage-actions)))
-
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."
   (unless (helm-candidate-buffer)
@@ -226,15 +213,18 @@ If nil, then use `helm-system-packages-column-width'."
     :help-message 'helm-system-packages-portage-help-message
     :action helm-system-packages-portage-use-actions))
 
-(defun helm-system-packages-portage ()
-  "Preconfigured `helm' for Portage."
-  (unless (helm-system-packages-missing-dependencies-p "eix" "qlist" "euse" "portageq" "genlop")
-    (helm :sources (list (helm-system-packages-portage-build-source)
-                         helm-system-packages-portage-use-source)
-          :buffer "*helm portage*"
-          :truncate-lines t
-          :input (when helm-system-packages-use-symbol-at-point-p
-                   (substring-no-properties (or (thing-at-point 'symbol) ""))))))
+(defvar helm-system-packages-portage-dependencies
+  '("emerge" "eix" "qlist" "euse" "portageq" "genlop"))
+(defvar helm-system-packages-portage
+  (helm-system-packages-manager-create
+   :name "dpkg"
+   :refresh-function #'helm-system-packages-portage-refresh
+   :dependencies helm-system-packages-portage-dependencies
+   :help-message 'helm-system-packages-portage-help-message
+   :keymap helm-system-packages-portage-map
+   :transformer #'helm-system-packages-portage-transformer
+   :actions helm-system-packages-portage-actions
+   :extra-source 'helm-system-packages-portage-use-source))
 
 (provide 'helm-system-packages-portage)
 

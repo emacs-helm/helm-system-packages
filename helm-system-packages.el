@@ -636,7 +636,8 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
   help-message
   keymap
   transformer
-  actions)
+  actions
+  extra-source)
 
 (defun helm-system-packages-build-source (manager)
   "Build Helm source for MANAGER."
@@ -662,7 +663,9 @@ SYMBOL contains the needed infos to build helm source see
     (unless (apply 'helm-system-packages-missing-dependencies-p
                    (helm-system-packages-manager-dependencies
                     current-manager))
-      (helm :sources (helm-system-packages-build-source current-manager)
+      (helm :sources (list (helm-system-packages-build-source current-manager)
+                           (helm-system-packages-manager-extra-source
+                            current-manager))
             :buffer (format "*helm %s*" (helm-system-packages-manager-name
                                          current-manager))
             :truncate-lines t
