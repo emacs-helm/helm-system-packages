@@ -640,6 +640,24 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
       :persistent-help "Show package description"
       :action (helm-system-packages-manager-actions manager))))
 
+(defun helm-system-packages-1 (symbol)
+  "Call helm on SYMBOL manager.
+SYMBOL should handle the variable `helm-system-packages-<manager>'.
+SYMBOL contains the needed infos to build helm source see
+`helm-system-packages-manager' defstruct."
+  (let ((current-manager
+         (symbol-value symbol)))
+    (unless (apply 'helm-system-packages-missing-dependencies-p
+                   (helm-system-packages-manager-dependencies
+                    current-manager))
+      (helm :sources (helm-system-packages-build-source current-manager)
+            :buffer (format "*helm %s*" (helm-system-packages-manager-name
+                                         current-manager))
+            :truncate-lines t
+            :input (when helm-system-packages-use-symbol-at-point-p
+                     (substring-no-properties
+                      (or (thing-at-point 'symbol) "")))))))
+
 ;;;###autoload
 (defun helm-system-packages (&optional arg)
   "Helm user interface for system packages.
@@ -671,18 +689,7 @@ system manager."
     (require symbol)
     (if (boundp symbol)
         ;; New abstraction.
-        (let ((current-manager
-               (symbol-value symbol)))
-          (unless (apply 'helm-system-packages-missing-dependencies-p
-                         (helm-system-packages-manager-dependencies
-                          current-manager))
-            (helm :sources (helm-system-packages-build-source current-manager)
-                  :buffer (format "*helm %s*" (helm-system-packages-manager-name
-                                               current-manager))
-                  :truncate-lines t
-                  :input (when helm-system-packages-use-symbol-at-point-p
-                           (substring-no-properties
-                            (or (thing-at-point 'symbol) ""))))))
+        (helm-system-packages-1 symbol)
       ;; Old abstraction (deprecated).
       (fset 'helm-system-packages-refresh
             (intern (concat "helm-system-packages-" manager "-refresh")))
