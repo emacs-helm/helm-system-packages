@@ -100,42 +100,41 @@
           (push (propertize p 'face (car face)) res)))))
     (helm-fast-remove-dups res :test #'equal)))
 
-;; TODO: Possible optimization: Split buffer directly.
 (defun helm-system-packages-pacman-list-explicit ()
   "List explicitly installed packages."
-  (split-string (with-temp-buffer
-                  (process-file "pacman" nil t nil
-                                "--query" "--explicit" "--quiet")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "pacman" nil t nil
+                  "--query" "--explicit" "--quiet")
+    (split-string (buffer-string) "\n" t)))
 
 (defun helm-system-packages-pacman-list-dependencies ()
   "List packages installed as a required dependency."
-  (split-string (with-temp-buffer
-                  (process-file "pacman" nil t nil "--query" "--deps" "--quiet")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "pacman" nil t nil "--query" "--deps" "--quiet")
+    (split-string (buffer-string) "\n" t)))
 
 (defun helm-system-packages-pacman-list-orphans ()
   "List orphan packages (unrequired dependencies)."
-  (split-string (with-temp-buffer
-                  (process-file "pacman" nil t nil
-                                "--query" "--deps" "--unrequired" "--quiet")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "pacman" nil t nil
+                  "--query" "--deps" "--unrequired" "--quiet")
+    (split-string (buffer-string) "\n" t)))
 
 (defun helm-system-packages-pacman-list-locals ()
   "List explicitly installed local packages.
 Local packages can also be orphans, explicit or dependencies."
-  (split-string (with-temp-buffer
-                  (process-file "pacman" nil t nil
-                                "--query" "--foreign" "--quiet")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "pacman" nil t nil
+                  "--query" "--foreign" "--quiet")
+    (split-string (buffer-string) "\n" t)))
 
 (defun helm-system-packages-pacman-list-groups ()
   "List groups.
 Groups can be (un)installed.  Dependency queries list the
 packages belonging to the group."
-  (split-string (with-temp-buffer
-                  (process-file "pacman" nil t nil "--sync" "--groups")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "pacman" nil t nil "--sync" "--groups")
+    (split-string (buffer-string) "\n" t)))
 
 ;; TODO: Merge this function into -refresh.
 (defun helm-system-packages-pacman-cache (display-list local-packages groups)
