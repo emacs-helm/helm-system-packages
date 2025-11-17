@@ -70,7 +70,7 @@
 (defun helm-system-packages-pacman-transformer (packages)
   ;; TODO: Possible optimization: Get rid of `reverse'.
   (let (res (pkglist (reverse packages)))
-    (dolist (p pkglist res)
+    (dolist (p pkglist)
       (let ((face (cdr (assoc (helm-system-packages-extract-name p)
                               (plist-get (helm-system-packages--cache-get)
                                          :display)))))
@@ -97,7 +97,8 @@
                 (memq 'helm-system-packages-orphans face))
            (and helm-system-packages--show-groups-p
                 (memq 'helm-system-packages-groups face)))
-          (push (propertize p 'face (car face)) res)))))))
+          (push (propertize p 'face (car face)) res)))))
+    (helm-fast-remove-dups res :test #'equal)))
 
 ;; TODO: Possible optimization: Split buffer directly.
 (defun helm-system-packages-pacman-list-explicit ()
