@@ -62,8 +62,10 @@
 (require 'ansi-color)
 
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
-(defvar helm-system-packages-eshell-buffer (concat "*" helm-system-packages-shell-buffer-name "*"))
-(make-obsolete-variable 'helm-system-packages-eshell-buffer 'helm-system-packages-shell-buffer-name "1.9.0")
+(defvar helm-system-packages-eshell-buffer
+  (concat "*" helm-system-packages-shell-buffer-name "*"))
+(make-obsolete-variable 'helm-system-packages-eshell-buffer
+                        'helm-system-packages-shell-buffer-name "1.9.0")
 (defvar helm-system-packages-buffer "*helm-system-packages-output*")
 
 (defvar helm-system-packages--show-uninstalled-p t)
@@ -101,35 +103,43 @@ If nil, use host linked with `default-directory'.")
   "List of virtual packages.
 This is only used for dependency display.")
 
-(defface helm-system-packages-explicit '((t (:inherit font-lock-warning-face)))
+(defface helm-system-packages-explicit
+    '((t (:inherit font-lock-warning-face)))
   "Face for explicitly installed packages."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-dependencies '((t (:inherit font-lock-comment-face :slant italic)))
+(defface helm-system-packages-dependencies
+    '((t (:inherit font-lock-comment-face :slant italic)))
   "Face for packages installed as dependencies."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-orphans '((t (:inherit font-lock-string-face :slant italic)))
+(defface helm-system-packages-orphans
+    '((t (:inherit font-lock-string-face :slant italic)))
   "Face for orphan packages (unrequired dependencies)."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-locals '((t (:weight bold)))
+(defface helm-system-packages-locals
+    '((t (:weight bold)))
   "Face for local packages."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-groups '((t (:inherit font-lock-doc-face)))
+(defface helm-system-packages-groups
+    '((t (:inherit font-lock-doc-face)))
   "Face for package groups."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-pinned '((t (:weight bold)))
+(defface helm-system-packages-pinned
+    '((t (:weight bold)))
   "Face for pinned packages."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-virtual '((t (:slant italic)))
+(defface helm-system-packages-virtual
+    '((t (:slant italic)))
   "Face for virtual packages."
   :group 'helm-system-packages)
 
-(defface helm-system-packages-residuals '((t (:slant italic)))
+(defface helm-system-packages-residuals
+    '((t (:slant italic)))
   "Face for packages with left-over configuration files."
   :group 'helm-system-packages)
 
@@ -146,49 +156,56 @@ This is only used for dependency display.")
 (defun helm-system-packages-toggle-explicit ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-explicit-p (not helm-system-packages--show-explicit-p))
+    (setq helm-system-packages--show-explicit-p
+          (not helm-system-packages--show-explicit-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-explicit 'helm-only t)
 
 (defun helm-system-packages-toggle-uninstalled ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-uninstalled-p (not helm-system-packages--show-uninstalled-p))
+    (setq helm-system-packages--show-uninstalled-p
+          (not helm-system-packages--show-uninstalled-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-uninstalled 'helm-only t)
 
 (defun helm-system-packages-toggle-dependencies ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-dependencies-p (not helm-system-packages--show-dependencies-p))
+    (setq helm-system-packages--show-dependencies-p
+          (not helm-system-packages--show-dependencies-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-dependencies 'helm-only t)
 
 (defun helm-system-packages-toggle-orphans ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-orphans-p (not helm-system-packages--show-orphans-p))
+    (setq helm-system-packages--show-orphans-p
+          (not helm-system-packages--show-orphans-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-orphans 'helm-only t)
 
 (defun helm-system-packages-toggle-locals ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-locals-p (not helm-system-packages--show-locals-p))
+    (setq helm-system-packages--show-locals-p
+          (not helm-system-packages--show-locals-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-locals 'helm-only t)
 
 (defun helm-system-packages-toggle-groups ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-groups-p (not helm-system-packages--show-groups-p))
+    (setq helm-system-packages--show-groups-p
+          (not helm-system-packages--show-groups-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-groups 'helm-only t)
 
 (defun helm-system-packages-toggle-pinned ()
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages--show-pinned-p (not helm-system-packages--show-pinned-p))
+    (setq helm-system-packages--show-pinned-p
+          (not helm-system-packages--show-pinned-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-pinned 'helm-only t)
 
@@ -244,7 +261,8 @@ See `helm-system-packages--cache-current'."
                   "")))
     (cdr (assoc host helm-system-packages--cache))))
 
-(defun helm-system-packages--cache-set (names descriptions display-list &optional title &rest extra)
+(defun helm-system-packages--cache-set (names descriptions display-list
+                                        &optional title &rest extra)
   "Set current cache entry.
 NAMES and DESCRIPTIONS are strings.
 TITLE is a string, usually the name of the package manager.
@@ -256,7 +274,9 @@ categories (e.g. both \"orphan\" and \"installed\").
 
 EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
   (let ((host (or (file-remote-p default-directory 'host) ""))
-        (val (append  (list :names names :descriptions descriptions :display display-list :title title) extra)))
+        (val (append  (list :names names :descriptions descriptions
+                            :display display-list :title title)
+                      extra)))
     (if (assoc host helm-system-packages--cache)
         (setcdr (assoc host helm-system-packages--cache) val)
       (push (cons host val) helm-system-packages--cache))))
@@ -339,7 +359,8 @@ If not found, category is `uninstalled'."
   "Toggle description column."
   (interactive)
   (with-helm-alive-p
-    (setq helm-system-packages-show-descriptions-p (not helm-system-packages-show-descriptions-p))
+    (setq helm-system-packages-show-descriptions-p
+          (not helm-system-packages-show-descriptions-p))
     (helm-force-update)))
 (put 'helm-system-packages-toggle-descriptions 'helm-only t)
 
@@ -360,7 +381,8 @@ DESC-ALIST's keys are ignored, the values are in the form
     ((package-name . package-desc)...)"
   (cond
    ((not desc-alist)
-    (message "No information for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " ")))
+    (message "No information for package(s) %s"
+             (mapconcat 'identity (helm-marked-candidates) " ")))
    ;; TODO: Sort buffer output? Or keep the mark order?
    (helm-current-prefix-arg
     (mapc 'insert (mapcar 'cadr desc-alist)))
@@ -370,7 +392,9 @@ DESC-ALIST's keys are ignored, the values are in the form
       (dolist (desc (sort
                      (apply 'append (mapcar 'cdr desc-alist))
                      (lambda (a b) (string< (car a) (car b)))))
-        (insert "* " (car desc) "\n" (replace-regexp-in-string "^* " "- " (cdr desc)) "\n"))
+        (insert "* " (car desc) "\n" (replace-regexp-in-string
+                                      "^* " "- " (cdr desc))
+                "\n"))
       (goto-char (point-min))
       (org-mode)
       (outline-show-all)
@@ -415,7 +439,8 @@ Otherwise display in `helm-system-packages-buffer'."
       (save-excursion (insert res))
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
-(make-obsolete 'helm-system-packages-print 'helm-system-packages-show-information "1.9.0")
+(make-obsolete 'helm-system-packages-print
+               'helm-system-packages-show-information "1.9.0")
 
 (defun helm-system-packages-prefix-remote (file)
   (or (file-remote-p file) file))
@@ -439,13 +464,15 @@ values the list of files, or a single list of files.
 
 In case of a hash table, one Helm source per package will be created."
   (if (= (hash-table-count files) 0)
-      (message "No file list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
+      (message "No file list for package(s) %s"
+               (mapconcat 'identity (helm-marked-candidates) " "))
     (require 'helm-files)
     (if (hash-table-p files)
         (let (sources)
           (maphash
            (lambda (package files)
-             (push (helm-system-packages-build-file-source package files) sources))
+             (push (helm-system-packages-build-file-source package files)
+                   sources))
            files)
           (helm :sources sources
                 :buffer "*helm system package files*"))
@@ -460,9 +487,11 @@ In case of a hash table, one Helm source per package will be created."
       (if helm-current-prefix-arg
           (insert res)
         (helm :sources
-              (helm-system-packages-build-file-source "Packages" (split-string res "\n"))
+              (helm-system-packages-build-file-source
+               "Packages" (split-string res "\n"))
               :buffer "*helm system package files*")))))
-(make-obsolete 'helm-system-packages-files 'helm-system-packages-find-files "1.9.0")
+(make-obsolete 'helm-system-packages-files
+               'helm-system-packages-find-files "1.9.0")
 
 (defun helm-system-packages-shell-name ()
   "Return the name of the shell buffer associated with `default-directory'.
@@ -493,7 +522,9 @@ COMMAND will be run in the Eshell buffer named by
         (push "sudo" arg-list)
         (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
         (add-hook 'eshell-post-command-hook
-                  (lambda () (remove-hook 'eshell-post-command-hook 'helm-system-packages-refresh t))
+                  (lambda ()
+                    (remove-hook 'eshell-post-command-hook
+                                 'helm-system-packages-refresh t))
                   t t)
         (goto-char (point-max))
         (insert (mapconcat 'identity arg-list " "))
@@ -524,10 +555,13 @@ The value is a string buffer, like the cache.
 TITLE is the name of the Helm session."
   (if (not pkg-alist)
       ;; TODO: Do not quit Helm session.
-      (message "No dependency list for package(s) %s" (mapconcat 'identity (helm-marked-candidates) " "))
-    ;; TODO: Possible optimization: split-string + sort + del-dups + mapconcat instead of working on buffer.
+      (message "No dependency list for package(s) %s"
+               (mapconcat 'identity (helm-marked-candidates) " "))
+    ;; TODO: Possible optimization: split-string + sort + del-dups +
+    ;; mapconcat instead of working on buffer.
     (let (desc-res
-          (descriptions (plist-get (helm-system-packages--cache-get) :descriptions))
+          (descriptions (plist-get (helm-system-packages--cache-get)
+                                   :descriptions))
           (buf (with-temp-buffer
                  (mapc 'insert (mapcar 'cdr pkg-alist))
                  (sort-lines nil (point-min) (point-max))
@@ -537,11 +571,14 @@ TITLE is the name of the Helm session."
         (if (string-match (concat "^" name "  .*$") descriptions)
             (setq desc-res (concat desc-res (match-string 0 descriptions) "\n"))
           (push name helm-system-packages--virtual-list)
-          (setq desc-res (concat desc-res
-                                 name
-                                 (make-string (- helm-system-packages-column-width (length name)) ? )
-                                 "  <virtual package>"
-                                 "\n"))))
+          (setq desc-res
+                (concat desc-res
+                        name
+                        (make-string (- helm-system-packages-column-width
+                                        (length name))
+                                     ? )
+                        "  <virtual package>"
+                        "\n"))))
       (let ((helm-system-packages--cache-current 'dependencies)
             (ass (assq 'dependencies helm-system-packages--cache))
             (val (list :names buf :descriptions desc-res :title title)))
@@ -557,7 +594,9 @@ TITLE is the name of the Helm session."
     (mapc 'browse-url (helm-comp-read
                        "URL: "
                        (helm-fast-remove-dups urls :test #'equal)
-                       :must-match t :exec-when-only-one t :marked-candidates t))))
+                       :must-match t
+                       :exec-when-only-one t
+                       :marked-candidates t))))
 
 (defun helm-system-packages-missing-dependencies-p (&rest deps)
   "Return non-nil if some DEPS are missing."
@@ -589,7 +628,8 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
 
 (defun helm-system-packages-build-source (manager)
   "Build Helm source for MANAGER."
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
+  (let ((title (or (plist-get (helm-system-packages--cache-get) :title)
+                   "package manager")))
     (helm-build-in-buffer-source title
       :init (helm-system-packages--make-init manager)
       :candidate-transformer (helm-system-packages-manager-transformer manager)
@@ -634,15 +674,18 @@ system manager."
         (let ((current-manager
                (symbol-value symbol)))
           (unless (apply 'helm-system-packages-missing-dependencies-p
-                         (helm-system-packages-manager-dependencies current-manager))
+                         (helm-system-packages-manager-dependencies
+                          current-manager))
             (helm :sources (helm-system-packages-build-source current-manager)
                   :buffer (format "*helm %s*" (helm-system-packages-manager-name
                                                current-manager))
                   :truncate-lines t
                   :input (when helm-system-packages-use-symbol-at-point-p
-                           (substring-no-properties (or (thing-at-point 'symbol) ""))))))
+                           (substring-no-properties
+                            (or (thing-at-point 'symbol) ""))))))
       ;; Old abstraction (deprecated).
-      (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
+      (fset 'helm-system-packages-refresh
+            (intern (concat "helm-system-packages-" manager "-refresh")))
       (funcall (intern (concat "helm-system-packages-" manager))))))
 
 (provide 'helm-system-packages)
