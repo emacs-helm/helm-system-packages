@@ -318,26 +318,16 @@ If REVERSE is non-nil, list reverse dependencies instead."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-xbps-build-source ()
-  "Build Helm source for xbps."
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
-    (helm-build-in-buffer-source title
-      :init 'helm-system-packages-init
-      :candidate-transformer 'helm-system-packages-xbps-transformer
-      :candidate-number-limit helm-system-packages-candidate-limit
-      :display-to-real 'helm-system-packages-extract-name
-      :keymap helm-system-packages-xbps-map
-      :help-message 'helm-system-packages-xbps-help-message
-      :persistent-help "Show package description"
-      :action helm-system-packages-xbps-actions)))
-
-(defun helm-system-packages-xbps ()
-  "Preconfigured `helm' for xbps."
-  (helm :sources (helm-system-packages-xbps-build-source)
-        :buffer "*helm xbps*"
-        :truncate-lines t
-        :input (when helm-system-packages-use-symbol-at-point-p
-                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
+(defvar helm-system-packages-xpps-dependencies '("xbps-query"))
+(defvar helm-system-packages-xbps
+  (helm-system-packages-manager-create
+   :name "dpkg"
+   :refresh-function #'helm-system-packages-xbps-refresh
+   :dependencies helm-system-packages-xbps-dependencies
+   :help-message 'helm-system-packages-xbps-help-message
+   :keymap helm-system-packages-xbps-map
+   :transformer #'helm-system-packages-xbps-transformer
+   :actions helm-system-packages-xbps-actions))
 
 (provide 'helm-system-packages-xbps)
 
