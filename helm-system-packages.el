@@ -679,11 +679,13 @@ PKG contains the needed infos to build helm source see
 ;;;###autoload
 (defun helm-system-packages (&optional arg)
   "Helm user interface for system packages.
-By default choose the package manager dedicated to this system, with a
+By default choose the package manager dedicated to this system, with one
 prefix arg use Guix which is the only one that can be used aside
-system manager."
+system manager.  With two prefix args only refresh cache using the
+default system manager"
   (interactive "P")
-  (let* ((manager (if (and arg (executable-find "guix" t))
+  (let* ((manager (if (and (equal arg '(4)) (executable-find "guix" t)
+                           (y-or-n-p "Really use Guix as package manager? "))
                       "guix"
                     (cl-loop for (exe . mng) in helm-system-packages--managers
                              thereis (and (executable-find exe t) mng))))
