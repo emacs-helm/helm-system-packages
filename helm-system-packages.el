@@ -305,7 +305,9 @@ EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
                    'helm-system-packages-refresh t))))
 
 (defun helm-system-packages--make-init (manager)
-  "Cache package lists and create Helm buffer."
+  "Return the init function as a lambda.
+The init function is in charge of caching package lists and creating
+Helm buffer."
   (lambda ()
     (let ((val (helm-system-packages--cache-get)))
       (unless val
