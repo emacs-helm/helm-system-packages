@@ -88,6 +88,9 @@
     ;; manager.
     ("guix" . "guix")))
 
+;; Store previous used manager here.
+(defvar helm-system-packages--last-manager nil)
+
 ;; TODO: Replace `mapcar' by `mapcan' when possible.
 
 ;; TODO: Possible optimization: turn into hash table, notably the display list.
@@ -673,7 +676,6 @@ PKG contains the needed infos to build helm source see
                      (substring-no-properties
                       (or (thing-at-point 'pkg) "")))))))
 
-(defvar helm-system-packages--last-manager nil)
 ;;;###autoload
 (defun helm-system-packages (&optional arg)
   "Helm user interface for system packages.
@@ -686,7 +688,7 @@ system manager."
                     (cl-loop for (exe . mng) in helm-system-packages--managers
                              thereis (and (executable-find exe t) mng))))
          (pkg (and manager
-                      (intern (concat "helm-system-packages-" manager)))))
+                   (intern (concat "helm-system-packages-" manager)))))
     (cl-assert manager nil "No supported package manager was found")
     (when (or arg (and helm-system-packages--last-manager
                        (not (eq helm-system-packages--last-manager
