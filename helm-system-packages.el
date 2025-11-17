@@ -599,7 +599,8 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
 (defun helm-system-packages (&optional arg)
   "Helm user interface for system packages.
 By default choose the package manager dedicated to this system, with a
-prefix arg allow choosing package manager"
+prefix arg use Guix which is the only one that can be used aside
+system manager."
   (interactive "P")
   ;; Some package managers do not have an executable bearing the same name,
   ;; hence the pair (EXECUTABLE . PACKAGE-MANAGER).
@@ -611,30 +612,22 @@ prefix arg allow choosing package manager"
                      ;; give priority to the original package
                      ;; manager.
                      ("guix" . "guix")))
-         (remote (file-remote-p default-directory))
-         (manager (if arg
-                      (completing-read "Choose manager: "
-                                       (mapcar 'cdr managers))
+         (manager (if (and arg (executable-find "guix" t))
+                      "guix"
                     (cl-loop for (exe . mng) in managers thereis
-                             (and (executable-find exe remote)
-                                  mng)))))
-    (cl-assert
-     (if arg
-         (executable-find (car (rassoc manager managers)) remote)
-       manager)
-     nil
-     (if (eq system-type 'darwin)
-         "No supported package manager was found. Check your `exec-path'."
-       "No supported package manager was found."))
+                             (and (executable-find exe t)
+                                  mng))))
+         (symbol (intern (concat "helm-system-packages-" manager))))
+    (cl-assert manager nil "No supported package manager was found")
     (when arg
       (setq helm-system-packages--cache nil
             helm-system-packages--virtual-list nil
             helm-system-packages--cache-current nil))
-    (require (intern (concat "helm-system-packages-" manager)))
-    (if (boundp (intern (concat "helm-system-packages-" manager)))
+    (require symbol)
+    (if (boundp symbol)
         ;; New abstraction.
         (let ((current-manager
-               (symbol-value (intern (concat "helm-system-packages-" manager)))))
+               (symbol-value symbol)))
           (unless (apply 'helm-system-packages-missing-dependencies-p
                          (helm-system-packages-manager-dependencies current-manager))
             (helm :sources (helm-system-packages-build-source current-manager)
@@ -643,7 +636,7 @@ prefix arg allow choosing package manager"
                   :truncate-lines t
                   :input (when helm-system-packages-use-symbol-at-point-p
                            (substring-no-properties (or (thing-at-point 'symbol) ""))))))
-      ;; Old abstraction.
+      ;; Old abstraction (deprecated).
       (fset 'helm-system-packages-refresh (intern (concat "helm-system-packages-" manager "-refresh")))
       (funcall (intern (concat "helm-system-packages-" manager))))))
 
