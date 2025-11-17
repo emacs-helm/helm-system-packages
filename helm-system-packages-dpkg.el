@@ -273,27 +273,16 @@ If REVERSE is non-nil, list reverse dependencies instead."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-dpkg-build-source ()
-  "Build Helm source for dpkg"
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
-    (helm-build-in-buffer-source title
-      :init 'helm-system-packages-init
-      :candidate-transformer 'helm-system-packages-dpkg-transformer
-      :candidate-number-limit helm-system-packages-candidate-limit
-      :display-to-real 'helm-system-packages-extract-name
-      :keymap helm-system-packages-dpkg-map
-      :help-message 'helm-system-packages-dpkg-help-message
-      :persistent-help "Show package description"
-      :action helm-system-packages-dpkg-actions)))
-
-(defun helm-system-packages-dpkg ()
-  "Preconfigured `helm' for dpkg."
-  (unless (helm-system-packages-missing-dependencies-p "apt-get" "apt-cache" "apt-mark")
-    (helm :sources (helm-system-packages-dpkg-build-source)
-          :buffer "*helm dpkg*"
-          :truncate-lines t
-          :input (when helm-system-packages-use-symbol-at-point-p
-                   (substring-no-properties (or (thing-at-point 'symbol) ""))))))
+(defvar helm-system-packages-dpkg-dependencies '("apt-get" "apt-cache" "apt-mark" "dpkg"))
+(defvar helm-system-packages-dpkg
+  (helm-system-packages-manager-create
+   :name "dpkg"
+   :refresh-function #'helm-system-packages-dpkg-refresh
+   :dependencies helm-system-packages-dpkg-dependencies
+   :help-message 'helm-system-packages-dpkg-help-message
+   :keymap helm-system-packages-dpkg-map
+   :transformer #'helm-system-packages-dpkg-transformer
+   :actions helm-system-packages-dpkg-actions))
 
 (provide 'helm-system-packages-dpkg)
 
