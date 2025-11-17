@@ -654,9 +654,9 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
       :action (helm-system-packages-manager-actions manager))))
 
 (defun helm-system-packages-1 (pkg)
-  "Call helm on SYMBOL manager.
-SYMBOL should handle the variable `helm-system-packages-<manager>'.
-SYMBOL contains the needed infos to build helm source see
+  "Call helm on PKG manager.
+PKG should handle the variable `helm-system-packages-<manager>'.
+PKG contains the needed infos to build helm source see
 `helm-system-packages-manager' defstruct."
   (let ((current-manager
          (symbol-value pkg)))
