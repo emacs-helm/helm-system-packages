@@ -76,6 +76,18 @@
 (defvar helm-system-packages--show-groups-p t)
 (defvar helm-system-packages--show-pinned-p t)
 
+;; Some package managers do not have an executable bearing the same name,
+;; hence the pair (EXECUTABLE . PACKAGE-MANAGER).
+(defconst helm-system-packages--managers
+  '(("emerge" . "portage") ("dnf" . "dnf")
+    ("dpkg" . "dpkg") ("pacman" . "pacman")
+    ("xbps-query" . "xbps") ("brew" . "brew")
+    ;; Keep "guix" last because it can be installed
+    ;; beside other package managers and we want to
+    ;; give priority to the original package
+    ;; manager.
+    ("guix" . "guix")))
+
 ;; TODO: Replace `mapcar' by `mapcan' when possible.
 
 ;; TODO: Possible optimization: turn into hash table, notably the display list.
@@ -665,21 +677,10 @@ By default choose the package manager dedicated to this system, with a
 prefix arg use Guix which is the only one that can be used aside
 system manager."
   (interactive "P")
-  ;; Some package managers do not have an executable bearing the same name,
-  ;; hence the pair (EXECUTABLE . PACKAGE-MANAGER).
-  (let* ((managers '(("emerge" . "portage") ("dnf" . "dnf")
-                     ("dpkg" . "dpkg") ("pacman" . "pacman")
-                     ("xbps-query" . "xbps") ("brew" . "brew")
-                     ;; Keep "guix" last because it can be installed
-                     ;; beside other package managers and we want to
-                     ;; give priority to the original package
-                     ;; manager.
-                     ("guix" . "guix")))
-         (manager (if (and arg (executable-find "guix" t))
+  (let* ((manager (if (and arg (executable-find "guix" t))
                       "guix"
-                    (cl-loop for (exe . mng) in managers thereis
-                             (and (executable-find exe t)
-                                  mng))))
+                    (cl-loop for (exe . mng) in helm-system-packages--managers
+                             thereis (and (executable-find exe t) mng))))
          (symbol (intern (concat "helm-system-packages-" manager))))
     (cl-assert manager nil "No supported package manager was found")
     (when arg
