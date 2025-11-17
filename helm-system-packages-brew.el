@@ -180,24 +180,14 @@ COMMAND is run without sudo as macOS brew does not require sudo rights."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-brew-build-source ()
-  "Build Helm source for brew."
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title) "package manager")))
-    (helm-build-in-buffer-source title
-      :init 'helm-system-packages-init
-      :candidate-transformer 'helm-system-packages-brew-transformer
-      :candidate-number-limit helm-system-packages-candidate-limit
-      :display-to-real 'helm-system-packages-extract-name
-      :persistent-help "Show package description"
-      :action helm-system-packages-brew-actions)))
-
-(defun helm-system-packages-brew ()
-  "Preconfigured `helm' for brew."
-  (helm :sources (helm-system-packages-brew-build-source)
-        :buffer "*helm brew*"
-        :truncate-lines t
-        :input (when helm-system-packages-use-symbol-at-point-p
-                 (substring-no-properties (or (thing-at-point 'symbol) "")))))
+(defvar helm-system-packages-brew-dependencies '("brew"))
+(defvar helm-system-packages-brew
+  (helm-system-packages-manager-create
+   :name "brew"
+   :refresh-function #'helm-system-packages-brew-refresh
+   :dependencies helm-system-packages-brew-dependencies
+   :transformer #'helm-system-packages-brew-transformer
+   :actions helm-system-packages-brew-actions))
 
 (provide 'helm-system-packages-brew)
 
