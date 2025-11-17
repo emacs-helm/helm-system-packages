@@ -424,29 +424,17 @@ If REVERSE is non-nil, list reverse dependencies instead."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-pacman-build-source ()
-  "Build Helm source for pacman."
-  (let ((title (or (plist-get (helm-system-packages--cache-get) :title)
-                   "package manager")))
-    (helm-build-in-buffer-source title
-      :init 'helm-system-packages-init
-      :candidate-transformer 'helm-system-packages-pacman-transformer
-      :candidate-number-limit helm-system-packages-candidate-limit
-      :display-to-real 'helm-system-packages-extract-name
-      :keymap helm-system-packages-pacman-map
-      :help-message 'helm-system-packages-pacman-help-message
-      :persistent-help "Show package description"
-      :action helm-system-packages-pacman-actions)))
+(defvar helm-system-packages-pacman-dependencies '("pacman" "expac"))
+(defvar helm-system-packages-pacman
+  (helm-system-packages-manager-create
+   :name "pacman"
+   :refresh-function #'helm-system-packages-pacman-refresh
+   :dependencies helm-system-packages-pacman-dependencies
+   :help-message 'helm-system-packages-pacman-help-message
+   :keymap helm-system-packages-pacman-map
+   :transformer #'helm-system-packages-pacman-transformer
+   :actions helm-system-packages-pacman-actions))
 
-(defun helm-system-packages-pacman ()
-  "Preconfigured `helm' for pacman."
-  (unless (helm-system-packages-missing-dependencies-p "expac")
-    (helm :sources (helm-system-packages-pacman-build-source)
-          :buffer "*helm pacman*"
-          :truncate-lines t
-          :input (when helm-system-packages-use-symbol-at-point-p
-                   (substring-no-properties
-                    (or (thing-at-point 'symbol) ""))))))
 
 (provide 'helm-system-packages-pacman)
 
