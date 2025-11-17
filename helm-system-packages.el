@@ -411,6 +411,7 @@ DESC-ALIST's keys are ignored, the values are in the form
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
         (view-mode 1)))))
 
+;; FIXME: Make clear the usage of next two functions.
 (defun helm-system-packages-call (command &optional args &rest options)
   "COMMAND to run with OPTIONS over the ARGS list.
 OPTIONS are insert before ARGS.
@@ -427,6 +428,7 @@ Return the result as a string."
       ;; We discard errors.
       (apply #'process-file command nil '(t nil) nil arg-list)
       (buffer-string))))
+;; FIXME: Why is this obsoleted? It is used in some places.
 (make-obsolete 'helm-system-packages-run 'helm-system-packages-call "1.9.0")
 
 (defun helm-system-packages-print (command &rest args)
@@ -490,16 +492,7 @@ In case of a hash table, one Helm source per package will be created."
             (helm-system-packages-build-file-source "Package files" files)
             :buffer "*helm system package files*"))))
 
-(defun helm-system-packages-files (command &rest args)
-  (let ((res (apply #'helm-system-packages-call command args)))
-    (if (string= res "")
-        (message "No result")
-      (if helm-current-prefix-arg
-          (insert res)
-        (helm :sources
-              (helm-system-packages-build-file-source
-               "Packages" (split-string res "\n"))
-              :buffer "*helm system package files*")))))
+(defalias 'helm-system-packages-files 'helm-system-packages-find-files)
 (make-obsolete 'helm-system-packages-files
                'helm-system-packages-find-files "1.9.0")
 
