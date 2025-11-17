@@ -154,9 +154,6 @@ COMMAND is run without sudo as macOS brew does not require sudo rights."
     (if (eshell-interactive-process)
         (message "A process is already running")
       (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
-      (add-hook 'eshell-post-command-hook
-                (lambda () (remove-hook 'eshell-post-command-hook 'helm-system-packages-refresh t))
-                t t)
       (goto-char (point-max))
       (insert (mapconcat 'identity arg-list " "))
       (when helm-system-packages-auto-send-commandline-p

@@ -165,7 +165,6 @@ This is only used for dependency display.")
 (defvar helm-ff-transformer-show-only-basename)
 (declare-function helm-comp-read "helm-mode.el")
 (declare-function org-sort-entries "org.el")
-(declare-function helm-system-packages-refresh "helm-system-package.el")
 (declare-function outline-show-all "outline.el")
 
 (defun helm-system-packages-toggle-explicit ()
@@ -225,7 +224,7 @@ This is only used for dependency display.")
 (put 'helm-system-packages-toggle-pinned 'helm-only t)
 
 ;; TODO: Don't refresh when eshell-last-command-status is not 0?
-(defvar helm-system-packages-refresh nil
+(defvar helm-system-packages--refresh nil
   "Function to refresh the package list.
 It is called:
 - on each session start;
@@ -296,27 +295,23 @@ EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
         (setcdr (assoc host helm-system-packages--cache) val)
       (push (cons host val) helm-system-packages--cache))))
 
-(defun helm-system-packages-init ()
-  "Cache package lists and create Helm buffer."
-  (let ((val (helm-system-packages--cache-get)))
-    (unless val
-      (helm-system-packages-refresh)
-      (setq val (helm-system-packages--cache-get)))
-    ;; TODO: We should only create the buffer if it does not already exist.
-    ;; On the other hand, we need to be able to override the package list.
-    ;; (unless (helm-candidate-buffer) ...
-    (helm-init-candidates-in-buffer
-        'global
-      (if helm-system-packages-show-descriptions-p
-          (plist-get val :descriptions)
-        (plist-get val :names)))))
+(defun helm-system-packages-refresh ()
+  (when helm-system-packages--refresh
+    (funcall helm-system-packages--refresh)
+    (when (and (boundp 'eshell-post-command-hook)
+               (memq 'helm-system-packages-refresh
+                     eshell-post-command-hook))
+      (remove-hook 'eshell-post-command-hook
+                   'helm-system-packages-refresh t))))
 
 (defun helm-system-packages--make-init (manager)
   "Cache package lists and create Helm buffer."
   (lambda ()
     (let ((val (helm-system-packages--cache-get)))
       (unless val
-        (funcall (helm-system-packages-manager-refresh-function manager))
+        (setq helm-system-packages--refresh
+              (helm-system-packages-manager-refresh-function manager))
+        (funcall helm-system-packages--refresh)
         (setq val (helm-system-packages--cache-get)))
       ;; TODO: We should only create the buffer if it does not already exist.
       ;; On the other hand, we need to be able to override the package list.
@@ -536,11 +531,6 @@ COMMAND will be run in the Eshell buffer named by
         (push command arg-list)
         (push "sudo" arg-list)
         (add-hook 'eshell-post-command-hook 'helm-system-packages-refresh nil t)
-        (add-hook 'eshell-post-command-hook
-                  (lambda ()
-                    (remove-hook 'eshell-post-command-hook
-                                 'helm-system-packages-refresh t))
-                  t t)
         (goto-char (point-max))
         (insert (mapconcat 'identity arg-list " "))
         (when helm-system-packages-auto-send-commandline-p
