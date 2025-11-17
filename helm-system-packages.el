@@ -691,13 +691,8 @@ system manager."
             helm-system-packages--virtual-list nil
             helm-system-packages--cache-current nil))
     (require symbol)
-    (if (boundp symbol)
-        ;; New abstraction.
-        (helm-system-packages-1 symbol)
-      ;; Old abstraction (deprecated).
-      (fset 'helm-system-packages-refresh
-            (intern (concat "helm-system-packages-" manager "-refresh")))
-      (funcall (intern (concat "helm-system-packages-" manager))))))
+    (cl-assert (boundp symbol) nil (format "Undefined variable %s" symbol))
+    (helm-system-packages-1 symbol)))
 
 (provide 'helm-system-packages)
 
