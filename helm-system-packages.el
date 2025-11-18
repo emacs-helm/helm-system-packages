@@ -296,6 +296,10 @@ EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
       (push (cons host val) helm-system-packages--cache))))
 
 (defun helm-system-packages-refresh ()
+  "Refresh package list for current manager.
+Current manager is known only after the init function run and the
+manager refresh function to use is stored in
+`helm-system-packages--refresh'."
   (when helm-system-packages--refresh
     (funcall helm-system-packages--refresh)
     (when (and (boundp 'eshell-post-command-hook)
@@ -307,7 +311,7 @@ EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
 (defun helm-system-packages--make-init (manager)
   "Return the init function as a lambda.
 The init function is in charge of caching package lists and creating
-Helm buffer."
+Helm candidate buffer."
   (lambda ()
     (let ((val (helm-system-packages--cache-get)))
       (unless val
