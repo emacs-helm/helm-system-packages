@@ -123,40 +123,6 @@ tested package to fall back on."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-;; TODO: Propertize the cache directly?
-(defun helm-system-packages-pacman-transformer (packages)
-  ;; TODO: Possible optimization: Get rid of `reverse'.
-  (let (res (pkglist (reverse packages)))
-    (dolist (p pkglist)
-      (let ((face (cdr (assoc (helm-system-packages-extract-name p)
-                              (plist-get (helm-system-packages--cache-get)
-                                         :display)))))
-        (cond
-         ((and (not face) (member (helm-system-packages-extract-name p)
-                                  helm-system-packages--virtual-list))
-          ;; When displaying dependencies, package may be virtual.
-          ;; Check first since it is also an "uninstalled" package.
-          (push (propertize p 'face 'helm-system-packages-pacman-virtual) res))
-         ((and (not face) helm-system-packages--show-uninstalled-p)
-          (push p res))
-         ;; For filtering, we consider local packages and non-local packages
-         ;; separately, thus we need to treat local packages first.
-         ;; TODO: Add support for multiple faces.
-         ((memq 'helm-system-packages-locals face)
-          (when helm-system-packages--show-locals-p
-            (push (propertize p 'face (car face)) res)))
-         ((or
-           (and helm-system-packages--show-explicit-p
-                (memq 'helm-system-packages-explicit face))
-           (and helm-system-packages--show-dependencies-p
-                (memq 'helm-system-packages-dependencies face))
-           (and helm-system-packages--show-orphans-p
-                (memq 'helm-system-packages-orphans face))
-           (and helm-system-packages--show-groups-p
-                (memq 'helm-system-packages-groups face)))
-          (push (propertize p 'face (car face)) res)))))
-    (helm-fast-remove-dups res :test #'equal)))
-
 (defun helm-system-packages-pacman-list-explicit ()
   "List explicitly installed packages."
   (with-temp-buffer
@@ -192,36 +158,8 @@ packages belonging to the group."
   (with-temp-buffer
     (process-file "pacman" nil t nil "--sync" "--groups")
     (split-string (buffer-string) "\n" t)))
-
-;; TODO: Merge this function into -refresh.
-(defun helm-system-packages-pacman-cache (display-list local-packages groups)
-  "Cache all package names with descriptions.
-LOCAL-PACKAGES and GROUPS are lists of strings."
-  ;; We build both caches at the same time.  We could also build
-  ;; just-in-time, but benchmarks show that it only saves less than
-  ;; 20% when building one cache.
-  (let (names descriptions)
-    (setq descriptions
-          (with-temp-buffer
-            ;; TODO: Possible optimization: Output directly in Elisp?
-            (let ((format-string (format "%%-%dn  %%d"
-                                         helm-system-packages-column-width)))
-              (process-file "expac" nil '(t nil) nil "--sync" format-string)
-              (apply 'process-file "expac" nil '(t nil) nil
-                     "--query" format-string local-packages))
-            (dolist (g groups)
-              (insert (concat g
-                              (make-string (- helm-system-packages-column-width
-                                              (length g))
-                                           ? )
-                              "  <group>\n")))
-            (sort-lines nil (point-min) (point-max))
-            (buffer-string)))
-    ;; replace-regexp-in-string is faster than mapconcat over split-string.
-    (setq names
-          (replace-regexp-in-string " .*" "" descriptions))
-    (helm-system-packages--cache-set names descriptions display-list "pacman")))
-
+
+;; Get and filter candidates.
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
@@ -250,6 +188,68 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
     (helm-system-packages-pacman-cache display-list locals groups)
     (message "Updating cache done")))
 
+(defun helm-system-packages-pacman-cache (display-list local-packages groups)
+  "Cache all package names with descriptions.
+LOCAL-PACKAGES and GROUPS are lists of strings."
+  ;; We build both caches at the same time.  We could also build
+  ;; just-in-time, but benchmarks show that it only saves less than
+  ;; 20% when building one cache.
+  (let (names descriptions)
+    (setq descriptions
+          (with-temp-buffer
+            ;; TODO: Possible optimization: Output directly in Elisp?
+            (let ((format-string (format "%%-%dn  %%d"
+                                         helm-system-packages-column-width)))
+              (process-file "expac" nil '(t nil) nil "--sync" format-string)
+              (apply 'process-file "expac" nil '(t nil) nil
+                     "--query" format-string local-packages))
+            (dolist (g groups)
+              (insert (concat g
+                              (make-string (- helm-system-packages-column-width
+                                              (length g))
+                                           ? )
+                              "  <group>\n")))
+            (sort-lines nil (point-min) (point-max))
+            (buffer-string)))
+    ;; replace-regexp-in-string is faster than mapconcat over split-string.
+    (setq names
+          (replace-regexp-in-string " .*" "" descriptions))
+    (helm-system-packages--cache-set names descriptions display-list "pacman")))
+
+(defun helm-system-packages-pacman-transformer (packages)
+  ;; TODO: Possible optimization: Get rid of `reverse'.
+  (let (res (pkglist (reverse packages)))
+    (dolist (p pkglist)
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p)
+                              (plist-get (helm-system-packages--cache-get)
+                                         :display)))))
+        (cond
+         ((and (not face) (member (helm-system-packages-extract-name p)
+                                  helm-system-packages--virtual-list))
+          ;; When displaying dependencies, package may be virtual.
+          ;; Check first since it is also an "uninstalled" package.
+          (push (propertize p 'face 'helm-system-packages-pacman-virtual) res))
+         ((and (not face) helm-system-packages--show-uninstalled-p)
+          (push p res))
+         ;; For filtering, we consider local packages and non-local packages
+         ;; separately, thus we need to treat local packages first.
+         ;; TODO: Add support for multiple faces.
+         ((memq 'helm-system-packages-locals face)
+          (when helm-system-packages--show-locals-p
+            (push (propertize p 'face (car face)) res)))
+         ((or
+           (and helm-system-packages--show-explicit-p
+                (memq 'helm-system-packages-explicit face))
+           (and helm-system-packages--show-dependencies-p
+                (memq 'helm-system-packages-dependencies face))
+           (and helm-system-packages--show-orphans-p
+                (memq 'helm-system-packages-orphans face))
+           (and helm-system-packages--show-groups-p
+                (memq 'helm-system-packages-groups face)))
+          (push (propertize p 'face (car face)) res)))))
+    (helm-fast-remove-dups res :test #'equal)))
+
+;; Actions
 (defun helm-system-packages-pacman-outdated-database-p ()
   "Return non-nil when database is too old.
 I.e. older than `helm-system-packages-pacman-synchronize-threshold'."
@@ -423,7 +423,8 @@ If REVERSE is non-nil, list reverse dependencies instead."
    (concat "\\[PACMAN\\].*"
            (regexp-opt (helm-marked-candidates))))
   (log-view-mode))
-
+
+;; Setup data for `helm-system-packages' command.
 (defvar helm-system-packages-pacman-dependencies '("pacman" "expac"))
 (defvar helm-system-packages-pacman
   (helm-system-packages-manager-create
