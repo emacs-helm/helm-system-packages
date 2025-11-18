@@ -65,7 +65,64 @@
     (define-key map (kbd "M-G")   'helm-system-packages-toggle-groups)
     (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
     map))
+
+(defcustom helm-system-packages-pacman-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap.
+If nil, then use `helm-system-packages-column-width'."
+  :group 'helm-system-packages
+  :type 'integer)
 
+(defcustom helm-system-packages-pacman-synchronize-threshold 86400
+  "Auto-synchronize database on installation if older than this many seconds.
+If nil, no automatic action is taken."
+  :group 'helm-system-packages
+  :type 'integer)
+
+(defcustom helm-system-packages-pacman-confirm-p t
+  "Prompt for confirmation before proceeding with transaction."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defcustom helm-system-packages-pacman-auto-clean-cache nil
+  "Clean cache before installing.
+The point of keeping previous version in cache is that you can revert back if
+something fails.
+By always cleaning before installing, the previous version in kept in cache.
+This is only healthy if you test every version you install.
+Installing two upgrades (or the same version) will effectively leave you with no
+tested package to fall back on."
+  :group 'helm-system-packages
+  :type 'boolean)
+
+(defcustom helm-system-packages-pacman-actions
+  '(("Show package(s)" . helm-system-packages-pacman-info)
+    ("Install (`C-u' to reinstall)" . helm-system-packages-pacman-install)
+    ("Uninstall (`C-u' to include dependencies)" .
+     helm-system-packages-pacman-uninstall)
+    ("Browse homepage URL" .
+     (lambda (_)
+       (helm-system-packages-browse-url
+        (split-string (helm-system-packages-run "expac" "--sync" "%u")
+                      "\n" t))))
+    ("Find files" . helm-system-packages-pacman-find-files)
+    ("Show dependencies (`C-u' to include optional deps)" .
+     helm-system-packages-pacman-show-dependencies)
+    ("Show reverse dependencies" .
+     (lambda (_)
+       (helm-system-packages-pacman-show-dependencies _ 'reverse)))
+    ("Mark as dependency" .
+     (lambda (_)
+       (helm-system-packages-run-as-root-over-installed
+        "pacman" "--database" "--asdeps")))
+    ("Mark as explicit" .
+     (lambda (_)
+       (helm-system-packages-run-as-root-over-installed
+        "pacman" "--database" "--asexplicit")))
+    ("Show history" . helm-system-packages-pacman-history))
+  "Actions for Helm pacman."
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
+
 ;; TODO: Propertize the cache directly?
 (defun helm-system-packages-pacman-transformer (packages)
   ;; TODO: Possible optimization: Get rid of `reverse'.
@@ -165,12 +222,6 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
           (replace-regexp-in-string " .*" "" descriptions))
     (helm-system-packages--cache-set names descriptions display-list "pacman")))
 
-(defcustom helm-system-packages-pacman-column-width 40
-  "Column at which descriptions are aligned, excluding a double-space gap.
-If nil, then use `helm-system-packages-column-width'."
-  :group 'helm-system-packages
-  :type 'integer)
-
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
@@ -198,12 +249,6 @@ If nil, then use `helm-system-packages-column-width'."
       (push (cons p '(helm-system-packages-groups)) display-list))
     (helm-system-packages-pacman-cache display-list locals groups)
     (message "Updating cache done")))
-
-(defcustom helm-system-packages-pacman-synchronize-threshold 86400
-  "Auto-synchronize database on installation if older than this many seconds.
-If nil, no automatic action is taken."
-  :group 'helm-system-packages
-  :type 'integer)
 
 (defun helm-system-packages-pacman-outdated-database-p ()
   "Return non-nil when database is too old.
@@ -269,22 +314,6 @@ Otherwise display in `helm-system-packages-buffer'."
       (if helm-in-persistent-action
           (list candidate)
         (helm-marked-candidates)))))))
-
-(defcustom helm-system-packages-pacman-auto-clean-cache nil
-  "Clean cache before installing.
-The point of keeping previous version in cache is that you can revert back if
-something fails.
-By always cleaning before installing, the previous version in kept in cache.
-This is only healthy if you test every version you install.
-Installing two upgrades (or the same version) will effectively leave you with no
-tested package to fall back on."
-  :group 'helm-system-packages
-  :type 'boolean)
-
-(defcustom helm-system-packages-pacman-confirm-p t
-  "Prompt for confirmation before proceeding with transaction."
-  :group 'helm-system-packages
-  :type 'boolean)
 
 (defun helm-system-packages-pacman-install (_)
   "Install marked candidates."
@@ -394,35 +423,6 @@ If REVERSE is non-nil, list reverse dependencies instead."
    (concat "\\[PACMAN\\].*"
            (regexp-opt (helm-marked-candidates))))
   (log-view-mode))
-
-(defcustom helm-system-packages-pacman-actions
-  '(("Show package(s)" . helm-system-packages-pacman-info)
-    ("Install (`C-u' to reinstall)" . helm-system-packages-pacman-install)
-    ("Uninstall (`C-u' to include dependencies)" .
-     helm-system-packages-pacman-uninstall)
-    ("Browse homepage URL" .
-     (lambda (_)
-       (helm-system-packages-browse-url
-        (split-string (helm-system-packages-run "expac" "--sync" "%u")
-                      "\n" t))))
-    ("Find files" . helm-system-packages-pacman-find-files)
-    ("Show dependencies (`C-u' to include optional deps)" .
-     helm-system-packages-pacman-show-dependencies)
-    ("Show reverse dependencies" .
-     (lambda (_)
-       (helm-system-packages-pacman-show-dependencies _ 'reverse)))
-    ("Mark as dependency" .
-     (lambda (_)
-       (helm-system-packages-run-as-root-over-installed
-        "pacman" "--database" "--asdeps")))
-    ("Mark as explicit" .
-     (lambda (_)
-       (helm-system-packages-run-as-root-over-installed
-        "pacman" "--database" "--asexplicit")))
-    ("Show history" . helm-system-packages-pacman-history))
-  "Actions for Helm pacman."
-  :group 'helm-system-packages
-  :type '(alist :key-type string :value-type function))
 
 (defvar helm-system-packages-pacman-dependencies '("pacman" "expac"))
 (defvar helm-system-packages-pacman
