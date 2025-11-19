@@ -301,7 +301,9 @@ Current manager is known only after the init function run and the
 manager refresh function to use is stored in
 `helm-system-packages--refresh'."
   (when helm-system-packages--refresh
+    (message "Helm-system-packages updating cache...")
     (funcall helm-system-packages--refresh)
+    (message "Helm-system-packages updating cache done")
     (when (and (boundp 'eshell-post-command-hook)
                (memq 'helm-system-packages-refresh
                      eshell-post-command-hook))
@@ -317,7 +319,7 @@ Helm candidate buffer."
       (unless val
         (setq helm-system-packages--refresh
               (helm-system-packages-manager-refresh-function manager))
-        (funcall helm-system-packages--refresh)
+        (helm-system-packages-refresh)
         (setq val (helm-system-packages--cache-get)))
       ;; TODO: We should only create the buffer if it does not already exist.
       ;; On the other hand, we need to be able to override the package list.

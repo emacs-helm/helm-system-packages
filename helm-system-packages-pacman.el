@@ -163,7 +163,6 @@ packages belonging to the group."
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
   (interactive)
-  (message "Updating cache...")
   (setq helm-system-packages-column-width
         (or helm-system-packages-pacman-column-width
             helm-system-packages-column-width))
@@ -185,8 +184,7 @@ packages belonging to the group."
       (push 'helm-system-packages-locals (cdr (assoc p display-list))))
     (dolist (p groups)
       (push (cons p '(helm-system-packages-groups)) display-list))
-    (helm-system-packages-pacman-cache display-list locals groups)
-    (message "Updating cache done")))
+    (helm-system-packages-pacman-cache display-list locals groups)))
 
 (defun helm-system-packages-pacman-cache (display-list local-packages groups)
   "Cache all package names with descriptions.
