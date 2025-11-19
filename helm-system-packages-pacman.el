@@ -208,9 +208,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
                                            ? )
                               "  <group>\n")))
             (buffer-string)))
-    ;; replace-regexp-in-string is faster than mapconcat over split-string.
-    (setq names
-          (replace-regexp-in-string " .*" "" descriptions))
+    (setq names (mapconcat #'car display-list "\n"))
     (helm-system-packages--cache-set names descriptions display-list "pacman")))
 
 (defun helm-system-packages-pacman-transformer (packages)
