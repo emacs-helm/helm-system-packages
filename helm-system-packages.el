@@ -301,9 +301,11 @@ Current manager is known only after the init function run and the
 manager refresh function to use is stored in
 `helm-system-packages--refresh'."
   (when helm-system-packages--refresh
-    (message "Helm-system-packages updating cache...")
-    (funcall helm-system-packages--refresh)
-    (message "Helm-system-packages updating cache done")
+    (let ((time (current-time)))
+      (message "Helm-system-packages updating cache...")
+      (funcall helm-system-packages--refresh)
+      (message "Helm-system-packages updating cache done in %.2f secs"
+               (float-time (time-subtract (current-time) time))))
     (when (and (boundp 'eshell-post-command-hook)
                (memq 'helm-system-packages-refresh
                      eshell-post-command-hook))
