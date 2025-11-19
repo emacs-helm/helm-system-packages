@@ -209,7 +209,6 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
                                               (length g))
                                            ? )
                               "  <group>\n")))
-            (sort-lines nil (point-min) (point-max))
             (buffer-string)))
     ;; replace-regexp-in-string is faster than mapconcat over split-string.
     (setq names
@@ -218,7 +217,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
 
 (defun helm-system-packages-pacman-transformer (packages)
   (let ((res '()))
-    (dolist (p (copy-sequence packages))
+    (dolist (p (sort (copy-sequence packages)))
       (let ((face (cdr (assoc (helm-system-packages-extract-name p)
                               (plist-get (helm-system-packages--cache-get)
                                          :display)))))
@@ -246,7 +245,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
            (and helm-system-packages--show-groups-p
                 (memq 'helm-system-packages-groups face)))
           (push (propertize p 'face (car face)) res)))))
-    (helm-fast-remove-dups (nreverse res) :test #'equal)))
+    (helm-fast-remove-dups (reverse res) :test #'equal)))
 
 ;; Actions
 (defun helm-system-packages-pacman-outdated-database-p ()
