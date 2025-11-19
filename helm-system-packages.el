@@ -295,17 +295,19 @@ EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
         (setcdr (assoc host helm-system-packages--cache) val)
       (push (cons host val) helm-system-packages--cache))))
 
-(defun helm-system-packages-refresh ()
+(defun helm-system-packages-refresh (&optional verbose)
   "Refresh package list for current manager.
 Current manager is known only after the init function run and the
 manager refresh function to use is stored in
 `helm-system-packages--refresh'."
   (when helm-system-packages--refresh
-    (let ((time (current-time)))
-      (message "Helm-system-packages updating cache...")
-      (funcall helm-system-packages--refresh)
-      (message "Helm-system-packages updating cache done in %.2f secs"
-               (float-time (time-subtract (current-time) time))))
+    (if verbose
+        (let ((time (current-time)))
+          (message "Helm-system-packages updating cache...")
+          (funcall helm-system-packages--refresh)
+          (message "Helm-system-packages updating cache done in %.2f secs"
+                   (float-time (time-subtract (current-time) time))))
+      (funcall helm-system-packages--refresh))
     (when (and (boundp 'eshell-post-command-hook)
                (memq 'helm-system-packages-refresh
                      eshell-post-command-hook))
@@ -321,7 +323,7 @@ Helm candidate buffer."
       (unless val
         (setq helm-system-packages--refresh
               (helm-system-packages-manager-refresh-function manager))
-        (helm-system-packages-refresh)
+        (helm-system-packages-refresh t)
         (setq val (helm-system-packages--cache-get)))
       ;; TODO: We should only create the buffer if it does not already exist.
       ;; On the other hand, we need to be able to override the package list.
