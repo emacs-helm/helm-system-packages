@@ -345,15 +345,11 @@ If a member of ALIST does not have a matching function, it is dropped.
 
 To explicitly drop an element, use the `ignore' function.
 To explicitly keep an element, use the `identity' function."
-  (let ((fun-all (car (alist-get 'all fun-alist)))
-        (result '()))
-    (dolist (e alist)
-      (let* ((fun (or (car (alist-get (car e) fun-alist))
-                      fun-all))
-             (res (and fun (funcall fun (cdr e)))))
-        (when res
-          (push (cons (car e) res) result))))
-    (nreverse result)))
+  (cl-loop for (key . val) in alist
+           for fun = (or (car (alist-get key fun-alist))
+                         (car (alist-get 'all fun-alist)))
+           for result = (and fun (funcall fun val))
+           when result collect (cons key result)))
 
 (defun helm-system-packages-categorize (packages)
   "Return an alist of PACKAGES indexed by category.
