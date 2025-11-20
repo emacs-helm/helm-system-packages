@@ -102,7 +102,8 @@ tested package to fall back on."
     ("Browse homepage URL" .
      (lambda (_)
        (helm-system-packages-browse-url
-        (split-string (helm-system-packages-run "expac" "--sync" "%u")
+        (split-string (helm-system-packages-call
+                       "expac" (helm-marked-candidates) "--sync" "%u")
                       "\n" t))))
     ("Find files" . helm-system-packages-pacman-find-files)
     ("Show dependencies (`C-u' to include optional deps)" .
