@@ -358,7 +358,7 @@ To explicitly keep an element, use the `identity' function."
 (defun helm-system-packages-categorize (packages)
   "Return an alist of PACKAGES indexed by category.
 PACKAGES must be a list.
-Order is presever within categories.
+Order is preserved within categories.
 Categories are infered from the display list: it's the last word of the first
 associated symbol.
 If not found, category is `uninstalled'."
