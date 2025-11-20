@@ -242,7 +242,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
            (and helm-system-packages--show-groups-p
                 (memq 'helm-system-packages-groups face)))
           (push (propertize p 'face (car face)) res)))))
-    (helm-fast-remove-dups (reverse res) :test #'equal)))
+    (helm-fast-remove-dups (nreverse res) :test #'equal)))
 
 ;; Actions
 (defun helm-system-packages-pacman-outdated-database-p ()
