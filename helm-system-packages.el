@@ -360,9 +360,10 @@ associated symbol.
 If not found, category is `uninstalled'."
   (let ((result '()))
     (dolist (p packages result)
-      (let* ((e (assoc p (plist-get (helm-system-packages--cache-get)
-                                    :display)))
-             (category (or (helm-aand (cadr e)
+      (let* ((display (helm-aand (helm-system-packages--cache-get)
+                                 (plist-get it :display)
+                                 (assoc p it)))
+             (category (or (helm-aand (cadr display)
                                       (symbol-name it)
                                       (replace-regexp-in-string
                                        ".*\\W\\(\\w+\\)$" "\\1" it)
