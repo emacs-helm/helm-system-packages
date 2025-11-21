@@ -406,7 +406,7 @@ DESC-ALIST's keys are ignored, the values are in the form
    (helm-current-prefix-arg
     (mapc 'insert (mapcar 'cadr desc-alist)))
    (t (switch-to-buffer helm-system-packages-buffer)
-      (view-mode 0)
+      (set-buffer helm-system-packages-buffer)
       (erase-buffer)
       (dolist (desc (sort
                      (apply 'append (mapcar 'cdr desc-alist))
@@ -418,7 +418,8 @@ DESC-ALIST's keys are ignored, the values are in the form
       (org-mode)
       (outline-show-all)
       (unless (or helm-current-prefix-arg helm-system-packages-editable-info-p)
-        (view-mode 1)))))
+        (read-only-mode 1)
+        (local-set-key (kbd "q") 'quit-window)))))
 
 ;; FIXME: Make clear the usage of next two functions.
 (defun helm-system-packages-call (command &optional args &rest options)
