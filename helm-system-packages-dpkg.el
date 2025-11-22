@@ -65,59 +65,42 @@ Requirements:
 (defvar helm-system-packages-dpkg--show-dependencies-p t)
 (defvar helm-system-packages-dpkg--show-residuals-p t)
 
-(defun helm-system-packages-dpkg-toggle-explicit ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-dpkg--show-explicit-p
-          (not helm-system-packages-dpkg--show-explicit-p))
-    (helm-update)))
-(put 'helm-system-packages-dpkg-toggle-explicit 'helm-only t)
+(defcustom helm-system-packages-dpkg-actions
+  '(("Show package(s)" . helm-system-packages-dpkg-info)
+    ("Install (`C-u' to reinstall)" .
+     (lambda (_)
+       (apply 'helm-system-packages-run-as-root
+              (helm-system-packages-make-apt-get-command
+               "install"
+               (and helm-current-prefix-arg "--reinstall")))))
+    ("Uninstall (`C-u' to include dependencies)" .
+     (lambda (_)
+       (apply 'helm-system-packages-run-as-root-over-installed
+              (helm-system-packages-make-apt-get-command
+               "remove"
+               (and helm-current-prefix-arg "--auto-remove")))))
+    ("Browse homepage URL" . helm-system-packages-dpkg-browse-url)
+    ("Find files" . helm-system-packages-dpkg-find-files)
+    ("Show dependencies" . helm-system-packages-dpkg-show-dependencies)
+    ("Show reverse dependencies" .
+     (lambda (_)
+       (helm-system-packages-dpkg-show-dependencies _ 'reverse)))
+    ("Uninstall/Purge (`C-u' to include dependencies)" .
+     (lambda (_)
+       (apply 'helm-system-packages-run-as-root-over-installed
+              (helm-system-packages-make-apt-get-command
+               "purge"
+               (and helm-current-prefix-arg "--auto-remove"))))))
+  "Actions for Helm dpkg."
+  :group 'helm-system-packages
+  :type '(alist :key-type string :value-type function))
 
-(defun helm-system-packages-dpkg-toggle-uninstalled ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-dpkg--show-uninstalled-p
-          (not helm-system-packages-dpkg--show-uninstalled-p))
-    (helm-update)))
-(put 'helm-system-packages-dpkg-toggle-uninstalled 'helm-only t)
+(defcustom helm-system-packages-dpkg-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap."
+  :group 'helm-system-packages
+  :type 'integer)
 
-(defun helm-system-packages-dpkg-toggle-dependencies ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-dpkg--show-dependencies-p
-          (not helm-system-packages-dpkg--show-dependencies-p))
-    (helm-update)))
-(put 'helm-system-packages-dpkg-toggle-dependencies 'helm-only t)
-
-(defun helm-system-packages-dpkg-toggle-residuals ()
-  (interactive)
-  (with-helm-alive-p
-    (setq helm-system-packages-dpkg--show-residuals-p
-          (not helm-system-packages-dpkg--show-residuals-p))
-    (helm-update)))
-(put 'helm-system-packages-dpkg-toggle-residuals 'helm-only t)
-
-(defun helm-system-packages-dpkg-transformer (packages)
-  (let (res
-        (pkglist (reverse packages))
-        (disps (plist-get (helm-system-packages--cache-get)
-                          :display)))
-    (dolist (p pkglist res)
-      (let* ((name (helm-system-packages-extract-name p))
-             (face (cdr (assoc name disps))))
-        (cond
-         ((not face)
-          (when helm-system-packages-dpkg--show-uninstalled-p
-            (push p res)))
-         ((or
-           (and helm-system-packages-dpkg--show-explicit-p
-                (memq 'helm-system-packages-explicit face))
-           (and helm-system-packages-dpkg--show-dependencies-p
-                (memq 'helm-system-packages-dependencies face))
-           (and helm-system-packages-dpkg--show-residuals-p
-                (memq 'helm-system-packages-residuals face)))
-          (push (propertize p 'face (car face)) res)))))))
-
+;; Functions for caching and filtering.
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
   (split-string (with-temp-buffer
@@ -151,11 +134,6 @@ Requirements:
     (process-file "apt-cache" nil t nil "pkgnames")
     ;; (sort-lines nil (point-min) (point-max))
     (buffer-string)))
-
-(defcustom helm-system-packages-dpkg-column-width 40
-  "Column at which descriptions are aligned, excluding a double-space gap."
-  :group 'helm-system-packages
-  :type 'integer)
 
 (defun helm-system-packages-dpkg-cache-descriptions ()
   "Cache all package names with descriptions."
@@ -198,6 +176,45 @@ Requirements:
      (helm-system-packages-dpkg-cache-descriptions)
      display-list "dpkg")))
 
+(defun helm-system-packages-dpkg-transformer (packages)
+  (let (res
+        (pkglist (reverse packages))
+        (disps (plist-get (helm-system-packages--cache-get)
+                          :display)))
+    (dolist (p pkglist res)
+      (let* ((name (helm-system-packages-extract-name p))
+             (face (cdr (assoc name disps))))
+        (cond
+         ((not face)
+          (when helm-system-packages-dpkg--show-uninstalled-p
+            (push p res)))
+         ((or
+           (and helm-system-packages-dpkg--show-explicit-p
+                (memq 'helm-system-packages-explicit face))
+           (and helm-system-packages-dpkg--show-dependencies-p
+                (memq 'helm-system-packages-dependencies face))
+           (and helm-system-packages-dpkg--show-residuals-p
+                (memq 'helm-system-packages-residuals face)))
+          (push (propertize p 'face (car face)) res)))))))
+
+
+;; Actions
+(defun helm-system-packages-dpkg-toggle-explicit ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-explicit-p
+          (not helm-system-packages-dpkg--show-explicit-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-explicit 'helm-only t)
+
+(defun helm-system-packages-dpkg-toggle-uninstalled ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-uninstalled-p
+          (not helm-system-packages-dpkg--show-uninstalled-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-uninstalled 'helm-only t)
+
 (defun helm-system-packages-dpkg-info (candidate)
   "Print information about the selected packages.
 With prefix argument, insert the output at point.
@@ -236,6 +253,22 @@ Otherwise display in `helm-system-packages-buffer'."
                       "\n" t))
          (push file (gethash pkg file-hash)))))))
 
+(defun helm-system-packages-dpkg-toggle-dependencies ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-dependencies-p
+          (not helm-system-packages-dpkg--show-dependencies-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-dependencies 'helm-only t)
+
+(defun helm-system-packages-dpkg-toggle-residuals ()
+  (interactive)
+  (with-helm-alive-p
+    (setq helm-system-packages-dpkg--show-residuals-p
+          (not helm-system-packages-dpkg--show-residuals-p))
+    (helm-update)))
+(put 'helm-system-packages-dpkg-toggle-residuals 'helm-only t)
+
 (defun helm-system-packages-dpkg-show-dependencies (_candidate
                                                     &optional reverse)
   "List candidate dependencies for `helm-system-packages-show-packages'.
@@ -255,36 +288,6 @@ If REVERSE is non-nil, list reverse dependencies instead."
     (if helm-system-packages-dpkg-confirm-p
         (push "DEBIAN_FRONTEND=readline" comm)
       (push "DEBIAN_FRONTEND=noninteractive" comm))))
-
-(defcustom helm-system-packages-dpkg-actions
-  '(("Show package(s)" . helm-system-packages-dpkg-info)
-    ("Install (`C-u' to reinstall)" .
-     (lambda (_)
-       (apply 'helm-system-packages-run-as-root
-              (helm-system-packages-make-apt-get-command
-               "install"
-               (and helm-current-prefix-arg "--reinstall")))))
-    ("Uninstall (`C-u' to include dependencies)" .
-     (lambda (_)
-       (apply 'helm-system-packages-run-as-root-over-installed
-              (helm-system-packages-make-apt-get-command
-               "remove"
-               (and helm-current-prefix-arg "--auto-remove")))))
-    ("Browse homepage URL" . helm-system-packages-dpkg-browse-url)
-    ("Find files" . helm-system-packages-dpkg-find-files)
-    ("Show dependencies" . helm-system-packages-dpkg-show-dependencies)
-    ("Show reverse dependencies" .
-     (lambda (_)
-       (helm-system-packages-dpkg-show-dependencies _ 'reverse)))
-    ("Uninstall/Purge (`C-u' to include dependencies)" .
-     (lambda (_)
-       (apply 'helm-system-packages-run-as-root-over-installed
-              (helm-system-packages-make-apt-get-command
-               "purge"
-               (and helm-current-prefix-arg "--auto-remove"))))))
-  "Actions for Helm dpkg."
-  :group 'helm-system-packages
-  :type '(alist :key-type string :value-type function))
 
 (defvar helm-system-packages-dpkg-dependencies
   '("apt-get" "apt-cache" "apt-mark" "dpkg"))
