@@ -232,12 +232,11 @@ DISPLAY-LIST and GROUPS are lists of strings."
           (push p res))
          ;; For filtering, we consider local packages and non-local packages
          ;; separately, thus we need to treat local packages first.
-         ;; TODO: Add support for multiple faces.
          ((memq 'helm-system-packages-locals face)
           (when helm-system-packages--show-locals-p
-            (add-face-text-property 0 len (car face) nil p)
-            (add-face-text-property len (length p)
-                                    'helm-system-packages-descriptions nil p))
+            (add-face-text-property 0 len (car face) nil p))
+          (add-face-text-property len (length p)
+                                  'helm-system-packages-descriptions nil p)
           (push p res))
          ((or
            (and helm-system-packages--show-explicit-p
