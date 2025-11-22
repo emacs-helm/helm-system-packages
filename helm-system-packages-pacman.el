@@ -208,8 +208,11 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
                                               (length g))
                                            ? )
                               "  <group>\n")))
+            (goto-char (point-min))
+            (while (re-search-forward "^\\([^ ]*\\) +" nil t)
+              (push (match-string 1) names))
             (buffer-string)))
-    (setq names (mapconcat #'car display-list "\n"))
+    (setq names (mapconcat #'identity names "\n"))
     (helm-system-packages--cache-set names descriptions display-list "pacman")))
 
 (defun helm-system-packages-pacman-transformer (packages)
