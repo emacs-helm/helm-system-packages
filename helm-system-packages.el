@@ -118,8 +118,12 @@ If nil, use host linked with `default-directory'.")
   "List of virtual packages.
 This is only used for dependency display.")
 
-(defface helm-system-packages-explicit
+(defface helm-system-packages-descriptions
     '((t (:inherit font-lock-warning-face)))
+  "Face for package descriptions.")
+
+(defface helm-system-packages-explicit
+    '((t (:inherit font-lock-type-face)))
   "Face for explicitly installed packages."
   :group 'helm-system-packages)
 

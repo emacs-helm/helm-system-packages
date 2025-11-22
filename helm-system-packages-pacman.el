@@ -224,11 +224,14 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
                                   helm-system-packages--virtual-list))
           ;; When displaying dependencies, package may be virtual.
           ;; Check first since it is also an "uninstalled" package.
-          (add-face-text-property 0 len 'helm-system-packages-pacman-virtual nil p)
-          (add-face-text-property len (length p) 'font-lock-type-face nil p)
+          (add-face-text-property 0 len
+                                  'helm-system-packages-pacman-virtual nil p)
+          (add-face-text-property len (length p)
+                                  'helm-system-packages-descriptions nil p)
           (push p res))
          ((and (not face) helm-system-packages--show-uninstalled-p)
-          (add-face-text-property len (length p) 'font-lock-type-face nil p)
+          (add-face-text-property len (length p)
+                                  'helm-system-packages-descriptions nil p)
           (push p res))
          ;; For filtering, we consider local packages and non-local packages
          ;; separately, thus we need to treat local packages first.
@@ -236,7 +239,8 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
          ((memq 'helm-system-packages-locals face)
           (when helm-system-packages--show-locals-p
             (add-face-text-property 0 len (car face) nil p)
-            (add-face-text-property len (length p) 'font-lock-type-face nil p))
+            (add-face-text-property len (length p)
+                                    'helm-system-packages-descriptions nil p))
           (push p res))
          ((or
            (and helm-system-packages--show-explicit-p
@@ -248,7 +252,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
            (and helm-system-packages--show-groups-p
                 (memq 'helm-system-packages-groups face)))
           (add-face-text-property 0 len (car face) nil p)
-          (add-face-text-property len (length p) 'font-lock-type-face nil p)
+          (add-face-text-property len (length p) 'helm-system-packages-descriptions nil p)
           (push p res)))))
     (helm-fast-remove-dups (nreverse res) :test #'equal)))
 
