@@ -53,11 +53,11 @@ Requirements:
   ;; M-U is reserved for `helm-unmark-all'.
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
-    (define-key map (kbd "M-I")   'helm-system-packages-dpkg-toggle-explicit)
-    (define-key map (kbd "M-N")   'helm-system-packages-dpkg-toggle-uninstalled)
-    (define-key map (kbd "M-D")   'helm-system-packages-dpkg-toggle-dependencies)
-    (define-key map (kbd "M-R")   'helm-system-packages-dpkg-toggle-residuals)
-    (define-key map (kbd "C-]")   'helm-system-packages-toggle-descriptions)
+    (define-key map (kbd "M-I") 'helm-system-packages-dpkg-toggle-explicit)
+    (define-key map (kbd "M-N") 'helm-system-packages-dpkg-toggle-uninstalled)
+    (define-key map (kbd "M-D") 'helm-system-packages-dpkg-toggle-dependencies)
+    (define-key map (kbd "M-R") 'helm-system-packages-dpkg-toggle-residuals)
+    (define-key map (kbd "C-]") 'helm-system-packages-toggle-descriptions)
     map))
 
 (defvar helm-system-packages-dpkg--show-uninstalled-p t)
@@ -101,7 +101,8 @@ Requirements:
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
       (let ((face (cdr (assoc (helm-system-packages-extract-name p)
-                              (plist-get (helm-system-packages--cache-get) :display)))))
+                              (plist-get (helm-system-packages--cache-get)
+                                         :display)))))
         (cond
          ((not face) (when helm-system-packages-dpkg--show-uninstalled-p
                        (push p res)))
@@ -140,7 +141,8 @@ Requirements:
         (when (string= (cadr pkg) "deinstall")
           (push (car pkg) res))))))
 
-(defun helm-system-packages-dpkg-cache-names () ; TODO: Build from --descriptions instead like pacman?
+;; TODO: Build from --descriptions instead like pacman?
+(defun helm-system-packages-dpkg-cache-names ()
   "Cache all package names."
   (with-temp-buffer
     (process-file "apt-cache" nil t nil "pkgnames")
@@ -165,9 +167,11 @@ Requirements:
       (backward-char)
       (let ((pos (- (point) (line-beginning-position))))
         (when (< pos helm-system-packages-dpkg-column-width)
-          (insert (make-string (- helm-system-packages-dpkg-column-width pos) ? ))))
+          (insert (make-string
+                   (- helm-system-packages-dpkg-column-width pos) ? ))))
       (forward-line))
-    ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also see helm-system-packages-dpkg-buffer-all.
+    ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also
+    ;; see helm-system-packages-dpkg-buffer-all.
     (buffer-string)))
 
 (defun helm-system-packages-dpkg-refresh ()
@@ -199,7 +203,8 @@ Otherwise display in `helm-system-packages-buffer'."
    ;; TODO: Optimize by calling the command only once and parsing output.
    `((uninstalled . ,(mapcar (lambda (pkg)
                                (cons pkg
-                                     (helm-system-packages-call "apt-cache" nil "show" pkg)))
+                                     (helm-system-packages-call
+                                      "apt-cache" nil "show" pkg)))
                              (if helm-in-persistent-action
                                  (list candidate)
                                (helm-marked-candidates)))))))
@@ -209,7 +214,8 @@ Otherwise display in `helm-system-packages-buffer'."
 
 With prefix argument, insert the output at point.
 Otherwise display in `helm-system-packages-buffer'."
-  (let ((res (helm-system-packages-call "apt-cache" (helm-marked-candidates) "show"))
+  (let ((res (helm-system-packages-call
+              "apt-cache" (helm-marked-candidates) "show"))
         urls)
     (dolist (url (split-string res "\n" t))
       (when (string-match "^Homepage: \\(.*\\)" url)
@@ -227,7 +233,8 @@ Otherwise display in `helm-system-packages-buffer'."
                       "\n" t))
          (push file (gethash pkg file-hash)))))))
 
-(defun helm-system-packages-dpkg-show-dependencies (_candidate &optional reverse)
+(defun helm-system-packages-dpkg-show-dependencies (_candidate
+                                                    &optional reverse)
   "List candidate dependencies for `helm-system-packages-show-packages'.
 If REVERSE is non-nil, list reverse dependencies instead."
   (let ((arg (if reverse "rdepends" "depends"))
@@ -251,13 +258,15 @@ If REVERSE is non-nil, list reverse dependencies instead."
     ("Install (`C-u' to reinstall)" .
      (lambda (_)
        (apply 'helm-system-packages-run-as-root
-              (helm-system-packages-make-apt-get-command "install"
-                                                         (when helm-current-prefix-arg "--reinstall")))))
+              (helm-system-packages-make-apt-get-command
+               "install"
+               (and helm-current-prefix-arg "--reinstall")))))
     ("Uninstall (`C-u' to include dependencies)" .
      (lambda (_)
        (apply 'helm-system-packages-run-as-root-over-installed
-              (helm-system-packages-make-apt-get-command "remove"
-                                                         (when helm-current-prefix-arg "--auto-remove")))))
+              (helm-system-packages-make-apt-get-command
+               "remove"
+               (and helm-current-prefix-arg "--auto-remove")))))
     ("Browse homepage URL" . helm-system-packages-dpkg-browse-url)
     ("Find files" . helm-system-packages-dpkg-find-files)
     ("Show dependencies" . helm-system-packages-dpkg-show-dependencies)
@@ -267,13 +276,15 @@ If REVERSE is non-nil, list reverse dependencies instead."
     ("Uninstall/Purge (`C-u' to include dependencies)" .
      (lambda (_)
        (apply 'helm-system-packages-run-as-root-over-installed
-              (helm-system-packages-make-apt-get-command "purge"
-                                                         (when helm-current-prefix-arg "--auto-remove"))))))
+              (helm-system-packages-make-apt-get-command
+               "purge"
+               (and helm-current-prefix-arg "--auto-remove"))))))
   "Actions for Helm dpkg."
   :group 'helm-system-packages
   :type '(alist :key-type string :value-type function))
 
-(defvar helm-system-packages-dpkg-dependencies '("apt-get" "apt-cache" "apt-mark" "dpkg"))
+(defvar helm-system-packages-dpkg-dependencies
+  '("apt-get" "apt-cache" "apt-mark" "dpkg"))
 (defvar helm-system-packages-dpkg
   (helm-system-packages-manager-create
    :name "dpkg"
