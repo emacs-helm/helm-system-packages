@@ -177,10 +177,9 @@ Requirements:
 
 (defun helm-system-packages-dpkg-transformer (packages)
   (let (res
-        (pkglist (reverse packages))
         (disps (plist-get (helm-system-packages--cache-get)
                           :display)))
-    (dolist (p pkglist res)
+    (dolist (p packages)
       (let* ((name (helm-system-packages-extract-name p))
              (face (cdr (assoc name disps))))
         (cond
@@ -194,7 +193,8 @@ Requirements:
                 (memq 'helm-system-packages-dependencies face))
            (and helm-system-packages-dpkg--show-residuals-p
                 (memq 'helm-system-packages-residuals face)))
-          (push (propertize p 'face (car face)) res)))))))
+          (push (propertize p 'face (car face)) res)))))
+    (nreverse res)))
 
 
 ;; Actions
