@@ -224,20 +224,17 @@ DISPLAY-LIST and GROUPS are lists of strings."
           (add-face-text-property 0 len
                                   'helm-system-packages-pacman-virtual nil p)
           (add-face-text-property len (length p)
-                                  'helm-system-packages-descriptions nil p)
-          (push p res))
+                                  'helm-system-packages-descriptions nil p))
          ((and (not face) helm-system-packages--show-uninstalled-p)
           (add-face-text-property len (length p)
-                                  'helm-system-packages-descriptions nil p)
-          (push p res))
+                                  'helm-system-packages-descriptions nil p))
          ;; For filtering, we consider local packages and non-local packages
          ;; separately, thus we need to treat local packages first.
          ((memq 'helm-system-packages-locals face)
           (when helm-system-packages--show-locals-p
             (add-face-text-property 0 len (car face) nil p))
           (add-face-text-property len (length p)
-                                  'helm-system-packages-descriptions nil p)
-          (push p res))
+                                  'helm-system-packages-descriptions nil p))
          ((or
            (and helm-system-packages--show-explicit-p
                 (memq 'helm-system-packages-explicit face))
@@ -248,8 +245,9 @@ DISPLAY-LIST and GROUPS are lists of strings."
            (and helm-system-packages--show-groups-p
                 (memq 'helm-system-packages-groups face)))
           (add-face-text-property 0 len (car face) nil p)
-          (add-face-text-property len (length p) 'helm-system-packages-descriptions nil p)
-          (push p res)))))
+          (add-face-text-property len (length p)
+                                  'helm-system-packages-descriptions nil p)))
+        (push p res)))
     (helm-fast-remove-dups (nreverse res) :test #'equal)))
 
 ;; Actions
