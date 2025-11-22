@@ -98,14 +98,17 @@ Requirements:
 (put 'helm-system-packages-dpkg-toggle-residuals 'helm-only t)
 
 (defun helm-system-packages-dpkg-transformer (packages)
-  (let (res (pkglist (reverse packages)))
+  (let (res
+        (pkglist (reverse packages))
+        (disps (plist-get (helm-system-packages--cache-get)
+                          :display)))
     (dolist (p pkglist res)
-      (let ((face (cdr (assoc (helm-system-packages-extract-name p)
-                              (plist-get (helm-system-packages--cache-get)
-                                         :display)))))
+      (let* ((name (helm-system-packages-extract-name p))
+             (face (cdr (assoc name disps))))
         (cond
-         ((not face) (when helm-system-packages-dpkg--show-uninstalled-p
-                       (push p res)))
+         ((not face)
+          (when helm-system-packages-dpkg--show-uninstalled-p
+            (push p res)))
          ((or
            (and helm-system-packages-dpkg--show-explicit-p
                 (memq 'helm-system-packages-explicit face))
