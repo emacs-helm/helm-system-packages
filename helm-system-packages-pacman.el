@@ -214,11 +214,11 @@ DISPLAY-LIST and GROUPS are lists of strings."
         (disps (plist-get (helm-system-packages--cache-get) :display)))
     (dolist (p (sort packages #'string-lessp))
       (let* ((name (helm-system-packages-extract-name p))
-             (len (length name))
+             (len  (length name))
              (face (cdr (assoc name disps))))
         (cond
-         ((and (not face) (member (helm-system-packages-extract-name p)
-                                  helm-system-packages--virtual-list))
+         ((and (not face)
+               (member name helm-system-packages--virtual-list))
           ;; When displaying dependencies, package may be virtual.
           ;; Check first since it is also an "uninstalled" package.
           (add-face-text-property 0 len
