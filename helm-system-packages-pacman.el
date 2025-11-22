@@ -190,13 +190,9 @@ packages belonging to the group."
 (defun helm-system-packages-pacman-cache (display-list groups)
   "Cache all package names with descriptions.
 DISPLAY-LIST and GROUPS are lists of strings."
-  ;; We build both caches at the same time.  We could also build
-  ;; just-in-time, but benchmarks show that it only saves less than
-  ;; 20% when building one cache.
   (let (names descriptions)
     (setq descriptions
           (with-temp-buffer
-            ;; TODO: Possible optimization: Output directly in Elisp?
             (let ((format-string (format "%%-%dn  %%d"
                                          helm-system-packages-column-width)))
               (process-file "expac" nil '(t nil) nil "--sync" format-string))
