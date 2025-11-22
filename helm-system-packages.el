@@ -61,6 +61,18 @@
 (require 'cl-lib)
 (require 'ansi-color)
 
+;; Shut up byte compiler
+(declare-function eshell-interactive-process "esh-cmd.el")
+(declare-function eshell-send-input "esh-mode.el")
+(declare-function helm-comp-read "helm-mode.el")
+(declare-function org-sort-entries "org.el")
+(declare-function outline-show-all "outline.el")
+
+(defvar eshell-buffer-name)
+(defvar helm-ff-transformer-show-only-basename)
+
+
+;; Internal vars
 (defvar helm-system-packages-shell-buffer-name "helm-system-packages-eshell")
 (defvar helm-system-packages-eshell-buffer
   (concat "*" helm-system-packages-shell-buffer-name "*"))
@@ -118,59 +130,76 @@ If nil, use host linked with `default-directory'.")
   "List of virtual packages.
 This is only used for dependency display.")
 
+
+;; User vars and faces
+(defgroup helm-system-packages nil
+  "Predefined configurations for `helm-system-packages'."
+  :group 'helm)
+
+(defcustom helm-system-packages-column-width 40
+  "Column at which descriptions are aligned, excluding a double-space gap."
+  :type 'integer)
+
+(defcustom helm-system-packages-show-descriptions-p t
+  "Always show descriptions in package list when non-nil."
+  :type 'boolean)
+
+(defcustom helm-system-packages-auto-send-commandline-p t
+  "When a transaction commandline is inserted into a shell buffer, "
+  :type 'boolean)
+
+(defcustom helm-system-packages-candidate-limit 1000
+  "Maximum number of candidates to display at once.
+0 means display all."
+  :type 'integer)
+
+(defcustom helm-system-packages-use-symbol-at-point-p nil
+  "Whether to use symbol at point as a default search entry."
+  :type 'boolean)
+
+(defcustom helm-system-packages-editable-info-p nil
+  "Whether info buffer is editable.
+If nil, it is displayed in view-mode, which means \"q\" (default binding) quits
+the window."
+  :type 'boolean)
+
 (defface helm-system-packages-descriptions
     '((t (:inherit font-lock-warning-face)))
   "Face for package descriptions.")
 
 (defface helm-system-packages-explicit
     '((t (:inherit font-lock-type-face)))
-  "Face for explicitly installed packages."
-  :group 'helm-system-packages)
+  "Face for explicitly installed packages.")
 
 (defface helm-system-packages-dependencies
     '((t (:inherit font-lock-comment-face :slant italic)))
-  "Face for packages installed as dependencies."
-  :group 'helm-system-packages)
+  "Face for packages installed as dependencies.")
 
 (defface helm-system-packages-orphans
     '((t (:inherit font-lock-string-face :slant italic)))
-  "Face for orphan packages (unrequired dependencies)."
-  :group 'helm-system-packages)
+  "Face for orphan packages (unrequired dependencies).")
 
 (defface helm-system-packages-locals
     '((t (:weight bold)))
-  "Face for local packages."
-  :group 'helm-system-packages)
+  "Face for local packages.")
 
 (defface helm-system-packages-groups
     '((t (:inherit font-lock-doc-face)))
-  "Face for package groups."
-  :group 'helm-system-packages)
+  "Face for package groups.")
 
 (defface helm-system-packages-pinned
     '((t (:weight bold)))
-  "Face for pinned packages."
-  :group 'helm-system-packages)
+  "Face for pinned packages.")
 
 (defface helm-system-packages-virtual
     '((t (:slant italic)))
-  "Face for virtual packages."
-  :group 'helm-system-packages)
+  "Face for virtual packages.")
 
 (defface helm-system-packages-residuals
     '((t (:slant italic)))
-  "Face for packages with left-over configuration files."
-  :group 'helm-system-packages)
+  "Face for packages with left-over configuration files.")
 
-;; Shut up byte compiler
-(declare-function eshell-interactive-process "esh-cmd.el")
-(declare-function eshell-send-input "esh-mode.el")
-(defvar eshell-buffer-name)
-(defvar helm-ff-transformer-show-only-basename)
-(declare-function helm-comp-read "helm-mode.el")
-(declare-function org-sort-entries "org.el")
-(declare-function outline-show-all "outline.el")
-
+
 (defun helm-system-packages-toggle-explicit ()
   (interactive)
   (with-helm-alive-p
@@ -233,43 +262,6 @@ This is only used for dependency display.")
 It is called:
 - on each session start;
 - whenever a shell command completes.")
-
-(defgroup helm-system-packages nil
-  "Predefined configurations for `helm-system-packages'."
-  :group 'helm)
-
-(defcustom helm-system-packages-column-width 40
-  "Column at which descriptions are aligned, excluding a double-space gap."
-  :group 'helm-system-packages
-  :type 'integer)
-
-(defcustom helm-system-packages-show-descriptions-p t
-  "Always show descriptions in package list when non-nil."
-  :group 'helm-system-packages
-  :type 'boolean)
-
-(defcustom helm-system-packages-auto-send-commandline-p t
-  "When a transaction commandline is inserted into a shell buffer, "
-  :group 'helm-system-packages
-  :type 'boolean)
-
-(defcustom helm-system-packages-candidate-limit 1000
-  "Maximum number of candidates to display at once.
-0 means display all."
-  :group 'helm-system-packages
-  :type 'integer)
-
-(defcustom helm-system-packages-use-symbol-at-point-p nil
-  "Whether to use symbol at point as a default search entry."
-  :group 'helm-system-packages
-  :type 'boolean)
-
-(defcustom helm-system-packages-editable-info-p nil
-  "Whether info buffer is editable.
-If nil, it is displayed in view-mode, which means \"q\" (default binding) quits
-the window."
-  :group 'helm-system-packages
-  :type 'boolean)
 
 (defun helm-system-packages--cache-get ()
   "Get current cache entry.
