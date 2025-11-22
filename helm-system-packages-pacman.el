@@ -214,7 +214,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
 
 (defun helm-system-packages-pacman-transformer (packages)
   (let ((res '()))
-    (dolist (p (sort (copy-sequence packages)))
+    (dolist (p (sort packages #'string-lessp))
       (let ((face (cdr (assoc (helm-system-packages-extract-name p)
                               (plist-get (helm-system-packages--cache-get)
                                          :display)))))
