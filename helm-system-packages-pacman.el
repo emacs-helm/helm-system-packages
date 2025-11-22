@@ -185,11 +185,11 @@ packages belonging to the group."
       (push 'helm-system-packages-locals (cdr (assoc p display-list))))
     (dolist (p groups)
       (push (cons p '(helm-system-packages-groups)) display-list))
-    (helm-system-packages-pacman-cache display-list locals groups)))
+    (helm-system-packages-pacman-cache display-list groups)))
 
-(defun helm-system-packages-pacman-cache (display-list local-packages groups)
+(defun helm-system-packages-pacman-cache (display-list groups)
   "Cache all package names with descriptions.
-LOCAL-PACKAGES and GROUPS are lists of strings."
+DISPLAY-LIST and GROUPS are lists of strings."
   ;; We build both caches at the same time.  We could also build
   ;; just-in-time, but benchmarks show that it only saves less than
   ;; 20% when building one cache.
@@ -199,9 +199,7 @@ LOCAL-PACKAGES and GROUPS are lists of strings."
             ;; TODO: Possible optimization: Output directly in Elisp?
             (let ((format-string (format "%%-%dn  %%d"
                                          helm-system-packages-column-width)))
-              (process-file "expac" nil '(t nil) nil "--sync" format-string)
-              (apply 'process-file "expac" nil '(t nil) nil
-                     "--query" format-string local-packages))
+              (process-file "expac" nil '(t nil) nil "--sync" format-string))
             (dolist (g groups)
               (insert (concat g
                               (make-string (- helm-system-packages-column-width
