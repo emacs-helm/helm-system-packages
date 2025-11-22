@@ -143,13 +143,12 @@ Requirements:
     ;; apt-cache's output format is "pkg - desc".  Remove "-" and align to
     ;; column.
     (goto-char (point-min))
-    (while (search-forward " " nil t)
-      (delete-char 1)
-      (backward-char)
-      (let ((pos (- (point) (line-beginning-position))))
+    (while (re-search-forward "^\\([^ ]*\\)\\( - \\)" nil t)
+      (let ((pos (- (match-end 1) (pos-bol))))
         (when (< pos helm-system-packages-dpkg-column-width)
-          (insert (make-string
-                   (- helm-system-packages-dpkg-column-width pos) ? ))))
+          (replace-match (make-string
+                          (- helm-system-packages-dpkg-column-width pos) ? )
+                         nil nil nil 2)))
       (forward-line))
     ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also
     ;; see helm-system-packages-dpkg-buffer-all.
