@@ -191,21 +191,20 @@ packages belonging to the group."
   "Cache all package names with descriptions.
 DISPLAY-LIST and GROUPS are lists of strings."
   (let (names descriptions)
-    (setq descriptions
-          (with-temp-buffer
-            (let ((format-string (format "%%-%dn  %%d"
-                                         helm-system-packages-column-width)))
-              (process-file "expac" nil '(t nil) nil "--sync" format-string))
-            (dolist (g groups)
-              (insert (concat g
-                              (make-string (- helm-system-packages-column-width
-                                              (length g))
-                                           ? )
-                              "  <group>\n")))
-            (goto-char (point-min))
-            (while (re-search-forward "^\\([^ ]*\\) +" nil t)
-              (push (match-string 1) names))
-            (buffer-string)))
+    (with-temp-buffer
+      (let ((format-string (format "%%-%dn  %%d"
+                                   helm-system-packages-column-width)))
+        (process-file "expac" nil '(t nil) nil "--sync" format-string))
+      (dolist (g groups)
+        (insert (concat g
+                        (make-string (- helm-system-packages-column-width
+                                        (length g))
+                                     ? )
+                        "  <group>\n")))
+      (goto-char (point-min))
+      (while (re-search-forward "^\\([^ ]*\\) +" nil t)
+        (push (match-string 1) names))
+      (setq descriptions (buffer-string)))
     (setq names (mapconcat #'identity names "\n"))
     (helm-system-packages--cache-set names descriptions display-list "pacman")))
 
