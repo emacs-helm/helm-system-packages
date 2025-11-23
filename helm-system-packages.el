@@ -610,6 +610,9 @@ TITLE is the name of the Helm session."
       (message "Dependencies are missing (%s), please install them"
                (mapconcat 'identity missing-deps ", ")))))
 
+;; WARN: Each time we modify the slots in this structure (add or
+;; remove) we have to recompile all other files otherwise we endup
+;; with an args-out-of-range error.
 (cl-defstruct (helm-system-packages-manager
                (:constructor nil)
                (:copier nil)
