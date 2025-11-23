@@ -274,7 +274,7 @@ If REVERSE is non-nil, list reverse dependencies instead."
                         "apt-cache" (helm-marked-candidates) arg)))
      title)))
 
-(defun helm-system-packages-make-apt-get-command ( &rest args)
+(defun helm-system-packages-make-apt-get-command (&rest args)
   (let ((comm (append '("apt-get" "--quiet") args)))
     (if helm-system-packages-dpkg-confirm-p
         (push "DEBIAN_FRONTEND=readline" comm)
