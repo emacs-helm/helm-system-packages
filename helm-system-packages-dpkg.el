@@ -127,32 +127,27 @@ Requirements:
         (when (string= (cadr pkg) "deinstall")
           (push (car pkg) res))))))
 
-;; TODO: Build from --descriptions instead like pacman?
-(defun helm-system-packages-dpkg-cache-names ()
-  "Cache all package names."
-  (with-temp-buffer
-    (process-file "apt-cache" nil t nil "pkgnames")
-    ;; (sort-lines nil (point-min) (point-max))
-    (buffer-string)))
-
-(defun helm-system-packages-dpkg-cache-descriptions ()
+(defun helm-system-packages-dpkg-cache (display-list)
   "Cache all package names with descriptions."
-  (with-temp-buffer
-    ;; `apt-cache search` is much faster than `apt-cache show`.
-    (process-file "apt-cache" nil '(t nil) nil "search" ".")
-    ;; apt-cache's output format is "pkg - desc".  Remove "-" and align to
-    ;; column.
-    (goto-char (point-min))
-    (while (re-search-forward "^\\([^ ]*\\)\\( - \\)" nil t)
-      (let ((pos (- (match-end 1) (pos-bol))))
-        (when (< pos helm-system-packages-dpkg-column-width)
-          (replace-match (make-string
-                          (- helm-system-packages-dpkg-column-width pos) ? )
-                         nil nil nil 2)))
-      (forward-line))
-    ;; (sort-lines nil (point-min) (point-max)) ; TODO: Required? Also
-    ;; see helm-system-packages-dpkg-buffer-all.
-    (buffer-string)))
+  (let (names descriptions)
+    (with-temp-buffer
+      ;; `apt-cache search` is much faster than `apt-cache show`.
+      (process-file "apt-cache" nil '(t nil) nil "search" ".")
+      (goto-char (point-min))
+      (while (re-search-forward "^\\([^ ]*\\)\\( - \\)" nil t)
+        (let ((name (match-string 1))
+              (pos  (- (match-end 1) (pos-bol))))
+          (push name names)
+          ;; apt-cache's output format is "pkg - desc".
+          ;; Remove " - " and align to column.
+          (when (< pos helm-system-packages-dpkg-column-width)
+            (replace-match (make-string
+                            (- helm-system-packages-dpkg-column-width pos) ? )
+                           nil nil nil 2)))
+        (forward-line))
+      (setq descriptions (buffer-string)))
+    (setq names (mapconcat #'identity names "\n"))
+    (helm-system-packages--cache-set names descriptions display-list "dpkg")))
 
 (defun helm-system-packages-dpkg-refresh ()
   "Refresh the package list."
@@ -170,10 +165,7 @@ Requirements:
     (dolist (p residuals)
       (push (cons p '(helm-system-packages-residuals))
             display-list))
-    (helm-system-packages--cache-set
-     (helm-system-packages-dpkg-cache-names)
-     (helm-system-packages-dpkg-cache-descriptions)
-     display-list "dpkg")))
+    (helm-system-packages-dpkg-cache display-list)))
 
 (defun helm-system-packages-dpkg-transformer (packages)
   (let (res
