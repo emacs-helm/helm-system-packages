@@ -626,7 +626,7 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER, FC-TRANSFORMER and ACTIONS are as
 specified by `helm-build-in-buffer-source'.
 Use TRANSFORMER for a candidate-transformer and FC-TRANSFORMER for a
 filtered-candidate-transformer.
-EXTRA-SOURCE allows adding an second source to helm :sources keyword."
+EXTRA-SOURCE allows adding a second source to helm :sources keyword."
   name
   refresh-function
   dependencies
