@@ -113,14 +113,14 @@ The values are in the form
 
   (:names STRING-BUFFER
    :descriptions STRING-BUFFER
-   :display LIST
+   :filtered LIST
    :title STRING ...)
 
-\\='display' is a list of
+:filtered is a list of (package . (faces...))
+These are special packages to highlight like installed,
+orphans etc...
 
-  (package . (faces...))
-
-Optional \\='title' is usually the package manager.")
+Optional :title is usually the package manager.")
 
 (defvar helm-system-packages--cache-current nil
   "Current host to use from cache.
@@ -285,7 +285,7 @@ categories (e.g. both \"orphan\" and \"installed\").
 EXTRA is an arbitrary prop-val sequence appended to the resulting plist."
   (let ((host (or (file-remote-p default-directory 'host) ""))
         (val (append  (list :names names :descriptions descriptions
-                            :display display-list :title title)
+                            :filtered display-list :title title)
                       extra)))
     (if (assoc host helm-system-packages--cache)
         (setcdr (assoc host helm-system-packages--cache) val)
@@ -357,7 +357,7 @@ If not found, category is `uninstalled'."
   (let ((result '()))
     (dolist (p packages result)
       (let* ((display (helm-aand (helm-system-packages--cache-get)
-                                 (plist-get it :display)
+                                 (plist-get it :filtered)
                                  (assoc p it)))
              (category (or (helm-aand (cadr display)
                                       (symbol-name it)
@@ -546,7 +546,7 @@ COMMAND will be run in the Eshell buffer `helm-system-packages-eshell-buffer'."
   (helm-system-packages-call-as-root
    command args
    (cl-loop for p in (helm-marked-candidates)
-            for alist = (plist-get (helm-system-packages--cache-get) :display)
+            for alist = (plist-get (helm-system-packages--cache-get) :filtered)
             when (assoc p alist) collect p)))
 
 ;; TODO: When all entries are filtered out by the transformer, it seems that

@@ -83,7 +83,7 @@ Requirements:
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
       (let ((face (cdr (assoc (helm-system-packages-extract-name p)
-                              (plist-get (helm-system-packages--cache-get) :display)))))
+                              (plist-get (helm-system-packages--cache-get) :filtered)))))
         (cond
          ((not face)
           (when helm-system-packages-guix--show-uninstalled-p

@@ -210,7 +210,7 @@ DISPLAY-LIST and GROUPS are lists of strings."
 
 (defun helm-system-packages-pacman-transformer (packages)
   (let ((res '())
-        (disps (plist-get (helm-system-packages--cache-get) :display)))
+        (disps (plist-get (helm-system-packages--cache-get) :filtered)))
     (dolist (p (sort packages #'string-lessp))
       (let* ((name (helm-system-packages-extract-name p))
              (len  (length name))

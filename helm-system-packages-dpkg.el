@@ -170,7 +170,7 @@ Requirements:
 (defun helm-system-packages-dpkg-transformer (packages)
   (let (res
         (disps (plist-get (helm-system-packages--cache-get)
-                          :display)))
+                          :filtered)))
     (dolist (p packages)
       (let* ((name (helm-system-packages-extract-name p))
              (face (cdr (assoc name disps))))
