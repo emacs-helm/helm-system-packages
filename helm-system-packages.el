@@ -619,8 +619,11 @@ TITLE is the name of the Helm session."
 DEPENDENCIES is a list of strings of external executables
 required by the package manager.
 
-HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
-`helm-build-in-buffer-source'."
+HELP-MESSAGE, KEYMAP, TRANSFORMER, FC-TRANSFORMER and ACTIONS are as
+specified by `helm-build-in-buffer-source'.
+Use TRANSFORMER for a candidate-transformer and FC-TRANSFORMER for a
+filtered-candidate-transformer.
+EXTRA-SOURCE allows adding an second source to helm :sources keyword."
   name
   refresh-function
   dependencies
@@ -628,6 +631,7 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
   help-message
   keymap
   transformer
+  fc-transformer
   actions
   extra-source)
 
@@ -638,6 +642,8 @@ HELP-MESSAGE, KEYMAP, TRANSFORMER and ACTIONS are as specified by
     (helm-build-in-buffer-source title
       :init (helm-system-packages--make-init manager)
       :candidate-transformer (helm-system-packages-manager-transformer manager)
+      :filtered-candidate-transformer
+      (helm-system-packages-manager-fc-transformer manager)
       :candidate-number-limit helm-system-packages-candidate-limit
       :display-to-real 'helm-system-packages-extract-name
       :keymap (helm-system-packages-manager-keymap manager)

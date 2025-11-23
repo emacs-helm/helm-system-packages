@@ -167,7 +167,7 @@ Requirements:
             display-list))
     (helm-system-packages-dpkg-cache display-list)))
 
-(defun helm-system-packages-dpkg-transformer (packages)
+(defun helm-system-packages-dpkg-transformer (packages _source)
   (let (res
         (disps (plist-get (helm-system-packages--cache-get)
                           :filtered)))
@@ -289,7 +289,7 @@ If REVERSE is non-nil, list reverse dependencies instead."
    :dependencies helm-system-packages-dpkg-dependencies
    :help-message 'helm-system-packages-dpkg-help-message
    :keymap helm-system-packages-dpkg-map
-   :transformer #'helm-system-packages-dpkg-transformer
+   :fc-transformer #'helm-system-packages-dpkg-transformer
    :actions helm-system-packages-dpkg-actions))
 
 (provide 'helm-system-packages-dpkg)
