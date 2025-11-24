@@ -1,11 +1,11 @@
 ;;; helm-system-packages.el --- Helm UI wrapper for system package managers. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;;               2017 ~ 2018 Pierre Neidhardt <mail@ambrevar.xyz>
+;; Copyright (C) 2017 ~ 2020 Pierre Neidhardt <mail@ambrevar.xyz>
+;;               2020 ~ 2025 Thierry Volpiatto <thievol@posteo.net>
 
 ;; Author: Pierre Neidhardt <mail@ambrevar.xyz>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
-;; Version: 1.10.2
+;; Version: 1.11.0
 ;; Package-Requires: ((emacs "24.4") (helm "2.8.7") (seq "1.8"))
 ;; Keywords: helm, packages
 
