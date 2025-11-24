@@ -130,6 +130,11 @@ If nil, use host linked with `default-directory'.")
   "List of virtual packages.
 This is only used for dependency display.")
 
+(defvar helm-system-packages--refresh nil
+  "Store function in charge to refresh the package list.
+It is called:
+- on each session start as :init function.
+- whenever a shell command completes.")
 
 ;; User vars and faces
 (defgroup helm-system-packages nil
@@ -255,13 +260,6 @@ the window."
           (not helm-system-packages--show-pinned-p))
     (helm-update)))
 (put 'helm-system-packages-toggle-pinned 'helm-only t)
-
-;; TODO: Don't refresh when eshell-last-command-status is not 0?
-(defvar helm-system-packages--refresh nil
-  "Function to refresh the package list.
-It is called:
-- on each session start;
-- whenever a shell command completes.")
 
 (defun helm-system-packages--cache-get ()
   "Get current cache entry.
