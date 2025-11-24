@@ -1,5 +1,14 @@
 #+TITLE: Helm System Packages
 
+* :TOC:
+- [[#usage][Usage]]
+  - [[#maintenance--other-operations][Maintenance & other operations]]
+  - [[#privileges][Privileges]]
+- [[#motivation][Motivation]]
+- [[#screencasts][Screencasts]]
+- [[#development][Development]]
+- [[#references][References]]
+
 * Introduction
 
 Helm System Packages is an Emacs-based interface to the package manager of your
@@ -23,17 +32,20 @@ packages:
 Helm System Packages provides a uniform interface over the following package
 managers:
 
-- =brew= (macOS)
-- =dnf=
-- =dpkg= (apt & friends)
-- =guix=
-- =pacman=
-- =portage= (emerge & friends)
-- =xbps=
+- =brew=    (Macos)
+- =dnf=     (Rpm packages, Fedora etc...)
+- =dpkg=    (Deb packages, Debian and derived)
+- =guix=    (Guix manager)
+- =pacman=  (ArchLinux and derived)
+- =portage= (Gentoo and derived)
+- =xbps=    (Void linux)
 - And (hopefully) more to come!  Contributions are welcome.
 
 Some package managers come with their specific actions and even specific
 Helm sources, e.g. Portage's USE flags.
+
+NOTES: Due to the lack of developpers to maintain these packages only
+the pacman and dpkg modules are maintained.
 
 * Usage
 
@@ -102,24 +114,15 @@ change.
 
 Each module is rather straightforward, it only needs to define the following:
 
-- A ~helm-system-packages-FOO~ function that starts a Helm session.
-- An interactive ~helm-system-packages-FOO-refresh~ function to refresh the package list either manually or after transactions.
+- A ~helm-system-packages-FOO-dependencies~ var that store the needed
+  executables to use.
 
-The =helm-system-packages.el= file provides some helper functions for Helm actions.
+- An ~helm-system-packages-FOO-refresh~ function which
+  will be used by the ~helm-system-packages-refresh~ function.
 
-** Roadmap
-*** TODO Strengthen the interface with structures
-*** TODO Factor all "info" actions?
-We can add Org subsections for files, dependencies, etc.
-Those sections should be folded by default.
-
-We probably still need specific "info" actions to insert at point.
-*** TODO Use bindings reflecting helm-list-elisp-packages
-*** TODO [#A] Port factorization to dpkg, portage
-*** TODO [#A] Port TRAMP support to brew
-*** Add option to display multiline candidates for long descriptions.
-*** With filtering, the displayed condidates won't include those above the candidate limit
-Can we include as many filtered candidates as possible?
+- A ~helm-system-packages-FOO~ variable that handle the necessary data
+  to build the helm source (use ~helm-system-packages-manager-create~
+  to build it).
 
 * References
 - https://wiki.voidlinux.org/Rosetta_stone
