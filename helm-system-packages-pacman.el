@@ -160,7 +160,6 @@ packages belonging to the group."
 ;; Get and filter candidates.
 (defun helm-system-packages-pacman-refresh ()
   "Refresh the package list."
-  (interactive)
   (setq helm-system-packages-column-width
         (or helm-system-packages-pacman-column-width
             helm-system-packages-column-width))
