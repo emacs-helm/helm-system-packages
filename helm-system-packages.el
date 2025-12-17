@@ -309,7 +309,10 @@ manager refresh function to use is stored in
                    'helm-system-packages-refresh t))))
 
 (defun helm-system-packages--make-init (manager)
-  "Return the init function as a lambda.
+  "Return the init function for MANAGER as a lambda.
+
+MANAGER is a symbol like `helm-system-packages-<MANAGER>' which is
+build in `helm-system-packages'.
 The init function is in charge of caching package lists and creating
 Helm candidate buffer."
   (lambda ()
