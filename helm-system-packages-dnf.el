@@ -1,7 +1,7 @@
 ;;; helm-system-packages-dnf.el --- Helm UI for RPM-based distros using DNF. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2018 ~ 2025 Damien Cassou <damien@cassou.me>
-;;               2020 ~ 2025 Thierry Volpiatto <thievol@posteo.net>
+;; Copyright (C) 2018 ~ 2026 Damien Cassou <damien@cassou.me>
+;;               2020 ~ 2026 Thierry Volpiatto <thievol@posteo.net>
 
 ;; Author: Damien Cassou <damien@cassou.me>
 ;; URL: https://github.com/emacs-helm/helm-system-packages

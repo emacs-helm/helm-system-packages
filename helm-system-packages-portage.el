@@ -1,7 +1,7 @@
 ;;; helm-system-packages-portage.el --- Helm UI for Portage. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2017 ~ 2020 Pierre Neidhardt <mail@ambrevar.xyz>
-;;               2020 ~ 2025 Thierry Volpiatto <thievol@posteo.net>
+;;               2020 ~ 2026 Thierry Volpiatto <thievol@posteo.net>
 
 ;; Author: Thierry Volpiatto <thievol@posteo.com>
 ;; Maintainer: Pierre Neidhardt <mail@ambrevar.xyz>

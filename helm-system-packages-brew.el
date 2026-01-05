@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 ~ 2020 Arnaud Hoffmann <tuedachu@gmail.com>
 ;;               2017 ~ 2020 Pierre Neidhardt <mail@ambrevar.xyz>
-;;               2020 ~ 2025 Thierry Volpiatto <thievol@posteo.net>
+;;               2020 ~ 2026 Thierry Volpiatto <thievol@posteo.net>
 
 ;; Author: Arnaud Hoffmann <tuedachu@gmail.com>
 ;; URL: https://github.com/emacs-helm/helm-system-packages
