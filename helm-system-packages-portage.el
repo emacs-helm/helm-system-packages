@@ -72,13 +72,15 @@
 (defun helm-system-packages-portage-list-dependencies (&optional explicit)
   "List packages installed as a required dependency.
 The caller can pass the list of EXPLICIT packages to avoid re-computing it."
-  (unless explicit
-    (setq explicit (helm-system-packages-portage-list-explicit)))
-  (seq-difference
-   (split-string (with-temp-buffer
-                   (process-file "qlist" nil t nil "-I")
-                   (buffer-string)))
-   explicit))
+  (cl-loop with seq1 = (with-temp-buffer
+                         (process-file
+                          "qlist" nil t nil "-I")
+                         (buffer-string))
+           with seq2 = (or explicit
+                           (helm-system-packages-portage-list-explicit))
+           for elm in seq1
+           unless (member elm seq2)
+           collect elm))
 
 (defun helm-system-packages-portage-cache (display-list)
   "Cache all package names with descriptions."

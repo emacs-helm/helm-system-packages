@@ -56,7 +56,6 @@
 ;; - `helm-system-packages-mapalist' which allows for chaining function calls
 ;;   over the aforementioned category alists.
 
-(require 'seq)
 (require 'helm)
 (require 'cl-lib)
 (require 'ansi-color)

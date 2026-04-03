@@ -95,7 +95,7 @@ Otherwise display in `helm-system-packages-buffer'."
        (cl-loop
         while (re-search-forward "^URL *: \\(.*\\)$" nil t)
         collect (match-string-no-properties 1) into urls
-        finally return (seq-uniq urls #'string=))))))
+                finally return (helm-fast-remove-dups urls :test #'string=))))))
 
 (defun helm-system-packages-dnf--list-files (package)
   "Return a list of all files installed by PACKAGE."

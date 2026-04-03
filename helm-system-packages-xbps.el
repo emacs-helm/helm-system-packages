@@ -85,16 +85,17 @@
 (defun helm-system-packages-xbps-list-dependencies (&rest non-dependencies)
   "List packages installed as a required dependency.
 NON-DEPENDENCIES are package lists which are to be excluded."
-  (seq-reduce
-   'seq-difference non-dependencies
-   (split-string (with-temp-buffer
-                   ;; --property automatic-install is always true... Is it a bug?
-                   ;; Thus we need to subtract all other installed packages categories.,
-                   (process-file "xbps-query" nil t nil "--search" "" "--prop" "automatic-install")
-                   (goto-char (point-min))
-                   (while (re-search-forward "-[^-]+$" nil t)
-                     (replace-match ""))
-                   (buffer-string)))))
+  (cl-loop with seq1 = (split-string (with-temp-buffer
+                                     ;; --property automatic-install is always true... Is it a bug?
+                                     ;; Thus we need to subtract all other installed packages categories.,
+                                     (process-file "xbps-query" nil t nil "--search" "" "--prop" "automatic-install")
+                                     (goto-char (point-min))
+                                     (while (re-search-forward "-[^-]+$" nil t)
+                                       (replace-match ""))
+                                     (buffer-string)))
+         with seq2 = (mapcan #'append non-dependencies)
+         for pkg in seq1
+         unless (member pkg seq2) collect pkg))
 
 (defun helm-system-packages-xbps-list-orphans ()
   "List orphan packages (unrequired dependencies)."
