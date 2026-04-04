@@ -417,7 +417,6 @@ DESC-ALIST's keys are ignored, the values are in the form
         (read-only-mode 1)
         (local-set-key (kbd "q") 'quit-window)))))
 
-;; FIXME: Make clear the usage of next two functions.
 (defun helm-system-packages-call (command &optional args &rest options)
   "COMMAND to run with OPTIONS over the ARGS list.
 OPTIONS are insert before ARGS.
@@ -429,13 +428,7 @@ Return the result as a string."
 
 (defun helm-system-packages-run (command &rest args)
   "COMMAND to run over `helm-marked-candidates'."
-  (let ((arg-list (append args (helm-marked-candidates))))
-    (with-temp-buffer
-      ;; We discard errors.
-      (apply #'process-file command nil '(t nil) nil arg-list)
-      (buffer-string))))
-;; FIXME: Why is this obsoleted? It is used in some places.
-(make-obsolete 'helm-system-packages-run 'helm-system-packages-call "1.9.0")
+  (helm-system-packages-call command (helm-marked-candidates) args))
 
 (defun helm-system-packages-print (command &rest args)
   "COMMAND to run over `helm-marked-candidates'.
