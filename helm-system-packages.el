@@ -431,10 +431,10 @@ Return the result as a string."
   (helm-system-packages-call command (helm-marked-candidates) args))
 
 (defun helm-system-packages-print (command &rest args)
-  "COMMAND to run over `helm-marked-candidates'.
+  "Print output of COMMAND executed with args on marked candidates.
 
-With prefix argument, insert the output at point.
-Otherwise display in `helm-system-packages-buffer'."
+With prefix argument, print at point, otherwise display in
+`helm-system-packages-buffer'."
   (let ((res (apply 'helm-system-packages-run (cons command args))))
     (if (string= res "")
         (message "No result")
