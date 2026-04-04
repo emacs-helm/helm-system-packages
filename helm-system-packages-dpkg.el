@@ -100,15 +100,15 @@ Requirements:
 ;; Functions for caching and filtering.
 (defun helm-system-packages-dpkg-list-explicit ()
   "List explicitly installed packages."
-  (split-string (with-temp-buffer
-                  (process-file "apt-mark" nil t nil "showmanual")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "apt-mark" nil t nil "showmanual")
+    (split-string (buffer-string))))
 
 (defun helm-system-packages-dpkg-list-dependencies ()
   "List packages installed as a dependency."
-  (split-string (with-temp-buffer
-                  (process-file "apt-mark" nil t nil "showauto")
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "apt-mark" nil t nil "showauto")
+    (split-string (buffer-string))))
 
 (defun helm-system-packages-dpkg-list-residuals ()
   "List packages with left-over configuration files."

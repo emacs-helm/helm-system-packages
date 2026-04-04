@@ -65,9 +65,9 @@
 
 (defun helm-system-packages-portage-list-explicit ()
   "List explicitly installed packages."
-  (split-string (with-temp-buffer
-                  (insert-file-contents-literally "/var/lib/portage/world")
-                  (buffer-string))))
+  (with-temp-buffer
+    (insert-file-contents-literally "/var/lib/portage/world")
+    (split-string (buffer-string))))
 
 (defun helm-system-packages-portage-list-dependencies (&optional explicit)
   "List packages installed as a required dependency.
@@ -172,15 +172,19 @@ If nil, then use `helm-system-packages-column-width'."
 (defun helm-system-packages-portage-use-init ()
   "Initialize buffer with all USE flags."
   (unless (helm-candidate-buffer)
-    (let ((local-uses (split-string (with-temp-buffer
-                                      (process-file "portageq" nil t nil "envvar" "USE")
-                                      (buffer-string)))))
+    (let ((local-uses (with-temp-buffer
+                        (process-file "portageq" nil t nil "envvar" "USE")
+                        (split-string (buffer-string)))))
       (helm-init-candidates-in-buffer
           'global
-        (mapcar (lambda (use-flag) (propertize use-flag 'face (when (member use-flag local-uses) 'helm-system-packages-explicit)))
-                (split-string (with-temp-buffer
-                                (process-file "eix" nil t nil "--print-all-useflags")
-                                (buffer-string))))))))
+        (mapcar (lambda (use-flag)
+                  (propertize
+                   use-flag 'face
+                   (if (member use-flag local-uses)
+                       'helm-system-packages-explicit 'default)))
+                (with-temp-buffer
+                  (process-file "eix" nil t nil "--print-all-useflags")
+                  (split-string (buffer-string))))))))
 
 (defcustom helm-system-packages-portage-use-actions
   '(("Description" .

@@ -75,46 +75,50 @@
 
 (defun helm-system-packages-xbps-list-explicit ()
   "List explicitly installed packages."
-  (split-string (with-temp-buffer
-                  (process-file "xbps-query" nil t nil "--list-manual-pkgs")
-                  (goto-char (point-min))
-                  (while (re-search-forward "-[^-]+$" nil t)
-                    (replace-match ""))
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "xbps-query" nil t nil "--list-manual-pkgs")
+    (goto-char (point-min))
+    (while (re-search-forward "-[^-]+$" nil t)
+      (replace-match ""))
+    (split-string (buffer-string))))
 
 (defun helm-system-packages-xbps-list-dependencies (&rest non-dependencies)
   "List packages installed as a required dependency.
 NON-DEPENDENCIES are package lists which are to be excluded."
-  (cl-loop with seq1 = (split-string (with-temp-buffer
-                                     ;; --property automatic-install is always true... Is it a bug?
-                                     ;; Thus we need to subtract all other installed packages categories.,
-                                     (process-file "xbps-query" nil t nil "--search" "" "--prop" "automatic-install")
-                                     (goto-char (point-min))
-                                     (while (re-search-forward "-[^-]+$" nil t)
-                                       (replace-match ""))
-                                     (buffer-string)))
-         with seq2 = (mapcan #'append non-dependencies)
-         for pkg in seq1
-         unless (member pkg seq2) collect pkg))
+  (cl-loop with seq1 = (with-temp-buffer
+                         ;; --property automatic-install is always
+                         ;; true... Is it a bug?  Thus we need to
+                         ;; subtract all other installed packages
+                         ;; categories.,
+                         (process-file
+                          "xbps-query" nil t nil
+                          "--search" "" "--prop" "automatic-install")
+                         (goto-char (point-min))
+                         (while (re-search-forward "-[^-]+$" nil t)
+                           (replace-match ""))
+                         (split-string (buffer-string)))
+           with seq2 = (mapcan #'append non-dependencies)
+           for pkg in seq1
+           unless (member pkg seq2) collect pkg))
 
 (defun helm-system-packages-xbps-list-orphans ()
   "List orphan packages (unrequired dependencies)."
-  (split-string (with-temp-buffer
-                  (process-file "xbps-query" nil t nil "--list-orphans")
-                  (goto-char (point-min))
-                  (while (re-search-forward "-[^-]+$" nil t)
-                    (replace-match ""))
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "xbps-query" nil t nil "--list-orphans")
+    (goto-char (point-min))
+    (while (re-search-forward "-[^-]+$" nil t)
+      (replace-match ""))
+    (split-string (buffer-string))))
 
 (defun helm-system-packages-xbps-list-pinned ()
   "List pinned installed packages.
 That is, packages that won't be updated automatically."
-  (split-string (with-temp-buffer
-                  (process-file "xbps-query" nil t nil "--list-hold-pkgs")
-                  (goto-char (point-min))
-                  (while (re-search-forward "-[^-]+$" nil t)
-                    (replace-match ""))
-                  (buffer-string))))
+  (with-temp-buffer
+    (process-file "xbps-query" nil t nil "--list-hold-pkgs")
+    (goto-char (point-min))
+    (while (re-search-forward "-[^-]+$" nil t)
+      (replace-match ""))
+    (split-string (buffer-string))))
 
 (defun helm-system-packages-xbps-cache (display-list)
   "Cache all package names with descriptions."

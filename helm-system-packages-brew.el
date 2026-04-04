@@ -41,16 +41,17 @@
 (defun helm-system-packages-brew-transformer (packages)
   (let (res (pkglist (reverse packages)))
     (dolist (p pkglist res)
-      (let ((face (cdr (assoc (helm-system-packages-extract-name p) helm-system-packages--display-lists))))
+      (let ((face (cdr (assoc (helm-system-packages-extract-name p)
+                              helm-system-packages--display-lists))))
         (cond
          ((and (not face) helm-system-packages--show-uninstalled-p)
           (push p res)))))))
 
 (defun helm-system-packages-brew-list-explicit ()
   "List explicitly installed packages."
-  (split-string (with-temp-buffer
-                  (call-process "brew" nil t nil "list")
-                  (buffer-string))))
+  (with-temp-buffer
+    (call-process "brew" nil t nil "list")
+    (split-string (buffer-string))))
 
 (defcustom helm-system-packages-brew-column-width 40
   "Column at which descriptions are aligned, excluding a double-space gap.
