@@ -97,7 +97,7 @@ NON-DEPENDENCIES are package lists which are to be excluded."
                          (while (re-search-forward "-[^-]+$" nil t)
                            (replace-match ""))
                          (split-string (buffer-string)))
-           with seq2 = (mapcan #'append non-dependencies)
+           with seq2 = (apply #'append non-dependencies)
            for pkg in seq1
            unless (member pkg seq2) collect pkg))
 
